@@ -353,16 +353,15 @@ class PlaylistServiceTest {
         assertEquals(1L, samplePlaylist.getLikeCount());
     }
 
-    /** ✅ 추천 플레이리스트 조회 테스트 (Redis 캐싱 적용) */
     @Test
     @DisplayName("추천 API가 Redis 캐싱을 사용하여 정상적으로 동작해야 한다.")
     void shouldRetrieveRecommendedPlaylistsFromCache() {
         Long playlistId = 1L;
-        List<Long> cachedPlaylistIds = Arrays.asList(2L, 3L);
+        String cachedRecommendationsStr = "2,3";
 
         // Given - Redis에서 추천 데이터가 존재하는 경우
-        when(valueOperations.get("playlist:recommend:" + playlistId)).thenReturn(cachedPlaylistIds);
-        when(playlistRepository.findAllById(cachedPlaylistIds))
+        when(valueOperations.get("playlist:recommend:" + playlistId)).thenReturn(cachedRecommendationsStr);
+        when(playlistRepository.findAllById(Arrays.asList(2L, 3L)))
                 .thenReturn(Arrays.asList(
                         Playlist.builder().id(2L).title("추천1").description("설명1").tags(new HashSet<>()).build(),
                         Playlist.builder().id(3L).title("추천2").description("설명2").tags(new HashSet<>()).build()
@@ -374,7 +373,7 @@ class PlaylistServiceTest {
         // Then
         assertEquals(2, recommendations.size());
         verify(valueOperations, times(1)).get("playlist:recommend:" + playlistId);
-        verify(playlistRepository, times(1)).findAllById(cachedPlaylistIds);
+        verify(playlistRepository, times(1)).findAllById(Arrays.asList(2L, 3L));
     }
 
     /** ✅ 정렬별 추천 테스트 */
