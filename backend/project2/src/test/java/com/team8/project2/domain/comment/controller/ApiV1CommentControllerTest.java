@@ -80,11 +80,15 @@ class ApiV1CommentControllerTest {
 	void createCommentWithNoAuth() throws Exception {
 		CommentDto commentDto = CommentDto.builder().content("content example").build();
 
-		mockMvc.perform(post("/api/v1/curations/1/comments").contentType("application/json")
-			.content(new ObjectMapper().writeValueAsString(commentDto))).andExpect(status().isUnauthorized());
+		mockMvc.perform(post("/api/v1/curations/1/comments")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(new ObjectMapper().writeValueAsString(commentDto)))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("401-1"))
+				.andExpect(jsonPath("$.msg").value("접근이 거부되었습니다. 로그인 상태를 확인해 주세요.")); // 실제 응답 메시지 확인 필요
 
-		// 샘플 데이터를 제외하고 댓글이 추가되지 않음
-		assertThat(commentRepository.count()).isEqualTo(1);
+		// 댓글 수 변화 확인 (DB 초기화 되어있다면 0일 것)
+		assertThat(commentService.getCommentsByCurationId(600L)).isEmpty();
 	}
 
 	@Test
