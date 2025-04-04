@@ -231,10 +231,19 @@ class PlaylistServiceTest {
     @DisplayName("플레이리스트에서 아이템을 삭제할 수 있다.")
     void deletePlaylistItem() {
         // Given
-        Long itemIdToDelete = 100L;
+        Long itemIdToDelete = 1L;
 
-        PlaylistItem item1 = PlaylistItem.builder().itemId(100L).itemType(PlaylistItem.PlaylistItemType.LINK).build();
-        PlaylistItem item2 = PlaylistItem.builder().itemId(101L).itemType(PlaylistItem.PlaylistItemType.CURATION).build();
+        PlaylistItem item1 = PlaylistItem.builder()
+                .id(1L)
+                .itemId(100L)
+                .itemType(PlaylistItem.PlaylistItemType.LINK)
+                .build();
+
+        PlaylistItem item2 = PlaylistItem.builder()
+                .id(2L)
+                .itemId(101L)
+                .itemType(PlaylistItem.PlaylistItemType.CURATION)
+                .build();
 
         samplePlaylist.setItems(new ArrayList<>(Arrays.asList(item1, item2)));
         when(playlistRepository.findById(samplePlaylist.getId())).thenReturn(Optional.of(samplePlaylist));
