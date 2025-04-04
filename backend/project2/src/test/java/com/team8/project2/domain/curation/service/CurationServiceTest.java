@@ -27,6 +27,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -302,10 +304,10 @@ class CurationServiceTest {
 	@Test
 	void findAllCuration() {
 		when(curationRepository.searchByFilters(ArgumentMatchers.anyList(), anyInt(), anyString(), anyString(), any(), any()))
-			.thenReturn((Page<Curation>) List.of(curation));
+			.thenReturn(new PageImpl<>(List.of(curation), PageRequest.of(0, 20), 1));
 
 		List<CurationResDto> foundCurations = curationService.searchCurations(List.of("tag"), "title", "content", null,
-			SearchOrder.LATEST,1,1).getCurations();
+			SearchOrder.LATEST,1,20).getCurations();
 
 		// Verify the result
 		assert foundCurations != null;
