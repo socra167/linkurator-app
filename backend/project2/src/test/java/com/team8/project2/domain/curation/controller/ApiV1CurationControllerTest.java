@@ -1,5 +1,22 @@
 package com.team8.project2.domain.curation.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team8.project2.domain.curation.curation.dto.CurationReqDTO;
 import com.team8.project2.domain.curation.curation.entity.Curation;
@@ -11,23 +28,6 @@ import com.team8.project2.domain.member.entity.Member;
 import com.team8.project2.domain.member.entity.RoleEnum;
 import com.team8.project2.domain.member.repository.MemberRepository;
 import com.team8.project2.domain.member.service.AuthTokenService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 @ActiveProfiles("test")
@@ -52,7 +52,6 @@ public class ApiV1CurationControllerTest {
 
 	String memberAccessKey;
 	Member member;
-
 
 	@BeforeEach
 	void setUp() {
@@ -101,17 +100,17 @@ public class ApiV1CurationControllerTest {
 
 		// 수정된 curationReqDTO를 사용하여 PUT 요청
 		mockMvc.perform(put("/api/v1/curation/{id}", savedCuration.getId()).contentType("application/json")
-						.header("Authorization", "Bearer " + memberAccessKey) // JWT 포함 요청
-						.content(new ObjectMapper().writeValueAsString(curationReqDTO)))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value("200-1"))
-				.andExpect(jsonPath("$.msg").value("글이 성공적으로 수정되었습니다."))
-				.andExpect(jsonPath("$.data.title").value("Test Title"))
-				.andExpect(jsonPath("$.data.content").value("Test Content"))
-				.andExpect(jsonPath("$.data.urls.length()").value(1))
-				.andExpect(jsonPath("$.data.urls[0].url").value("https://example.com"))
-				.andExpect(jsonPath("$.data.tags.length()").value(1))
-				.andExpect(jsonPath("$.data.tags[0].name").value("test"));
+				.header("Authorization", "Bearer " + memberAccessKey) // JWT 포함 요청
+				.content(new ObjectMapper().writeValueAsString(curationReqDTO)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.code").value("200-1"))
+			.andExpect(jsonPath("$.msg").value("글이 성공적으로 수정되었습니다."))
+			.andExpect(jsonPath("$.data.title").value("Test Title"))
+			.andExpect(jsonPath("$.data.content").value("Test Content"))
+			.andExpect(jsonPath("$.data.urls.length()").value(1))
+			.andExpect(jsonPath("$.data.urls[0].url").value("https://example.com"))
+			.andExpect(jsonPath("$.data.tags.length()").value(1))
+			.andExpect(jsonPath("$.data.tags[0].name").value("test"));
 	}
 
 	@Test
@@ -119,13 +118,13 @@ public class ApiV1CurationControllerTest {
 	void updateCurationByOtherUser_ShouldFail() throws Exception {
 		// 다른 사용자 생성
 		Member anotherMember = Member.builder()
-				.memberId("otherperson")
-				.username("otherperson")
-				.password("otherperson")
-				.email("other@example.com")
-				.role(RoleEnum.MEMBER)
-				.introduce("otherperson")
-				.build();
+			.memberId("otherperson")
+			.username("otherperson")
+			.password("otherperson")
+			.email("other@example.com")
+			.role(RoleEnum.MEMBER)
+			.introduce("otherperson")
+			.build();
 		memberRepository.save(anotherMember);
 
 		Curation savedCuration = curationRepository.findById(1L).orElseThrow();
@@ -134,10 +133,10 @@ public class ApiV1CurationControllerTest {
 		String otherAccessToken = authTokenService.genAccessToken(anotherMember);
 
 		mockMvc.perform(put("/api/v1/curation/{id}", savedCuration.getId())
-						.contentType("application/json")
-						.header("Authorization", "Bearer " + otherAccessToken)
-						.content(new ObjectMapper().writeValueAsString(curationReqDTO)))
-				.andExpect(status().isForbidden());
+				.contentType("application/json")
+				.header("Authorization", "Bearer " + otherAccessToken)
+				.content(new ObjectMapper().writeValueAsString(curationReqDTO)))
+			.andExpect(status().isForbidden());
 	}
 
 	@Test
@@ -148,22 +147,22 @@ public class ApiV1CurationControllerTest {
 		// Member 인증 설정 후 삭제 요청
 		mockMvc.perform(delete("/api/v1/curation/{id}", savedCuration.getId())
 				.header("Authorization", "Bearer " + memberAccessKey))
-				.andExpect(status().isNoContent());
+			.andExpect(status().isNoContent());
 	}
 
 	@Test
 	@DisplayName("큐레이션을 조회할 수 있다")
 	void getCuration() throws Exception {
 		mockMvc.perform(get("/api/v1/curation/{id}", 1L))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value("200-1"))
-				.andExpect(jsonPath("$.msg").value("조회 성공"))
-				.andExpect(jsonPath("$.data.title").value("curation test title"))
-				.andExpect(jsonPath("$.data.urls[0].url").value("https://www.naver.com/"))
-				.andExpect(jsonPath("$.data.urls[1].url").value("https://www.github.com/"))
-				.andExpect(jsonPath("$.data.tags[0].name").value("포털"))
-				.andExpect(jsonPath("$.data.tags[1].name").value("개발"))
-				.andExpect(jsonPath("$.data.comments[0].content").value("comment test content"));
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.code").value("200-1"))
+			.andExpect(jsonPath("$.msg").value("조회 성공"))
+			.andExpect(jsonPath("$.data.title").value("최신 개발 트렌드"))
+			.andExpect(jsonPath("$.data.urls[0].url").value("https://www.naver.com/"))
+			.andExpect(jsonPath("$.data.urls[1].url").value("https://www.github.com/"))
+			.andExpect(jsonPath("$.data.tags[0].name").value("개발"))
+			.andExpect(jsonPath("$.data.tags[1].name").value("프로그래밍"))
+			.andExpect(jsonPath("$.data.comments[0].content").value("더 많은 예시가 있으면 좋겠어요."));
 	}
 
 	@Test
@@ -181,10 +180,14 @@ public class ApiV1CurationControllerTest {
 		}
 
 		mockMvc.perform(get("/api/v1/curation"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value("200-1"))
-				.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
-				.andExpect(jsonPath("$.data.length()").value(11));
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.code").value("200-1"))
+			.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
+			.andExpect(jsonPath("$.data.curations.length()").value(20))
+			.andExpect(jsonPath("$.data.totalPages").value(11))
+			.andExpect(jsonPath("$.data.totalElements").value(210))
+			.andExpect(jsonPath("$.data.numberOfElements").value(20))
+			.andExpect(jsonPath("$.data.size").value(20));
 	}
 
 	@Test
@@ -197,7 +200,7 @@ public class ApiV1CurationControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
-			.andExpect(jsonPath("$.data.length()").value(2));
+			.andExpect(jsonPath("$.data.curations.length()").value(2));
 	}
 
 	private Curation createCurationWithTags(List<String> tags) {
@@ -215,12 +218,11 @@ public class ApiV1CurationControllerTest {
 		createCurationWithTitle("test-ex");
 		createCurationWithTitle("test");
 
-
 		mockMvc.perform(get("/api/v1/curation").param("title", "ex"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
-			.andExpect(jsonPath("$.data.length()").value(2));
+			.andExpect(jsonPath("$.data.curations.length()").value(2));
 	}
 
 	private Curation createCurationWithTitle(String title) {
@@ -244,7 +246,7 @@ public class ApiV1CurationControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
-			.andExpect(jsonPath("$.data.length()").value(2));
+			.andExpect(jsonPath("$.data.length()").value(5));
 	}
 
 	private Curation createCurationWithContent(String content) {
@@ -268,7 +270,7 @@ public class ApiV1CurationControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
-			.andExpect(jsonPath("$.data.length()").value(1));
+			.andExpect(jsonPath("$.data.length()").value(5));
 	}
 
 	private Curation createCurationWithTitleAndContent(String title, String content) {
@@ -292,25 +294,28 @@ public class ApiV1CurationControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
-			.andExpect(jsonPath("$.data[0].content").value("content3"))
-			.andExpect(jsonPath("$.data[1].content").value("content2"))
-			.andExpect(jsonPath("$.data[2].content").value("content1"));
+			.andExpect(jsonPath("$.data.curations[0].content").value("content3"))
+			.andExpect(jsonPath("$.data.curations[1].content").value("content2"))
+			.andExpect(jsonPath("$.data.curations[2].content").value("content1"));
 	}
 
 	@Test
 	@DisplayName("오래된 순으로 큐레이션을 전체 조회할 수 있다")
 	void findCurationByOldest() throws Exception {
-		createCurationWithTitleAndContent("title1", "content1");
-		createCurationWithTitleAndContent("title2", "content2");
-		createCurationWithTitleAndContent("title3", "content3");
-
 		mockMvc.perform(get("/api/v1/curation").param("order", "OLDEST"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
-			.andExpect(jsonPath("$.data[1].content").value("content1"))
-			.andExpect(jsonPath("$.data[2].content").value("content2"))
-			.andExpect(jsonPath("$.data[3].content").value("content3"));
+			.andExpect(jsonPath("$.data.curations.length()").value(20))
+			.andExpect(jsonPath("$.data.curations[0].id").value(1))
+			.andExpect(jsonPath("$.data.curations[1].id").value(2))
+			.andExpect(jsonPath("$.data.curations[2].id").value(3))
+			.andExpect(jsonPath("$.data.curations[3].id").value(4))
+			.andExpect(jsonPath("$.data.curations[4].id").value(5))
+			.andExpect(jsonPath("$.data.totalPages").value(10))
+			.andExpect(jsonPath("$.data.totalElements").value(200))
+			.andExpect(jsonPath("$.data.numberOfElements").value(20))
+			.andExpect(jsonPath("$.data.size").value(20));
 	}
 
 	@Test
@@ -324,9 +329,9 @@ public class ApiV1CurationControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
-			.andExpect(jsonPath("$.data[0].content").value("content2"))
-			.andExpect(jsonPath("$.data[1].content").value("content1"))
-			.andExpect(jsonPath("$.data[2].content").value("content3"));
+			.andExpect(jsonPath("$.data.curations[0].content").value("content2"))
+			.andExpect(jsonPath("$.data.curations[1].content").value("content1"))
+			.andExpect(jsonPath("$.data.curations[2].content").value("content3"));
 	}
 
 	private Curation createCurationWithTitleAndContentAndLikeCount(String title, String content, Long likeCount) {
@@ -334,7 +339,8 @@ public class ApiV1CurationControllerTest {
 				.stream()
 				.map(linkReqDto -> linkReqDto.getUrl())
 				.collect(Collectors.toList()),
-			curationReqDTO.getTagReqDtos().stream().map(tagReqDto -> tagReqDto.getName()).collect(Collectors.toList()), member);
+			curationReqDTO.getTagReqDtos().stream().map(tagReqDto -> tagReqDto.getName()).collect(Collectors.toList()),
+			member);
 
 		curation.setLikeCount(likeCount);
 		curationRepository.save(curation);
@@ -354,9 +360,9 @@ public class ApiV1CurationControllerTest {
 				.collect(Collectors.toUnmodifiableList()), member);
 
 		mockMvc.perform(
-				post("/api/v1/curation/{id}", savedCuration.getId())
-				.header("Authorization", "Bearer " + memberAccessKey)
-				.param("memberId", String.valueOf(member.getMemberId())))
+				post("/api/v1/curation/like/{id}", savedCuration.getId())
+					.header("Authorization", "Bearer " + memberAccessKey)
+					.param("memberId", String.valueOf(member.getMemberId())))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("글에 좋아요를 했습니다."))
@@ -377,7 +383,7 @@ public class ApiV1CurationControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("글이 검색되었습니다."))
-			.andExpect(jsonPath("$.data.length()").value(2));
+			.andExpect(jsonPath("$.data.curations.length()").value(2));
 	}
 
 	private Member createMember(String author) {
@@ -407,11 +413,13 @@ public class ApiV1CurationControllerTest {
 		String accessToken = authTokenService.genAccessToken(member);
 
 		mockMvc.perform(get("/api/v1/curation/following")
-			.header("Authorization", "Bearer " + accessToken))
+				.header("Authorization", "Bearer " + accessToken))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.code").value("200-1"))
 			.andExpect(jsonPath("$.msg").value("팔로우중인 큐레이터의 큐레이션이 조회되었습니다."))
-			.andExpect(jsonPath("$.data.length()").value(1));
+			.andExpect(jsonPath("$.data[0].id").value(178))
+			.andExpect(jsonPath("$.data[1].id").value(177))
+			.andExpect(jsonPath("$.data[2].id").value(134));
 	}
 
 	@Test
