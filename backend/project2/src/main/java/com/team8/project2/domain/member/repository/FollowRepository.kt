@@ -1,21 +1,18 @@
-package com.team8.project2.domain.member.repository;
+package com.team8.project2.domain.member.repository
 
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import com.team8.project2.domain.member.entity.Follow;
-import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.member.entity.Follow
+import com.team8.project2.domain.member.entity.Member
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
+import java.util.*
 
 @Repository
-public interface FollowRepository extends JpaRepository<Follow, Long> {
-	Optional<Follow> findByFollowerAndFollowee(Member follower, Member followee);
+interface FollowRepository : JpaRepository<Follow, Long> {
+    fun findByFollowerAndFollowee(follower: Member?, followee: Member?): Follow?
 
-	List<Follow> findByFollower(Member actor);
+    fun findByFollower(actor: Member): List<Follow?>?
 
-	boolean existsByFollowerIdAndFolloweeId(Long followerId, Long followeeId);
+    fun existsByFollowerIdAndFolloweeId(followerId: Long, followeeId: Long): Boolean
 
-	void deleteByFollowerOrFollowee(Member member, Member member2);
+    fun deleteByFollowerOrFollowee(member: Member, member2: Member)
 }

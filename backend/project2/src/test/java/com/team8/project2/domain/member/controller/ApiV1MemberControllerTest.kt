@@ -139,7 +139,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
         )
 
 
-        mvc!!.perform(
+        mvc.perform(
             MockMvcRequestBuilders.post("/api/v1/members/join")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ObjectMapper().writeValueAsString(memberReqDTO))
@@ -163,7 +163,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
             RoleEnum.MEMBER
         )
 
-        mvc!!.perform(
+        mvc.perform(
             MockMvcRequestBuilders.post("/api/v1/members/join")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ObjectMapper().writeValueAsString(memberReqDTO))
@@ -187,7 +187,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
             RoleEnum.MEMBER
         )
 
-        mvc!!.perform(
+        mvc.perform(
             MockMvcRequestBuilders.post("/api/v1/members/join")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ObjectMapper().writeValueAsString(memberReqDTO))
@@ -196,29 +196,28 @@ class ApiV1MemberControllerTest @Autowired constructor(
             .andExpect(MockMvcResultMatchers.jsonPath("$.msg").value("memberId : NotBlank : 회원 ID는 필수 입력값입니다."))
     }
 
-    @get:Throws(Exception::class)
-    @get:DisplayName("username 기반 큐레이터 정보 조회")
-    @get:Test
-    val curatorInfoTest: Unit
-        get() {
-            val savedMember = memberRepository!!.findById(1L).orElseThrow()
-            val curationCount = curationService!!.countByMember(savedMember)
+    @Test
+    @DisplayName("username 기반 큐레이터 정보 조회")
+    @Throws(Exception::class)
+    fun curatorInfoTest() {
+        val savedMember = memberRepository.findById(1L).orElseThrow()
+        val curationCount = curationService.countByMember(savedMember)
 
-            // When
-            mvc!!.perform(MockMvcRequestBuilders.get("/api/v1/members/" + savedMember.getUsername()))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-4"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.username").value("username"))
-                .andExpect(
-                    MockMvcResultMatchers.jsonPath("$.data.profileImage")
-                        .value(s3Uploader!!.baseUrl + "default-profile.svg")
-                )
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.introduce").value("test"))
-                .andExpect(
-                    MockMvcResultMatchers.jsonPath("$.data.curationCount").value(curationCount)
-                ) // ✅ 예상 값과 실제 값이 일치하도록 변경
-                .andDo(MockMvcResultHandlers.print())
-        }
+        // When
+        mvc.perform(MockMvcRequestBuilders.get("/api/v1/members/${savedMember.getUsername()}"))
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-4"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.username").value("username"))
+            .andExpect(
+                MockMvcResultMatchers.jsonPath("$.data.profileImage")
+                    .value(s3Uploader.baseUrl + "default-profile.svg")
+            )
+            .andExpect(MockMvcResultMatchers.jsonPath("$.data.introduce").value("test"))
+            .andExpect(
+                MockMvcResultMatchers.jsonPath("$.data.curationCount").value(curationCount)
+            )
+            .andDo(MockMvcResultHandlers.print())
+    }
 
     @Test
     @DisplayName("이미 존재하는 memberId로 회원 가입 시 오류 발생")
@@ -245,32 +244,31 @@ class ApiV1MemberControllerTest @Autowired constructor(
     }
 
 
-    @get:Throws(Exception::class)
-    @get:DisplayName("JWT 인증으로 내 정보 조회")
-    @get:Test
-    val myInfoTest: Unit
-        get() {
-            val memberReqDTO = MemberReqDTO(
-                "member" + UUID.randomUUID(),
-                "1234",  // 비밀번호 4자 → 에러 유도
-                "member1@gmail.com",
-                "user" + UUID.randomUUID(),
-                "www.url",
-                "안녕",
-                RoleEnum.MEMBER
-            )
+    @Test
+    @DisplayName("JWT 인증으로 내 정보 조회")
+    @Throws(Exception::class)
+    fun myInfoTest() {
+        val memberReqDTO = MemberReqDTO(
+            "member" + UUID.randomUUID(),
+            "1234",  // 비밀번호 4자 → 에러 유도
+            "member1@gmail.com",
+            "user" + UUID.randomUUID(),
+            "www.url",
+            "안녕",
+            RoleEnum.MEMBER
+        )
 
-            val member = memberService.join(memberReqDTO.toEntity())
-            val accessToken = memberService.genAccessToken(member)
+        val member = memberService.join(memberReqDTO.toEntity())
+        val accessToken = memberService.genAccessToken(member)
 
-            mvc!!.perform(
-                MockMvcRequestBuilders.get("/api/v1/members/me")
-                    .header("Authorization", "Bearer $accessToken")
-            ) // JWT 포함 요청
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-2"))
-                .andDo(MockMvcResultHandlers.print())
-        }
+        mvc.perform(
+            MockMvcRequestBuilders.get("/api/v1/members/me")
+                .header("Authorization", "Bearer $accessToken")
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-2"))
+            .andDo(MockMvcResultHandlers.print())
+    }
 
     @Test
     @DisplayName("로그아웃 시 JWT 삭제")
@@ -288,10 +286,10 @@ class ApiV1MemberControllerTest @Autowired constructor(
         )
 
 
-        val member = memberService!!.join(memberReqDTO.toEntity())
+        val member = memberService.join(memberReqDTO.toEntity())
         val accessToken = memberService.genAccessToken(member)
 
-        mvc!!.perform(
+        mvc.perform(
             MockMvcRequestBuilders.post("/api/v1/members/logout")
                 .header("Authorization", "Bearer $accessToken")
         )
@@ -318,7 +316,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
         )
 
         // Given
-        val member = memberService!!.join(memberReqDTO.toEntity())
+        val member = memberService.join(memberReqDTO.toEntity())
         val accessToken = memberService.genAccessToken(member)
 
         // 수정할 정보
@@ -327,7 +325,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
         val newIntroduce = "자기소개 수정 테스트"
 
         // When
-        mvc!!.perform(
+        mvc.perform(
             MockMvcRequestBuilders.put("/api/v1/members/{memberId}", member.getMemberId())
                 .header("Authorization", "Bearer $accessToken")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -361,11 +359,11 @@ class ApiV1MemberControllerTest @Autowired constructor(
         fun follow() {
             val followeeId = 1L
             val followerId = 2L
-            val followee = memberService!!.findById(followeeId).get()
-            val member = memberRepository!!.findById(followerId).get()
+            val followee = memberService.findById(followeeId).get()
+            val member = memberRepository.findById(followerId).get()
             val accessToken = memberService.genAccessToken(member)
 
-            mvc!!.perform(
+            mvc.perform(
                 MockMvcRequestBuilders.post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer $accessToken")
             )
@@ -386,11 +384,11 @@ class ApiV1MemberControllerTest @Autowired constructor(
         fun follow_alreadyFollowed() {
             val followeeId = 1L
             val followerId = 3L
-            val followee = memberService!!.findById(followeeId).get()
-            val member = memberRepository!!.findById(followerId).get()
+            val followee = memberService.findById(followeeId).get()
+            val member = memberRepository.findById(followerId).get()
             val accessToken = memberService.genAccessToken(member)
 
-            mvc!!.perform(
+            mvc.perform(
                 MockMvcRequestBuilders.post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer $accessToken")
             )
@@ -407,10 +405,10 @@ class ApiV1MemberControllerTest @Autowired constructor(
         fun follow_invalidFollowee() {
             val invalidFolloweeMemberId = "invalidMemberId"
             val followerId = 1L
-            val member = memberRepository!!.findById(followerId).get()
-            val accessToken = memberService!!.genAccessToken(member)
+            val member = memberRepository.findById(followerId).get()
+            val accessToken = memberService.genAccessToken(member)
 
-            mvc!!.perform(
+            mvc.perform(
                 MockMvcRequestBuilders.post("/api/v1/members/%s/follow".formatted(invalidFolloweeMemberId))
                     .header("Authorization", "Bearer $accessToken")
             )
@@ -425,11 +423,11 @@ class ApiV1MemberControllerTest @Autowired constructor(
         fun follow_self() {
             val followeeId = 1L
             val followerId = 1L
-            val followee = memberService!!.findById(followeeId).get()
-            val member = memberRepository!!.findById(followerId).get()
+            val followee = memberService.findById(followeeId).get()
+            val member = memberRepository.findById(followerId).get()
             val accessToken = memberService.genAccessToken(member)
 
-            mvc!!.perform(
+            mvc.perform(
                 MockMvcRequestBuilders.post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer $accessToken")
             )
@@ -444,12 +442,12 @@ class ApiV1MemberControllerTest @Autowired constructor(
         fun unfollow() {
             val followeeId = 1L
             val followerId = 3L
-            val followee = memberService!!.findById(followeeId).get()
-            val member = memberRepository!!.findById(followerId).get()
+            val followee = memberService.findById(followeeId).get()
+            val member = memberRepository.findById(followerId).get()
             val accessToken = memberService.genAccessToken(member)
 
-            mvc!!.perform(
-                MockMvcRequestBuilders.post("/api/v1/members/%s/unfollow".formatted(followee.getUsername()))
+            mvc.perform(
+                MockMvcRequestBuilders.post("/api/v1/members/${followee.getUsername()}/unfollow")
                     .header("Authorization", "Bearer $accessToken")
             )
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -468,11 +466,11 @@ class ApiV1MemberControllerTest @Autowired constructor(
         fun unfollow_notFollowed() {
             val followeeId = 3L
             val followerId = 1L
-            val followee = memberService!!.findById(followeeId).get()
-            val member = memberRepository!!.findById(followerId).get()
+            val followee = memberService.findById(followeeId).get()
+            val member = memberRepository.findById(followerId).get()
             val accessToken = memberService.genAccessToken(member)
 
-            mvc!!.perform(
+            mvc.perform(
                 MockMvcRequestBuilders.post("/api/v1/members/%s/unfollow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer $accessToken")
             )
@@ -488,12 +486,12 @@ class ApiV1MemberControllerTest @Autowired constructor(
             val followee1Id = 1L
             val followee2Id = 2L
             val followerId = 3L
-            val followee1 = memberService!!.findById(followee1Id).get()
+            val followee1 = memberService.findById(followee1Id).get()
             val followee2 = memberService.findById(followee2Id).get()
-            val member = memberRepository!!.findById(followerId).get()
+            val member = memberRepository.findById(followerId).get()
             val accessToken = memberService.genAccessToken(member)
 
-            mvc!!.perform(
+            mvc.perform(
                 MockMvcRequestBuilders.get("/api/v1/members/following")
                     .header("Authorization", "Bearer $accessToken")
             )

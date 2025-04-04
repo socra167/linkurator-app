@@ -156,7 +156,7 @@ class MemberServiceTest {
 
 
         whenever(memberRepository!!.findByUsername("user2")).thenReturn(followee)
-        whenever(followRepository!!.findByFollowerAndFollowee(follower, followee)).thenReturn(Optional.empty())
+        whenever(followRepository!!.findByFollowerAndFollowee(follower, followee)).thenReturn(null)
         val follow = Follow()
         follow.setFollowerAndFollowee(follower, followee)
         whenever(followRepository!!.save(any<Follow>())).thenReturn(follow)

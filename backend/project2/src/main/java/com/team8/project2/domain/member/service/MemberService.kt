@@ -117,7 +117,7 @@ class MemberService(
         var follow = Follow()
         follow.setFollowerAndFollowee(follower, followee)
 
-        followRepository.findByFollowerAndFollowee(follower, followee).ifPresent { _f: Follow? ->
+        followRepository.findByFollowerAndFollowee(follower, followee)?.let {
             throw ServiceException("400-1", "이미 팔로우중인 사용자입니다.")
         }
 
@@ -134,11 +134,8 @@ class MemberService(
             throw ServiceException("400-1", "자신을 팔로우할 수 없습니다.")
         }
 
-        val follow = Follow()
-        follow.setFollowerAndFollowee(follower, followee)
-
-        followRepository.findByFollowerAndFollowee(follower, followee)
-            .orElseThrow { ServiceException("400-1", "팔로우중이 아닙니다.") }
+        val follow = followRepository.findByFollowerAndFollowee(follower, followee)
+            ?: throw ServiceException("400-1", "팔로우중이 아닙니다.")
 
         followRepository.delete(follow)
         return UnfollowResDto.fromEntity(follow)
@@ -146,9 +143,9 @@ class MemberService(
 
     @Transactional(readOnly = true)
     fun getFollowingUsers(actor: Member?): FollowingResDto {
-        val followings = followRepository.findByFollower(actor)
-            .sortedByDescending { it.followedAt }
-        return FollowingResDto.fromEntity(followings)
+        val followings = followRepository.findByFollower(actor!!)
+            ?.sortedByDescending { it?.followedAt }
+        return FollowingResDto.fromEntity(followings!!)
     }
 
     @Transactional
@@ -158,7 +155,7 @@ class MemberService(
 
     @Transactional(readOnly = true)
     fun isFollowed(followeeId: Long?, followerId: Long?): Boolean {
-        return followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId)
+        return followRepository.existsByFollowerIdAndFolloweeId(followerId!!, followeeId!!)
     }
 
     @Transactional(readOnly = true)
@@ -176,7 +173,7 @@ class MemberService(
         }
 
         return CuratorInfoDto(
-            username, member.profileImage, member.introduce, curationCount, isFollowed,
+            username.toString(), member.profileImage.toString(), member.introduce.toString(), curationCount, isFollowed,
             isLogin
         )
     }
@@ -190,6 +187,6 @@ class MemberService(
         actor.profileImage = s3Uploader.baseUrl + imageFileName
 
         memberRepository.save(actor)
-        eventPublisher.publishEvent(ProfileImageUpdateEvent(oldProfileImageUrl))
+        eventPublisher.publishEvent(ProfileImageUpdateEvent(oldProfileImageUrl!!))
     }
 }

@@ -1,16 +1,11 @@
-package com.team8.project2.domain.member.dto;
+package com.team8.project2.domain.member.dto
 
-import com.team8.project2.domain.member.entity.Follow;
+import com.team8.project2.domain.member.entity.Follow
 
-import lombok.Getter;
-
-@Getter
-public class UnfollowResDto {
-	private String followee;
-
-	public static UnfollowResDto fromEntity(Follow follow) {
-		UnfollowResDto unfollowResDto = new UnfollowResDto();
-		unfollowResDto.followee = follow.getFolloweeName();
-		return unfollowResDto;
-	}
+data class UnfollowResDto(val followee: String) {
+    companion object {
+        fun fromEntity(follow: Follow): UnfollowResDto {
+            return UnfollowResDto(followee = follow.followeeName)
+        }
+    }
 }

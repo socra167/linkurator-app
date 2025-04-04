@@ -1,29 +1,31 @@
-package com.team8.project2.domain.member.dto;
+package com.team8.project2.domain.member.dto
 
-import java.util.List;
-import java.util.stream.Collectors;
+import com.team8.project2.domain.member.entity.Member
 
-import com.team8.project2.domain.member.entity.Member;
+class AllMemberResDto {
+    var members: List<MemberResDTO> = listOf()
+    var totalPages: Int = 0
+    var totalElements: Long = 0
+    var numberOfElements: Int = 0
+    var size: Int = 0
 
-import lombok.Getter;
-
-@Getter
-public class AllMemberResDto {
-	private List<MemberResDTO> members;
-	private int totalPages;
-	private long totalElements;
-	private int numberOfElements;
-	private int size;
-
-	public static AllMemberResDto of(List<Member> members, int totalPages, long totalElements, int numberOfElements, int size) {
-		AllMemberResDto dto = new AllMemberResDto();
-		dto.members = members.stream()
-			.map(MemberResDTO::fromEntity)
-			.collect(Collectors.toList());
-		dto.totalPages = totalPages;
-		dto.totalElements = totalElements;
-		dto.numberOfElements = numberOfElements;
-		dto.size = size;
-		return dto;
-	}
+    companion object {
+        @JvmStatic
+        fun of(
+            members: List<Member?>,
+            totalPages: Int,
+            totalElements: Long,
+            numberOfElements: Int,
+            size: Int
+        ): AllMemberResDto {
+            val dto = AllMemberResDto()
+            dto.members = members
+                .mapNotNull { it?.let { member -> MemberResDTO.fromEntity(member) } }
+            dto.totalPages = totalPages
+            dto.totalElements = totalElements
+            dto.numberOfElements = numberOfElements
+            dto.size = size
+            return dto
+        }
+    }
 }

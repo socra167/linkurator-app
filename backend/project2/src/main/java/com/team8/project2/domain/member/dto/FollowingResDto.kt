@@ -1,21 +1,20 @@
-package com.team8.project2.domain.member.dto;
+package com.team8.project2.domain.member.dto
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.team8.project2.domain.member.entity.Follow;
-
-import lombok.Getter;
+import com.team8.project2.domain.member.dto.FollowResDto.Companion.fromEntity
+import com.team8.project2.domain.member.entity.Follow
+import lombok.Getter
 
 @Getter
-public class FollowingResDto {
-	List<FollowResDto> following = new ArrayList<>();
+class FollowingResDto {
+    var following: MutableList<FollowResDto> = ArrayList()
 
-	public static FollowingResDto fromEntity(List<Follow> followings) {
-		FollowingResDto dto = new FollowingResDto();
-		for (Follow follow : followings) {
-			dto.following.add(FollowResDto.fromEntity(follow));
-		}
-		return dto;
-	}
+    companion object {
+        fun fromEntity(followings: List<Follow?>): FollowingResDto {
+            val dto = FollowingResDto()
+            for (follow in followings) {
+                dto.following.add(fromEntity(follow!!))
+            }
+            return dto
+        }
+    }
 }
