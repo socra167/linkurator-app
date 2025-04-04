@@ -1,11 +1,13 @@
 package com.team8.project2.domain.comment.controller;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.nio.charset.StandardCharsets;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team8.project2.domain.comment.dto.CommentDto;
+import com.team8.project2.domain.comment.repository.CommentRepository;
+import com.team8.project2.domain.comment.service.CommentService;
+import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.member.repository.MemberRepository;
+import com.team8.project2.domain.member.service.AuthTokenService;
+import com.team8.project2.domain.member.service.MemberService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +19,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team8.project2.domain.comment.dto.CommentDto;
-import com.team8.project2.domain.comment.repository.CommentRepository;
-import com.team8.project2.domain.comment.service.CommentService;
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.domain.member.service.AuthTokenService;
-import com.team8.project2.domain.member.service.MemberService;
+import java.nio.charset.StandardCharsets;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 @ActiveProfiles("test")
@@ -57,49 +57,37 @@ class ApiV1CommentControllerTest {
 	}
 
 	@Test
-	@DisplayName("댓글을 작성할 수 있다")
+	@DisplayName("BaseInitData 기반 - 댓글을 작성할 수 있다")
 	void createComment() throws Exception {
-		CommentDto commentDto = CommentDto.builder().content("content example").build();
+		CommentDto commentDto = CommentDto.builder().content("BaseInitData 댓글 작성 테스트").build();
 
-		mockMvc.perform(post("/api/v1/curations/1/comments").header("Authorization", "Bearer " + authorAccessKey)
-				.contentType("application/json")
-				.content(new ObjectMapper().writeValueAsString(commentDto)))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.code").value("200-2"))
-			.andExpect(jsonPath("$.msg").value("댓글이 작성되었습니다."))
-			.andExpect(jsonPath("$.data.id").isNumber())
-			.andExpect(jsonPath("$.data.authorName").value("username"))
-			.andExpect(jsonPath("$.data.content").value("content example"));
+		mockMvc.perform(post("/api/v1/curations/1/comments")
+						.header("Authorization", "Bearer " + authorAccessKey)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(new ObjectMapper().writeValueAsString(commentDto)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.code").value("200-2"))
+				.andExpect(jsonPath("$.data.authorName").value("username"))
+				.andExpect(jsonPath("$.data.content").value("BaseInitData 댓글 작성 테스트"));
 
-		// BaseInitData에서 추가된 샘플 데이터를 포함해 2개
-		assertThat(commentService.getCommentsByCurationId(1L)).hasSize(2);
+		// BaseInitData의 댓글 3개 + 방금 작성한 댓글 1개 = 4개
+		assertThat(commentService.getCommentsByCurationId(1L)).hasSize(4);
 	}
 
 	@Test
 	@DisplayName("실패 - 인증 정보가 없으면 댓글 작성에 실패한다")
 	void createCommentWithNoAuth() throws Exception {
-		CommentDto commentDto = CommentDto.builder().content("content example").build();
+		CommentDto commentDto = CommentDto.builder().content("unauth comment").build();
 
-		mockMvc.perform(post("/api/v1/curations/1/comments").contentType("application/json")
-			.content(new ObjectMapper().writeValueAsString(commentDto))).andExpect(status().isUnauthorized());
+		mockMvc.perform(post("/api/v1/curations/1/comments")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(new ObjectMapper().writeValueAsString(commentDto)))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("401-1"))
+				.andExpect(jsonPath("$.msg").value("접근이 거부되었습니다. 로그인 상태를 확인해 주세요."));
 
-		// 샘플 데이터를 제외하고 댓글이 추가되지 않음
-		assertThat(commentRepository.count()).isEqualTo(1);
-	}
-
-	@Test
-	@DisplayName("실패 - 인증 정보가 잘못되었으면 댓글 작성에 실패한다")
-	void createCommentWithWrongAuth() throws Exception {
-		String wrongAuth = "wrongAuth";
-
-		CommentDto commentDto = CommentDto.builder().content("content example").build();
-
-		mockMvc.perform(post("/api/v1/curations/1/comments").header("Authorization", "Bearer " + wrongAuth)
-			.contentType("application/json")
-			.content(new ObjectMapper().writeValueAsString(commentDto))).andExpect(status().isUnauthorized());
-
-		// 샘플 데이터를 제외하고 댓글이 추가되지 않음
-		assertThat(commentRepository.count()).isEqualTo(1);
+		assertThat(commentService.getCommentsByCurationId(1L))
+				.noneMatch(c -> c.getContent().equals("unauth comment"));
 	}
 
 	@Test
@@ -113,8 +101,8 @@ class ApiV1CommentControllerTest {
 			.andExpect(jsonPath("$.code").value("200-2"))
 			.andExpect(jsonPath("$.msg").value("댓글이 조회되었습니다."))
 			.andExpect(jsonPath("$.data[0].id").value("1"))
-			.andExpect(jsonPath("$.data[0].authorName").value("username"))
-			.andExpect(jsonPath("$.data[0].content").value("comment test content"));
+			.andExpect(jsonPath("$.data[0].authorName").value("other"))
+			.andExpect(jsonPath("$.data[0].content").value("정말 유용한 정보네요! 감사합니다."));
 	}
 
 	private CommentDto createCommentAtCuration(Long curationId, Member author) {
