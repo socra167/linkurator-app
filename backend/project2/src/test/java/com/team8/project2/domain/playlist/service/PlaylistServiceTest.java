@@ -177,11 +177,12 @@ class PlaylistServiceTest {
     @DisplayName("플레이리스트를 정상적으로 삭제해야 한다.")
     void shouldDeletePlaylistSuccessfully() {
         // Given
-        when(playlistRepository.existsById(1L)).thenReturn(true);
+        when(playlistRepository.findById(1L)).thenReturn(Optional.of(samplePlaylist));
         doNothing().when(playlistRepository).deleteById(1L);
 
         // When & Then
         assertDoesNotThrow(() -> playlistService.deletePlaylist(1L));
+        verify(playlistRepository, times(1)).deleteById(1L);
     }
 
     @Test
