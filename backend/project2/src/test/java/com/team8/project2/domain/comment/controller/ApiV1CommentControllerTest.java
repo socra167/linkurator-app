@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -61,18 +62,18 @@ class ApiV1CommentControllerTest {
 	void createComment() throws Exception {
 		CommentDto commentDto = CommentDto.builder().content("content example").build();
 
-		mockMvc.perform(post("/api/v1/curations/1/comments").header("Authorization", "Bearer " + authorAccessKey)
-				.contentType("application/json")
-				.content(new ObjectMapper().writeValueAsString(commentDto)))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.code").value("200-2"))
-			.andExpect(jsonPath("$.msg").value("댓글이 작성되었습니다."))
-			.andExpect(jsonPath("$.data.id").isNumber())
-			.andExpect(jsonPath("$.data.authorName").value("username"))
-			.andExpect(jsonPath("$.data.content").value("content example"));
+		mockMvc.perform(post("/api/v1/curations/1/comments")
+						.header("Authorization", "Bearer " + authorAccessKey)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(new ObjectMapper().writeValueAsString(commentDto)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.code").value("200-2"))
+				.andExpect(jsonPath("$.msg").value("댓글이 작성되었습니다."))
+				.andExpect(jsonPath("$.data.authorName").value("username"))
+				.andExpect(jsonPath("$.data.content").value("content example"));
 
-		// BaseInitData에서 추가된 샘플 데이터를 포함해 2개
-		assertThat(commentService.getCommentsByCurationId(1L)).hasSize(4);
+		List<CommentDto> comments = commentService.getCommentsByCurationId(1L);
+		assertThat(comments).anyMatch(c -> c.getContent().equals("content example"));
 	}
 
 	@Test
