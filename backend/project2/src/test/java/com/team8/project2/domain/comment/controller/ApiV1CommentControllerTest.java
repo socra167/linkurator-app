@@ -79,17 +79,17 @@ class ApiV1CommentControllerTest {
 	@Test
 	@DisplayName("실패 - 인증 정보가 없으면 댓글 작성에 실패한다")
 	void createCommentWithNoAuth() throws Exception {
-		CommentDto commentDto = CommentDto.builder().content("content example").build();
+		CommentDto commentDto = CommentDto.builder().content("unauth comment").build();
 
 		mockMvc.perform(post("/api/v1/curations/1/comments")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(new ObjectMapper().writeValueAsString(commentDto)))
 				.andExpect(status().isUnauthorized())
 				.andExpect(jsonPath("$.code").value("401-1"))
-				.andExpect(jsonPath("$.msg").value("접근이 거부되었습니다. 로그인 상태를 확인해 주세요.")); // 실제 응답 메시지 확인 필요
+				.andExpect(jsonPath("$.msg").value("접근이 거부되었습니다. 로그인 상태를 확인해 주세요."));
 
-		// 댓글 수 변화 확인 (DB 초기화 되어있다면 0일 것)
-		assertThat(commentService.getCommentsByCurationId(600L)).isEmpty();
+		assertThat(commentService.getCommentsByCurationId(1L))
+				.noneMatch(c -> c.getContent().equals("unauth comment"));
 	}
 
 	@Test
