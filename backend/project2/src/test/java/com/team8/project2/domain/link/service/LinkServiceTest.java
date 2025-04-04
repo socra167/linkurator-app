@@ -1,10 +1,11 @@
 package com.team8.project2.domain.link.service;
 
-import com.team8.project2.domain.link.dto.LinkReqDTO;
-import com.team8.project2.domain.link.entity.Link;
-import com.team8.project2.domain.link.repository.LinkRepository;
-import com.team8.project2.global.exception.ServiceException;
-import jakarta.servlet.http.HttpServletRequest;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.time.Duration;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,11 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
-import java.time.Duration;
-import java.util.Optional;
+import com.team8.project2.domain.link.dto.LinkReqDTO;
+import com.team8.project2.domain.link.entity.Link;
+import com.team8.project2.domain.link.repository.LinkRepository;
+import com.team8.project2.global.exception.ServiceException;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 @ExtendWith(MockitoExtension.class)
 class LinkServiceTest {
@@ -32,9 +34,11 @@ class LinkServiceTest {
     @Mock
     private HttpServletRequest request;
 
+    @Mock
+    private LinkClickService linkClickService;
+
     @InjectMocks
     private LinkService linkService;
-
 
     private Link link;
 
@@ -177,10 +181,6 @@ class LinkServiceTest {
 
         // 링크 클릭 로직이 제대로 동작하도록 설정
         when(linkRepository.findById(1L)).thenReturn(Optional.of(link));
-        when(linkRepository.save(any(Link.class))).thenReturn(link);
-
-        // 클릭수 초기 상태 저장
-        int initialClickCount = link.getClick();
 
         // When: 링크를 여러 번 클릭한다
         linkService.getLinkAndIncrementClick(1L, request);  // 첫 번째 클릭
@@ -188,7 +188,7 @@ class LinkServiceTest {
         linkService.getLinkAndIncrementClick(1L, request);  // 세 번째 클릭
 
         // Then: 클릭수는 한 번만 증가해야 한다
-        assertEquals(initialClickCount + 1, link.getClick()); // 클릭수가 1만 증가해야 한다.
+        verify(linkClickService, times(1)).increaseClickCount(any()); // 클릭수가 1만 증가해야 한다.
     }
 
     // 이미 클릭한 사용자에 대해 클릭수 증가하지 않는 테스트
@@ -239,5 +239,4 @@ class LinkServiceTest {
         assertEquals("404-1", exception.getCode());
         assertEquals("해당 링크를 찾을 수 없습니다.", exception.getMessage());
     }
-
 }
