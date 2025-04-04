@@ -10,6 +10,7 @@ import com.team8.project2.domain.playlist.entity.Playlist;
 import com.team8.project2.domain.playlist.entity.PlaylistItem;
 import com.team8.project2.domain.playlist.repository.PlaylistLikeRepository;
 import com.team8.project2.domain.playlist.repository.PlaylistRepository;
+import com.team8.project2.global.Rq;
 import com.team8.project2.global.exception.BadRequestException;
 import com.team8.project2.global.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,8 +54,10 @@ class PlaylistServiceTest {
     @Mock
     private ValueOperations<String, Object> valueOperations;
 
-    private Playlist samplePlaylist;
+    @Mock
+    private Rq rq;
 
+    private Playlist samplePlaylist;
     private Member sampleMember;
 
     @BeforeEach
@@ -78,6 +81,8 @@ class PlaylistServiceTest {
 
         lenient().when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        lenient().when(rq.getActor()).thenReturn(sampleMember);
     }
 
     @Test
@@ -93,6 +98,7 @@ class PlaylistServiceTest {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .tags(Set.of())
+                .member(sampleMember)
                 .build();
 
         when(playlistRepository.save(any(Playlist.class))).thenReturn(newPlaylist);
