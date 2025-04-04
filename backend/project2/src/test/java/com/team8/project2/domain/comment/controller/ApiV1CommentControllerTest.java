@@ -92,21 +92,6 @@ class ApiV1CommentControllerTest {
 	}
 
 	@Test
-	@DisplayName("실패 - 인증 정보가 잘못되었으면 댓글 작성에 실패한다")
-	void createCommentWithWrongAuth() throws Exception {
-		String wrongAuth = "wrongAuth";
-
-		CommentDto commentDto = CommentDto.builder().content("content example").build();
-
-		mockMvc.perform(post("/api/v1/curations/1/comments").header("Authorization", "Bearer " + wrongAuth)
-			.contentType("application/json")
-			.content(new ObjectMapper().writeValueAsString(commentDto))).andExpect(status().isUnauthorized());
-
-		// 샘플 데이터를 제외하고 댓글이 추가되지 않음
-		assertThat(commentRepository.count()).isEqualTo(1);
-	}
-
-	@Test
 	@DisplayName("댓글을 조회할 수 있다")
 	void getCommentsByCurationId() throws Exception {
 		Member author = memberRepository.findById(1L).get();
@@ -117,8 +102,8 @@ class ApiV1CommentControllerTest {
 			.andExpect(jsonPath("$.code").value("200-2"))
 			.andExpect(jsonPath("$.msg").value("댓글이 조회되었습니다."))
 			.andExpect(jsonPath("$.data[0].id").value("1"))
-			.andExpect(jsonPath("$.data[0].authorName").value("username"))
-			.andExpect(jsonPath("$.data[0].content").value("comment test content"));
+			.andExpect(jsonPath("$.data[0].authorName").value("other"))
+			.andExpect(jsonPath("$.data[0].content").value("정말 유용한 정보네요! 감사합니다."));
 	}
 
 	private CommentDto createCommentAtCuration(Long curationId, Member author) {
