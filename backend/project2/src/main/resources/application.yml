@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  output:
+    ansi:
+      enables: always
+  datasource:
+    url: jdbc:mysql://localhost:3306/project1
+    username: dbuser
+    password: 1234
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 6000ms
+
+  cloud:
+    aws:
+      s3:
+        bucket: linkurator-bucket
+
+custom:
+  jwt:
+    secret-key: abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890
+    expire-seconds: 80000
