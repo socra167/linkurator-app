@@ -297,8 +297,8 @@ class PlaylistServiceTest {
 
         // Then
         assertEquals(0, samplePlaylist.getItems().stream().filter(item -> item.getId().equals(3L)).findFirst().get().getDisplayOrder());
-        assertEquals(1, samplePlaylist.getItems().stream().filter(item -> item.getId().equals(1L)).findFirst().get().getDisplayOrder());
-        assertEquals(2, samplePlaylist.getItems().stream().filter(item -> item.getId().equals(2L)).findFirst().get().getDisplayOrder());
+        assertEquals(100, samplePlaylist.getItems().stream().filter(item -> item.getId().equals(1L)).findFirst().get().getDisplayOrder());
+        assertEquals(200, samplePlaylist.getItems().stream().filter(item -> item.getId().equals(2L)).findFirst().get().getDisplayOrder());
 
         assertNotNull(updatedDto);
         assertEquals("테스트 플레이리스트", updatedDto.getTitle());
