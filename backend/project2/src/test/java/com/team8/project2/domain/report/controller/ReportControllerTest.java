@@ -14,12 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,8 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ReportControllerTest {
 
     @Autowired private MockMvc mockMvc;
-    @Autowired
-    private MemberRepository memberRepository;
+    @Autowired private MemberRepository memberRepository;
     @Autowired private AuthTokenService authTokenService;
     @Autowired private ReportRepository reportRepository;
     @Autowired private CurationRepository curationRepository;
@@ -42,37 +39,40 @@ class ReportControllerTest {
 
     @BeforeEach
     void setUp() {
-        reporter = memberRepository.findById(2L)
-                .orElseThrow(() -> new RuntimeException("BaseInitData: memberId=2 없음"));
+        reporter = memberRepository.findById(2L).orElseThrow();
         accessToken = authTokenService.genAccessToken(reporter);
     }
 
     @Test
     @DisplayName("신고한 큐레이션 목록을 조회할 수 있다")
     void getMyReportedCurations() throws Exception {
-        // 🚨 테스트 전에 직접 신고 데이터 생성
-        Curation targetCuration = curationRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("BaseInitData: curationId=1 없음"));
+        Curation curation = curationRepository.findById(1L).orElseThrow();
+        reportRepository.save(Report.builder().reporter(reporter).curation(curation).reportType(ReportType.ABUSE).build());
 
-        reportRepository.save(
-                Report.builder()
-                        .reporter(reporter)
-                        .curation(targetCuration)
-                        .reportType(ReportType.ABUSE)
-                        .build()
-        );
-
-        // 🔍 신고 내역 조회
         mockMvc.perform(get("/api/v1/reports/myreported/{memberId}", reporter.getId())
-                        .header("Authorization", "Bearer " + accessToken)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200-1"))
-                .andExpect(jsonPath("$.msg").value("글이 성공적을 조회되었습니다."))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].curationId").value(targetCuration.getId()))
+                .andExpect(jsonPath("$.data[0].curationId").value(curation.getId()))
                 .andExpect(jsonPath("$.data[0].reportType").value("ABUSE"));
+    }
 
-        assertThat(reportRepository.findAllByReporter(reporter)).isNotEmpty();
+    @Test
+    @DisplayName("신고 내역이 없을 경우 빈 배열을 반환한다")
+    void getEmptyReportedCurations() throws Exception {
+        mockMvc.perform(get("/api/v1/reports/myreported/{memberId}", reporter.getId())
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 신고 내역은 조회할 수 없다")
+    void cannotAccessOthersReportList() throws Exception {
+        mockMvc.perform(get("/api/v1/reports/myreported/{memberId}", 3L)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("$.code").value("404-1"));
     }
 }
