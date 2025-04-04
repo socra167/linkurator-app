@@ -189,7 +189,7 @@ class PlaylistServiceTest {
     @DisplayName("존재하지 않는 플레이리스트 삭제 시 NotFoundException이 발생해야 한다.")
     void shouldThrowNotFoundExceptionWhenDeletingNonExistingPlaylist() {
         // Given
-        when(playlistRepository.existsById(99L)).thenReturn(false);
+        when(playlistRepository.findById(99L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(NotFoundException.class, () -> playlistService.deletePlaylist(99L));
