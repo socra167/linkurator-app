@@ -1,6 +1,7 @@
 package com.team8.project2.domain.curation.service;
 
 import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto;
+import com.team8.project2.domain.curation.curation.dto.CurationResDto;
 import com.team8.project2.domain.curation.curation.entity.Curation;
 import com.team8.project2.domain.curation.curation.entity.CurationLink;
 import com.team8.project2.domain.curation.curation.entity.CurationTag;
@@ -25,14 +26,13 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -302,10 +302,10 @@ class CurationServiceTest {
 	@Test
 	void findAllCuration() {
 		when(curationRepository.searchByFilters(ArgumentMatchers.anyList(), anyInt(), anyString(), anyString(), any(), any()))
-			.thenReturn(List.of(curation));
+			.thenReturn((Page<Curation>) List.of(curation));
 
-		List<Curation> foundCurations = curationService.searchCurations(List.of("tag"), "title", "content", null,
-			SearchOrder.LATEST);
+		List<CurationResDto> foundCurations = curationService.searchCurations(List.of("tag"), "title", "content", null,
+			SearchOrder.LATEST,1,1).getCurations();
 
 		// Verify the result
 		assert foundCurations != null;
