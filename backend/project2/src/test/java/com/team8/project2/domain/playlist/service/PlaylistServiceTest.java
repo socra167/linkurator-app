@@ -231,7 +231,7 @@ class PlaylistServiceTest {
     @DisplayName("플레이리스트에서 아이템을 삭제할 수 있다.")
     void deletePlaylistItem() {
         // Given
-        Long itemIdToDelete = 1L;
+        Long itemDbIdToDelete = 1L;
 
         PlaylistItem item1 = PlaylistItem.builder()
                 .id(1L)
@@ -249,11 +249,11 @@ class PlaylistServiceTest {
         when(playlistRepository.findById(samplePlaylist.getId())).thenReturn(Optional.of(samplePlaylist));
 
         // When
-        playlistService.deletePlaylistItem(samplePlaylist.getId(), itemIdToDelete);
+        playlistService.deletePlaylistItem(samplePlaylist.getId(), itemDbIdToDelete );
 
         // Then
         assertFalse(samplePlaylist.getItems().stream()
-                .anyMatch(item -> item.getItemId().equals(itemIdToDelete)));
+                .anyMatch(item -> item.getItemId().equals(itemDbIdToDelete )));
         verify(playlistRepository, times(1)).save(samplePlaylist);
     }
 
