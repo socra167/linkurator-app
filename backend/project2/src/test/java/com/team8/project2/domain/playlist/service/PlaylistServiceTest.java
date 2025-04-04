@@ -62,18 +62,19 @@ class PlaylistServiceTest {
 
     @BeforeEach
     void setUp() {
+        sampleMember = Member.builder()
+                .id(1L)
+                .username("테스트 유저")
+                .email("test@example.com")
+                .build();
+
         samplePlaylist = Playlist.builder()
                 .id(1L)
                 .title("테스트 플레이리스트")
                 .tags(new HashSet<>())
                 .description("테스트 설명")
                 .likeCount(0L)
-                .build();
-
-        sampleMember = Member.builder()
-                .id(1L)
-                .username("테스트 유저")
-                .email("test@example.com")
+                .member(sampleMember)
                 .build();
 
         lenient().when(memberRepository.findById(sampleMember.getId())).thenReturn(Optional.of(sampleMember));
@@ -138,11 +139,11 @@ class PlaylistServiceTest {
     }
 
     @Test
-    @DisplayName("모든 플레이리스트를 정상적으로 조회해야 한다.")
+    @DisplayName("현재 로그인한 사용자의 모든 플레이리스트를 정상적으로 조회해야 한다.")
     void shouldRetrieveAllPlaylistsSuccessfully() {
         // Given
         List<Playlist> playlists = Arrays.asList(samplePlaylist);
-        when(playlistRepository.findAll()).thenReturn(playlists);
+        when(playlistRepository.findByMember(sampleMember)).thenReturn(playlists);
 
         // When
         List<PlaylistDto> foundPlaylists = playlistService.getAllPlaylists();
