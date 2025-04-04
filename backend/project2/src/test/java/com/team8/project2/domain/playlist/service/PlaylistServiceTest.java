@@ -21,8 +21,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.util.*;
@@ -50,6 +52,9 @@ class PlaylistServiceTest {
 
     @Mock
     private ZSetOperations<String, Object> zSetOperations;
+
+    @Mock
+    private SetOperations<String, Object> setOperations;
 
     @Mock
     private ValueOperations<String, Object> valueOperations;
@@ -82,6 +87,7 @@ class PlaylistServiceTest {
 
         lenient().when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(redisTemplate.opsForSet()).thenReturn(setOperations);
 
         lenient().when(rq.getActor()).thenReturn(sampleMember);
     }
@@ -326,20 +332,6 @@ class PlaylistServiceTest {
                 playlistService.updatePlaylistItemOrder(1L, newOrder));
     }
 
-//    /** ✅ 조회수 증가 테스트 (Redis 반영) */
-//    @Test
-//    @DisplayName("조회수가 Redis에서 정상적으로 증가해야 한다.")
-//    void shouldIncreaseViewCountInRedis() {
-//        Long playlistId = 1L;
-//
-//        // When
-//        playlistService.recordPlaylistView(playlistId);
-//
-//        // Then
-//        verify(zSetOperations, times(1)).incrementScore("playlist:view_count", playlistId.toString(), 1);
-//    }
-
-    /** ✅ 좋아요 증가 테스트 (Redis 반영) */
     @Test
     @DisplayName("좋아요가 Redis에서 정상적으로 증가해야 한다.")
     void shouldIncreaseLikeCountInRedis() {
@@ -347,16 +339,17 @@ class PlaylistServiceTest {
         Long memberId = 1L;
 
         // Given
-        when(zSetOperations.score("playlist:like_count", playlistId.toString()))
-                .thenReturn(1.0);
-        when(redisTemplate.opsForZSet().incrementScore("playlist:like_count", playlistId.toString(), 1))
-                .thenReturn(1.0);
+        when(redisTemplate.execute(any(DefaultRedisScript.class), eq(Collections.singletonList("playlist_like:" + playlistId)), eq(String.valueOf(memberId))))
+                .thenReturn(1L);
+        when(setOperations.size("playlist_like:" + playlistId)).thenReturn(1L);
 
         // When
         playlistService.likePlaylist(playlistId, memberId);
 
         // Then
-        verify(zSetOperations, times(1)).incrementScore("playlist:like_count", playlistId.toString(), 1);
+        verify(redisTemplate, times(1)).execute(any(DefaultRedisScript.class),
+                eq(Collections.singletonList("playlist_like:" + playlistId)),
+                eq(String.valueOf(memberId)));
         assertEquals(1L, samplePlaylist.getLikeCount());
     }
 
