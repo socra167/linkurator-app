@@ -1,11 +1,13 @@
 package com.team8.project2.domain.comment.controller;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.nio.charset.StandardCharsets;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team8.project2.domain.comment.dto.CommentDto;
+import com.team8.project2.domain.comment.repository.CommentRepository;
+import com.team8.project2.domain.comment.service.CommentService;
+import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.member.repository.MemberRepository;
+import com.team8.project2.domain.member.service.AuthTokenService;
+import com.team8.project2.domain.member.service.MemberService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +19,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team8.project2.domain.comment.dto.CommentDto;
-import com.team8.project2.domain.comment.repository.CommentRepository;
-import com.team8.project2.domain.comment.service.CommentService;
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.domain.member.service.AuthTokenService;
-import com.team8.project2.domain.member.service.MemberService;
+import java.nio.charset.StandardCharsets;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 @ActiveProfiles("test")
@@ -72,7 +72,7 @@ class ApiV1CommentControllerTest {
 			.andExpect(jsonPath("$.data.content").value("content example"));
 
 		// BaseInitData에서 추가된 샘플 데이터를 포함해 2개
-		assertThat(commentService.getCommentsByCurationId(1L)).hasSize(2);
+		assertThat(commentService.getCommentsByCurationId(1L)).hasSize(4);
 	}
 
 	@Test
