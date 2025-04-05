@@ -33,20 +33,13 @@ jobs:
         working-directory: backend/project2/
         shell: bash
 
-      - name: 📦 Upload test reports on failure
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-reports
-          path: backend/project2/build/reports/tests/test
-
   discordNotification:
     needs: backend-ci
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: ✅ Discord Notification on Success (PR)
-        if: success() && github.event_name == 'pull_request' && github.event.action == 'opened'
+        if: needs.backend-ci.result == 'success' && github.event_name == 'pull_request' && github.event.action == 'opened'
         uses: discord-actions/message@v2
         with:
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
@@ -59,7 +52,7 @@ jobs:
             **PR Link:** ${{ github.event.pull_request.html_url }}
 
       - name: ❌ Discord Notification on Failure (PR)
-        if: failure() && github.event_name == 'pull_request' && github.event.action == 'opened'
+        if: needs.backend-ci.result == 'failure' && github.event_name == 'pull_request' && github.event.action == 'opened'
         uses: discord-actions/message@v2
         with:
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
@@ -73,7 +66,7 @@ jobs:
             📄 [테스트 리포트 확인하기](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       - name: ✅ Discord Notification on Success (Push)
-        if: success() && github.event_name == 'push'
+        if: needs.backend-ci.result == 'success' && github.event_name == 'push'
         uses: discord-actions/message@v2
         with:
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
@@ -86,7 +79,7 @@ jobs:
             **Pusher:** ${{ github.event.pusher.name }}
 
       - name: ❌ Discord Notification on Failure (Push)
-        if: failure() && github.event_name == 'push'
+        if: needs.backend-ci.result == 'failure' && github.event_name == 'push'
         uses: discord-actions/message@v2
         with:
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
