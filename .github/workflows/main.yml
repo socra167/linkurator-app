@@ -3,10 +3,9 @@ name: Backend CI & Discord Notifications
 on:
   pull_request:
     branches: [ main ]
-    types: [ opened, closed ]  # PR이 열릴 때와 닫힐 때(머지 포함)
+    types: [ opened, closed ]
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -23,23 +22,30 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          
+
       - name: 🔐 Grant execute permission for gradlew
         run: chmod +x ./gradlew
         working-directory: backend/project2/
         shell: bash
 
       - name: 🛠 Build with Gradle with test profile
-        run: sudo ./gradlew build -Pprofile=test
+        run: ./gradlew build -Pprofile=test
         working-directory: backend/project2/
         shell: bash
 
+      - name: 📦 Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: backend/project2/build/reports/tests/test
+
   discordNotification:
     needs: backend-ci
+    if: always()
     runs-on: ubuntu-latest
     steps:
-      # PR 성공 알림
-      - name: Discord Notification on Success (PR)
+      - name: ✅ Discord Notification on Success (PR)
         if: success() && github.event_name == 'pull_request' && github.event.action == 'opened'
         uses: discord-actions/message@v2
         with:
@@ -52,8 +58,7 @@ jobs:
             **Author:** ${{ github.event.pull_request.user.login }}
             **PR Link:** ${{ github.event.pull_request.html_url }}
 
-      # PR 실패 알림
-      - name: Discord Notification on Failure (PR)
+      - name: ❌ Discord Notification on Failure (PR)
         if: failure() && github.event_name == 'pull_request' && github.event.action == 'opened'
         uses: discord-actions/message@v2
         with:
@@ -65,9 +70,9 @@ jobs:
             **PR Title:** ${{ github.event.pull_request.title }}
             **Author:** ${{ github.event.pull_request.user.login }}
             **PR Link:** ${{ github.event.pull_request.html_url }}
+            📄 [테스트 리포트 확인하기](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-      # Push 성공 알림
-      - name: Discord Notification on Success (Push)
+      - name: ✅ Discord Notification on Success (Push)
         if: success() && github.event_name == 'push'
         uses: discord-actions/message@v2
         with:
@@ -80,8 +85,7 @@ jobs:
             **Commit:** [${{ github.event.head_commit.message }}](${{ github.event.head_commit.url }})
             **Pusher:** ${{ github.event.pusher.name }}
 
-      # Push 실패 알림
-      - name: Discord Notification on Failure (Push)
+      - name: ❌ Discord Notification on Failure (Push)
         if: failure() && github.event_name == 'push'
         uses: discord-actions/message@v2
         with:
@@ -93,9 +97,9 @@ jobs:
             **Branch:** ${{ github.ref }}
             **Commit:** [${{ github.event.head_commit.message }}](${{ github.event.head_commit.url }})
             **Pusher:** ${{ github.event.pusher.name }}
+            📄 [테스트 리포트 확인하기](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-      # PR Merge 알림
-      - name: Discord Notification on PR Merge
+      - name: 🎉 Discord Notification on PR Merge
         if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         uses: discord-actions/message@v2
         with:
