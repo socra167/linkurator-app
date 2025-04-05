@@ -237,7 +237,7 @@ public class BaseInitData {
 					.build();
 
 			PlaylistDto playlistDto = playlistService.createPlaylist(playlistCreateDto, member);
-			Playlist playList = playlistRepository.findById(playlistDto.getId()).get();
+			Playlist playlist = playlistRepository.findById(playlistDto.getId()).get();
 
 			// 플레이리스트에 큐레이션(1L) 추가
 			Curation curation = curationRepository.findById(1L).get();
@@ -245,7 +245,7 @@ public class BaseInitData {
 				.itemId(1L)
 				.curation(curation)
 				.itemType(PlaylistItem.PlaylistItemType.CURATION)
-				.playlist(playList)
+				.playlist(playlist)
 				.displayOrder(0)
 				.build();
 			playlistItemRepository.save(newItem);
