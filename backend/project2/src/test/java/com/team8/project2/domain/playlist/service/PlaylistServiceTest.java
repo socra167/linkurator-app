@@ -255,11 +255,11 @@ class PlaylistServiceTest {
         when(playlistRepository.findById(samplePlaylist.getId())).thenReturn(Optional.of(samplePlaylist));
 
         // When
-        playlistService.deletePlaylistItem(samplePlaylist.getId(), itemDbIdToDelete );
+        playlistService.deletePlaylistItem(samplePlaylist.getId(), itemDbIdToDelete);
 
         // Then
         assertFalse(samplePlaylist.getItems().stream()
-                .anyMatch(item -> item.getItemId().equals(itemDbIdToDelete )));
+                .anyMatch(item -> item.getItemId().equals(itemDbIdToDelete)));
         verify(playlistRepository, times(1)).save(samplePlaylist);
     }
 
@@ -376,7 +376,9 @@ class PlaylistServiceTest {
         verify(playlistRepository, times(1)).findAllById(Arrays.asList(2L, 3L));
     }
 
-    /** ✅ 정렬별 추천 테스트 */
+    /**
+     * ✅ 정렬별 추천 테스트
+     */
     @Test
     @DisplayName("추천 플레이리스트가 좋아요 순으로 정렬되어야 한다.")
     void shouldSortRecommendedPlaylistsByLikes() {
@@ -384,24 +386,45 @@ class PlaylistServiceTest {
         Long playlistId = 1L;
         String sortType = "likes";
 
-        // ✅ Mock 플레이리스트 생성 (ID, 태그 포함)
-        Playlist samplePlaylist = Playlist.builder()
-                .id(playlistId)
-                .title("테스트 플레이리스트")
-                .description("테스트 설명")
-                .tags(new HashSet<>())
-                .build();
-
-        // ✅ `findById()`가 특정 플레이리스트를 반환하도록 Mock 설정
         when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist));
 
-        // ✅ 추천 리스트 (Mock)
-        List<Playlist> mockPlaylists = Arrays.asList(
-                Playlist.builder().id(2L).title("추천 플레이리스트1").description("설명1").tags(new HashSet<>()).build(),
-                Playlist.builder().id(3L).title("추천 플레이리스트2").description("설명2").tags(new HashSet<>()).build()
-        );
+        // 추천 대상 플레이리스트 모킹 (likeCount 부여)
+        Playlist p2 = Playlist.builder()
+                .id(2L)
+                .title("추천 플레이리스트1")
+                .description("설명1")
+                .tags(new HashSet<>())
+                .likeCount(10L)
+                .member(sampleMember)
+                .build();
+        Playlist p3 = Playlist.builder()
+                .id(3L)
+                .title("추천 플레이리스트2")
+                .description("설명2")
+                .tags(new HashSet<>())
+                .likeCount(5L)
+                .member(sampleMember)
+                .build();
 
+        List<Playlist> mockPlaylists = Arrays.asList(p2, p3);
         when(playlistRepository.findAllById(any())).thenReturn(mockPlaylists);
+
+        when(valueOperations.get("playlist:recommend:" + playlistId)).thenReturn(null);
+
+        // Redis 정렬된 집합 호출
+        when(zSetOperations.reverseRange(eq("playlist:like_count:"), anyLong(), anyLong()))
+                .thenReturn(new HashSet<>(Arrays.asList("2", "3")));
+
+        // Redis 나머지 빈 집합 설정
+        when(zSetOperations.reverseRange(eq("playlist:view_count:"), anyLong(), anyLong()))
+                .thenReturn(new HashSet<>());
+        when(zSetOperations.reverseRange(eq("trending:24h"), anyLong(), anyLong()))
+                .thenReturn(new HashSet<>());
+        when(zSetOperations.reverseRange(eq("popular:24h"), anyLong(), anyLong()))
+                .thenReturn(new HashSet<>());
+
+        // 사용자의 플레이리스트 없음
+        when(playlistRepository.findByMember(sampleMember)).thenReturn(Collections.emptyList());
 
         // When
         List<PlaylistDto> result = playlistService.recommendPlaylist(playlistId, sortType);
@@ -413,13 +436,14 @@ class PlaylistServiceTest {
         assertEquals(3L, result.get(1).getId());
         assertEquals("추천 플레이리스트2", result.get(1).getTitle());
 
-        // ✅ Mock 메서드 호출 검증
         verify(playlistRepository, times(1)).findById(playlistId);
     }
+
 
     @Test
     @DisplayName("추천 플레이리스트가 조회수 순으로 정렬되어야 한다.")
     void shouldSortRecommendedPlaylistsByViews() {
+        // Given
         Long playlistId = 1L;
         String sortType = "views";
 
@@ -428,22 +452,60 @@ class PlaylistServiceTest {
                 .title("테스트 플레이리스트")
                 .description("테스트 설명")
                 .tags(new HashSet<>())
+                .member(sampleMember)
                 .build();
 
         when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist));
 
-        List<Playlist> mockPlaylists = Arrays.asList(
-                Playlist.builder().id(2L).title("추천1").description("설명1").tags(new HashSet<>()).build(),
-                Playlist.builder().id(3L).title("추천2").description("설명2").tags(new HashSet<>()).build()
-        );
+        Playlist p2 = Playlist.builder()
+                .id(2L)
+                .title("추천1")
+                .description("설명1")
+                .tags(new HashSet<>())
+                .viewCount(200L)
+                .member(sampleMember)
+                .build();
+        Playlist p3 = Playlist.builder()
+                .id(3L)
+                .title("추천2")
+                .description("설명2")
+                .tags(new HashSet<>())
+                .viewCount(100L)
+                .member(sampleMember)
+                .build();
 
+        List<Playlist> mockPlaylists = Arrays.asList(p2, p3);
         when(playlistRepository.findAllById(any())).thenReturn(mockPlaylists);
+        when(playlistRepository.findAll()).thenReturn(mockPlaylists);
 
+        when(valueOperations.get("playlist:recommend:" + playlistId)).thenReturn(null);
+
+        // Redis ZSet 모킹: 빈 집합
+        when(zSetOperations.reverseRange(eq("playlist:view_count:"), anyLong(), anyLong()))
+                .thenReturn(new HashSet<>());
+        when(zSetOperations.reverseRange(eq("playlist:like_count:"), anyLong(), anyLong()))
+                .thenReturn(new HashSet<>());
+        when(zSetOperations.reverseRange(eq("trending:24h"), anyLong(), anyLong()))
+                .thenReturn(new HashSet<>());
+        when(zSetOperations.reverseRange(eq("popular:24h"), anyLong(), anyLong()))
+                .thenReturn(new HashSet<>());
+
+        // 사용자의 플레이리스트 없음
+        when(playlistRepository.findByMember(sampleMember)).thenReturn(Collections.emptyList());
+        when(rq.getActor()).thenReturn(sampleMember);
+
+        // When
         List<PlaylistDto> recommendations = playlistService.recommendPlaylist(playlistId, sortType);
 
         // Then
         assertNotNull(recommendations);
         assertEquals(2, recommendations.size());
+        assertEquals(2L, recommendations.get(0).getId());
+        assertEquals("추천1", recommendations.get(0).getTitle());
+        assertEquals(3L, recommendations.get(1).getId());
+        assertEquals("추천2", recommendations.get(1).getTitle());
+
+        verify(playlistRepository, times(1)).findById(playlistId);
     }
 
 
@@ -453,73 +515,131 @@ class PlaylistServiceTest {
         Long playlistId = 1L;
         String sortType = "combined";
 
-        // ✅ Mock 플레이리스트 추가 (findById가 null 반환하지 않도록 설정)
+        Member sampleMember = Member.builder()
+                .id(1L)
+                .username("테스트 유저")
+                .email("test@example.com")
+                .build();
+
         Playlist samplePlaylist = Playlist.builder()
                 .id(playlistId)
                 .title("테스트 플레이리스트")
                 .description("테스트 설명")
                 .tags(new HashSet<>())
+                .member(sampleMember)
                 .build();
 
         when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist));
 
-        // ✅ 추천 리스트 Mock 설정
-        List<Playlist> playlists = Arrays.asList(
-                Playlist.builder().id(2L).title("추천1").description("설명1").tags(new HashSet<>()).build(),
-                Playlist.builder().id(3L).title("추천2").description("설명2").tags(new HashSet<>()).build()
-        );
+        Playlist p2 = Playlist.builder()
+                .id(2L)
+                .title("추천1")
+                .description("설명1")
+                .tags(new HashSet<>())
+                .viewCount(150L)
+                .likeCount(20L)
+                .member(sampleMember)
+                .build();
+        Playlist p3 = Playlist.builder()
+                .id(3L)
+                .title("추천2")
+                .description("설명2")
+                .tags(new HashSet<>())
+                .viewCount(100L)
+                .likeCount(30L)
+                .member(sampleMember)
+                .build();
 
+        List<Playlist> playlists = Arrays.asList(p2, p3);
+
+        // findAllById()와 findAll()이 추천 대상 리스트를 반환하도록 설정
         when(playlistRepository.findAllById(any())).thenReturn(playlists);
+        when(playlistRepository.findAll()).thenReturn(playlists);
 
-        // ✅ 실행
+        when(valueOperations.get("playlist:recommend:" + playlistId)).thenReturn(null);
+        when(zSetOperations.reverseRange(anyString(), anyLong(), anyLong()))
+                .thenReturn(new HashSet<>());
+
+        when(rq.getActor()).thenReturn(sampleMember);
+
+        // When
         List<PlaylistDto> recommendations = playlistService.recommendPlaylist(playlistId, sortType);
 
-        // ✅ 검증
+        // Then
         assertNotNull(recommendations);
         assertEquals(2, recommendations.size());
+        assertEquals(2L, recommendations.get(0).getId());
+        assertEquals("추천1", recommendations.get(0).getTitle());
+        assertEquals(3L, recommendations.get(1).getId());
+        assertEquals("추천2", recommendations.get(1).getTitle());
+
+        verify(playlistRepository, times(1)).findById(playlistId);
     }
 
 
     @Test
     @DisplayName("Redis 캐싱이 없을 때 추천 알고리즘을 실행해야 한다.")
     void shouldRunRecommendationAlgorithmIfCacheMiss() {
+        // Given
         Long playlistId = 1L;
         String sortType = "combined";
 
-        // ✅ Redis 캐시 없음
+        Member sampleMember = Member.builder()
+                .id(1L)
+                .username("테스트 유저")
+                .email("test@example.com")
+                .build();
+        Playlist samplePlaylist = Playlist.builder()
+                .id(playlistId)
+                .title("테스트 플레이리스트")
+                .description("테스트 설명")
+                .tags(new HashSet<>())
+                .member(sampleMember)
+                .build();
+
+        // Given: Redis 캐시가 없음을 설정 (cache miss)
         when(valueOperations.get("playlist:recommend:" + playlistId)).thenReturn(null);
 
-        // ✅ 정확한 key 값으로 Stubbing 설정
+        // Given: Redis의 ZSet 연산 모킹 - trending 및 popular 플레이리스트 설정
         Set<Object> trendingPlaylists = new HashSet<>(Arrays.asList("2", "3"));
         Set<Object> popularPlaylists = new HashSet<>(Arrays.asList("3", "4"));
 
-        doReturn(trendingPlaylists).when(zSetOperations).reverseRange(eq("playlist:view_count"), eq(0L), eq(5L));
-        doReturn(popularPlaylists).when(zSetOperations).reverseRange(eq("playlist:like_count"), eq(0L), eq(5L));
+        doReturn(trendingPlaylists)
+                .when(zSetOperations)
+                .reverseRange(eq("playlist:view_count:"), eq(0L), eq(5L));
+        doReturn(popularPlaylists)
+                .when(zSetOperations)
+                .reverseRange(eq("playlist:like_count:"), eq(0L), eq(5L));
 
-        doReturn(trendingPlaylists).when(zSetOperations).reverseRange(eq("trending:24h"), eq(0L), eq(5L));
-        doReturn(popularPlaylists).when(zSetOperations).reverseRange(eq("popular:24h"), eq(0L), eq(5L));
+        doReturn(trendingPlaylists)
+                .when(zSetOperations)
+                .reverseRange(eq("trending:24h"), eq(0L), eq(5L));
+        doReturn(popularPlaylists)
+                .when(zSetOperations)
+                .reverseRange(eq("popular:24h"), eq(0L), eq(5L));
 
-        // ✅ Mock된 플레이리스트 데이터 준비
+        // Given: 추천 플레이리스트 ID 목록과 mock 추천 플레이리스트 데이터 준비
         List<Long> recommendedPlaylistIds = Arrays.asList(2L, 3L, 4L);
         List<Playlist> mockPlaylists = Arrays.asList(
-                Playlist.builder().id(2L).title("추천1").description("설명1").tags(new HashSet<>()).build(),
-                Playlist.builder().id(3L).title("추천2").description("설명2").tags(new HashSet<>()).build(),
-                Playlist.builder().id(4L).title("추천3").description("설명3").tags(new HashSet<>()).build()
+                Playlist.builder().id(2L).title("추천1").description("설명1")
+                        .tags(new HashSet<>()).member(sampleMember).build(),
+                Playlist.builder().id(3L).title("추천2").description("설명2")
+                        .tags(new HashSet<>()).member(sampleMember).build(),
+                Playlist.builder().id(4L).title("추천3").description("설명3")
+                        .tags(new HashSet<>()).member(sampleMember).build()
         );
 
-        when(playlistRepository.findAllById(recommendedPlaylistIds)).thenReturn(mockPlaylists);
+        // Given: Repository 모킹 설정
+        when(playlistRepository.findAllById(any())).thenReturn(mockPlaylists);
         when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist));
+        when(rq.getActor()).thenReturn(sampleMember);
 
-        // ✅ 실행
+        // When: 캐시가 없으므로 추천 알고리즘을 실행하여 추천 리스트를 생성
         List<PlaylistDto> recommendations = playlistService.recommendPlaylist(playlistId, sortType);
 
-        // ✅ 검증
+        // Then: 추천 결과가 3건이어야 하며, Redis 캐시에 추천 결과가 저장되어야 함
         assertEquals(3, recommendations.size());
-
-        verify(valueOperations, times(1)).set(eq("playlist:recommend:" + playlistId), any(), any());
+        verify(valueOperations, times(1))
+                .set(eq("playlist:recommend:" + playlistId), any(), any());
     }
-
-
-
-
 }
