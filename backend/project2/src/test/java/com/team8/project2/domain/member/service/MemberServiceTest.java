@@ -88,8 +88,25 @@ public class MemberServiceTest {
     }
 
     @Test
+    @DisplayName("회원 삭제 - 존재하는 회원이면 정상적으로 삭제된다.")
+    void deleteMember_Succeeds_WhenMemberExists() {
+        // given
+        Member member = Member.builder()
+                .memberId("user1")
+                .build();
+
+        when(memberRepository.findByMemberId("user1")).thenReturn(Optional.of(member));
+
+        // when
+        memberService.deleteMember("user1");
+
+        // then
+        verify(memberRepository).delete(member);
+    }
+
+    @Test
     @DisplayName("JWT 발급 - 회원 정보를 이용해 accessToken을 생성한다.")
-    void getAuthToken_JWT_토큰을_반환한다() {
+    void getAuthToken_ReturnsAccessToken_WhenMemberIsValid() {
         Member member = Member.builder().id(1L).memberId("user").build();
         when(authTokenService.genAccessToken(member)).thenReturn("mocked.jwt.token");
 
@@ -100,7 +117,7 @@ public class MemberServiceTest {
 
     @Test
     @DisplayName("JWT 인증 - accessToken의 payload로부터 사용자 정보를 생성한다.")
-    void getMemberByAccessToken_페이로드로부터_Member객체를_생성한다() {
+    void getMemberByAccessToken_ReturnsMember_WhenPayloadIsValid() {
         Map<String, Object> payload = Map.of("id", 1L, "memberId", "user");
         when(authTokenService.getPayload("token123")).thenReturn(payload);
 
@@ -113,7 +130,7 @@ public class MemberServiceTest {
 
     @Test
     @DisplayName("팔로우 - 정상적으로 팔로우 관계가 저장된다.")
-    void followUser_정상적으로_팔로우된다() {
+    void followUser_Succeeds_WhenValidFolloweeIsGiven() {
         Member follower = Member.builder().id(1L).memberId("user1").build();
         Member followee = Member.builder().id(2L).memberId("user2").build();
 
@@ -129,9 +146,9 @@ public class MemberServiceTest {
 
     @Test
     @DisplayName("팔로우 - 자기 자신은 팔로우할 수 없다.")
-    void followUser_자기자신은_팔로우_불가() {
+    void followUser_Fails_WhenFollowSelf() {
         Member follower = Member.builder().id(1L).memberId("user1").build();
-        Member followee = Member.builder().id(2L).memberId("user1").build(); // 동일 ID
+        Member followee = Member.builder().id(2L).memberId("user1").build(); // same ID
 
         when(memberRepository.findByUsername("user1")).thenReturn(Optional.of(followee));
 

@@ -154,9 +154,7 @@ public class ApiV1MemberController {
         }
 
         Member existingMember = memberService.findByMemberId(memberId).get();
-        existingMember.setEmail(updateReqDTO.getEmail());
-        existingMember.setUsername(updateReqDTO.getUsername());
-        existingMember.setIntroduce(updateReqDTO.getIntroduce());
+        updateReqDTO.ToMemberReqDTO(existingMember);
 
         Member updatedMember = memberService.updateMember(existingMember);
         return new RsData<>("200-5", "회원 정보가 수정되었습니다.", MemberResDTO.fromEntity(updatedMember));

@@ -1,6 +1,7 @@
 package com.team8.project2.domain.member.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.team8.project2.domain.member.entity.Member;
 import com.team8.project2.domain.member.entity.RoleEnum;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -32,15 +33,10 @@ public class MemberUpdateReqDTO {
     @JsonProperty("introduce")
     private String introduce;
 
-    public MemberReqDTO toMemberReqDTO(String password, RoleEnum role) {
-        return MemberReqDTO.builder()
-                .memberId(this.memberId)
-                .password(password) // 매개변수로 받은 password 설정
-                .email(this.email)
-                .username(this.username)
-                .profileImage(this.profileImage)
-                .introduce(this.introduce)
-                .role(role != null ? role : RoleEnum.MEMBER) // 매개변수로 받은 role 설정, 기본값 MEMBER
-                .build();
+    public void ToMemberReqDTO(Member member) {
+        if (this.email != null) member.setEmail(this.email);
+        if (this.username != null) member.setUsername(this.username);
+        if (this.profileImage != null) member.setProfileImage(this.profileImage);
+        if (this.introduce != null) member.setIntroduce(this.introduce);
     }
 }
