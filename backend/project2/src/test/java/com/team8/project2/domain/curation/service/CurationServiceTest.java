@@ -565,7 +565,7 @@ class CurationServiceTest {
 		curationService.reportCuration(1L, ReportType.SPAM);
 
 		// 여기에 report 저장 등의 로직이 추가되었다면 검증해줘야 함
-		verify(rq, times(1)).getActor();
+		verify(reportRepository, times(1)).save(any());
 	}
 
 	@Test
