@@ -1,11 +1,10 @@
 package com.team8.project2.domain.playlist.service;
 
+import com.team8.project2.domain.link.entity.Link;
+import com.team8.project2.domain.link.service.LinkService;
 import com.team8.project2.domain.member.entity.Member;
 import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.domain.playlist.dto.PlaylistCreateDto;
-import com.team8.project2.domain.playlist.dto.PlaylistDto;
-import com.team8.project2.domain.playlist.dto.PlaylistItemOrderUpdateDto;
-import com.team8.project2.domain.playlist.dto.PlaylistUpdateDto;
+import com.team8.project2.domain.playlist.dto.*;
 import com.team8.project2.domain.playlist.entity.Playlist;
 import com.team8.project2.domain.playlist.entity.PlaylistItem;
 import com.team8.project2.domain.playlist.repository.PlaylistLikeRepository;
@@ -38,6 +37,9 @@ class PlaylistServiceTest {
 
     @InjectMocks
     private PlaylistService playlistService;
+
+    @Mock
+    private LinkService linkService;
 
     @Mock
     private PlaylistRepository playlistRepository;
@@ -672,6 +674,73 @@ class PlaylistServiceTest {
         assertThat(result.isPublic()).isFalse();
         assertThat(result.getItems()).hasSize(originalPlaylist.getItems().size());
     }
+
+    @DisplayName("플레이리스트 아이템의 내용을 수정한다")
+    @Test
+    void updatePlaylistLinkItemContent() {
+        // given
+        Long playlistId = 1L;
+        Long playlistItemId = 10L;
+        Long linkId = 100L;
+
+        Member member = Member.builder()
+                .id(1L)
+                .username("testUser")
+                .build();
+
+        Link link = Link.builder()
+                .id(linkId)
+                .title("기존 제목")
+                .url("https://old-url.com")
+                .description("기존 설명")
+                .build();
+
+        PlaylistItem playlistItem = PlaylistItem.builder()
+                .id(playlistItemId)
+                .itemId(linkId)
+                .itemType(PlaylistItem.PlaylistItemType.LINK)
+                .displayOrder(0)
+                .link(link)
+                .build();
+
+        Playlist playlist = Playlist.builder()
+                .id(playlistId)
+                .title("수정 가능한 플리")
+                .member(member)
+                .items(new ArrayList<>(List.of(playlistItem)))
+                .build();
+
+        PlaylistItemUpdateDto updateDto = PlaylistItemUpdateDto.builder()
+                .title("수정된 링크 제목")
+                .description("수정된 링크 설명")
+                .url("https://new-url.com")
+                .build();
+
+        given(rq.getActor()).willReturn(member);
+        given(playlistRepository.findById(playlistId)).willReturn(Optional.of(playlist));
+        lenient().when(playlistRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        given(linkService.updateLinkDetails(eq(linkId), eq(updateDto.getTitle()), eq(updateDto.getUrl()), eq(updateDto.getDescription())))
+                .willReturn(Link.builder()
+                        .id(linkId)
+                        .title(updateDto.getTitle())
+                        .url(updateDto.getUrl())
+                        .description(updateDto.getDescription())
+                        .build());
+
+        // when
+        PlaylistDto result = playlistService.updatePlaylistItem(playlistId, playlistItemId, updateDto);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getItems()).hasSize(1);
+        PlaylistItemDto updatedItem = result.getItems().get(0);
+        assertThat(updatedItem.getItemType()).isEqualTo("LINK");
+        assertThat(updatedItem.getUrl()).isEqualTo("https://new-url.com");
+        assertThat(updatedItem.getTitle()).isEqualTo("수정된 링크 제목");
+        assertThat(updatedItem.getDescription()).isEqualTo("수정된 링크 설명");
+    }
+
 
 
 
