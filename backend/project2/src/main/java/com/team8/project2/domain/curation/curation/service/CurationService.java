@@ -486,7 +486,7 @@ public class CurationService {
 			.map(curation -> {
 				curation.setViewCount(redisTemplate.opsForZSet().score(DAY_VIEW_COUNT_KEY, String.valueOf(curation.getId())).longValue());
 				return curation;
-			})
+			}).sorted(Comparator.comparingLong(Curation::getViewCount).reversed())
 			.toList();
 
 		if (topCurations.isEmpty()) {
