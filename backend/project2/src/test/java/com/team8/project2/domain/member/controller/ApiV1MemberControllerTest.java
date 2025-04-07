@@ -53,50 +53,6 @@ public class ApiV1MemberControllerTest {
 
     private Member member;
 
-    @BeforeEach
-    void setUp() {
-
-        // MemberReqDTO 설정 (링크 포함)
-        memberReqDTO = new MemberReqDTO();
-        memberReqDTO.setMemberId("member1");
-        memberReqDTO.setUsername("초보");
-        memberReqDTO.setPassword("1234");
-        memberReqDTO.setRole("MEMBER");
-        memberReqDTO.setProfileImage("www.url");
-        memberReqDTO.setEmail("member1@gmail.com");
-        memberReqDTO.setIntroduce("안녕");
-
-
-        Member savedMember = memberRepository.findByUsername(memberReqDTO.getUsername())
-                .orElseGet(() -> {
-                    Member newMember = memberRepository.save(memberReqDTO.toEntity());
-                    memberRepository.flush(); // ✅ 강제 동기화
-                    return newMember;
-                });
-
-        this.member = memberRepository.findByUsername(savedMember.getUsername()).orElse(null);
-
-        System.out.println("setup()에서 생성된 member: " + this.member);
-
-        if (this.member == null) {
-            throw new IllegalStateException("setup()에서 member가 정상적으로 생성되지 않았습니다.");
-        }
-
-        if (this.member == null) {
-            System.out.println("setup()에서 member가 정상적으로 생성되지 않음. 테스트 중단");
-            return;  //
-        }
-
-        // ✅ 큐레이션 추가
-        curationService.createCuration(
-                "테스트 큐레이션 1",
-                "큐레이션 내용",
-                List.of("https://test.com"),
-                List.of("테스트 태그"),
-                member
-        );
-
-    }
 
     @BeforeAll
     static void setupTokens() {
@@ -184,11 +140,14 @@ public class ApiV1MemberControllerTest {
     @DisplayName("회원 가입3 - 비밀번호 길이 제한 위반")
     void join3() throws Exception {
         // 필수 입력값 중 password를 4자로 설정하여 길이 제한 검증
-        memberReqDTO.setUsername("초보");
+        memberReqDTO = new MemberReqDTO();
+        memberReqDTO.setMemberId( "member" + UUID.randomUUID());
+        memberReqDTO.setUsername("user" + UUID.randomUUID());
+        memberReqDTO.setPassword("1234");
+        memberReqDTO.setRole("MEMBER");
         memberReqDTO.setProfileImage("www.url");
         memberReqDTO.setEmail("member1@gmail.com");
         memberReqDTO.setIntroduce("안녕");
-        memberReqDTO.setPassword("1234");
 
         mvc.perform(MockMvcRequestBuilders.post("/api/v1/members/join")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -201,7 +160,14 @@ public class ApiV1MemberControllerTest {
     @DisplayName("회원 가입4 - 필수 입력값 누락 (비밀번호 없음)")
     void joinWithoutPassword() throws Exception {
         // 비밀번호 누락 테스트
+        memberReqDTO = new MemberReqDTO();
+        memberReqDTO.setMemberId( "member" + UUID.randomUUID());
+        memberReqDTO.setUsername("user" + UUID.randomUUID());
         memberReqDTO.setPassword(null);
+        memberReqDTO.setRole("MEMBER");
+        memberReqDTO.setProfileImage("www.url");
+        memberReqDTO.setEmail("member1@gmail.com");
+        memberReqDTO.setIntroduce("안녕");
 
         mvc.perform(MockMvcRequestBuilders.post("/api/v1/members/join")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -214,8 +180,14 @@ public class ApiV1MemberControllerTest {
     @DisplayName("회원 가입5 - 필수 입력값 누락 (사용자명 없음)")
     void joinWithoutMemberId() throws Exception {
         // 사용자명 누락 테스트
+        memberReqDTO = new MemberReqDTO();
         memberReqDTO.setMemberId(null);
-        memberReqDTO.setPassword("123456"); // 비밀번호 정상값으로 설정
+        memberReqDTO.setPassword("123456");
+        memberReqDTO.setUsername(null);
+        memberReqDTO.setRole("MEMBER");
+        memberReqDTO.setProfileImage("www.url");
+        memberReqDTO.setEmail("member1@gmail.com");
+        memberReqDTO.setIntroduce("안녕"); // 비밀번호 정상값으로 설정
 
         mvc.perform(MockMvcRequestBuilders.post("/api/v1/members/join")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -246,7 +218,7 @@ public class ApiV1MemberControllerTest {
     @DisplayName("이미 존재하는 memberId로 회원 가입 시 오류 발생")
     void joinWithDuplicateMemberId() throws Exception {
         // Given
-        String duplicateMemberId = memberReqDTO.getMemberId(); // `setup()`에서 이미 생성된 ID 사용
+        String duplicateMemberId = "memberId"; // BaseInitData 에서 이미 생성된 ID 사용
         String password = "123456";
         String email = "duplicate@example.com";
         String role = "MEMBER";
@@ -267,8 +239,14 @@ public class ApiV1MemberControllerTest {
     @Test
     @DisplayName("JWT 인증으로 내 정보 조회")
     void getMyInfoTest() throws Exception {
+        memberReqDTO = new MemberReqDTO();
         memberReqDTO.setMemberId( "member" + UUID.randomUUID());
         memberReqDTO.setUsername("user" + UUID.randomUUID());
+        memberReqDTO.setPassword("1234");
+        memberReqDTO.setRole("MEMBER");
+        memberReqDTO.setProfileImage("www.url");
+        memberReqDTO.setEmail("member1@gmail.com");
+        memberReqDTO.setIntroduce("안녕");
         Member member = memberService.join(memberReqDTO.toEntity());
         String accessToken = memberService.genAccessToken(member);
 
@@ -282,8 +260,17 @@ public class ApiV1MemberControllerTest {
     @Test
     @DisplayName("로그아웃 시 JWT 삭제")
     void logoutTest() throws Exception {
+        // MemberReqDTO 설정 (링크 포함)
+        memberReqDTO = new MemberReqDTO();
         memberReqDTO.setMemberId( "member" + UUID.randomUUID());
         memberReqDTO.setUsername("user" + UUID.randomUUID());
+        memberReqDTO.setPassword("1234");
+        memberReqDTO.setRole("MEMBER");
+        memberReqDTO.setProfileImage("www.url");
+        memberReqDTO.setEmail("member1@gmail.com");
+        memberReqDTO.setIntroduce("안녕");
+
+
         Member member = memberService.join(memberReqDTO.toEntity());
         String accessToken = memberService.genAccessToken(member);
 

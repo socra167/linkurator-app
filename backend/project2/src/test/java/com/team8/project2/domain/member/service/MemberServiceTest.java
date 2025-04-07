@@ -3,6 +3,7 @@ package com.team8.project2.domain.member.service;
 import com.team8.project2.domain.curation.curation.repository.CurationRepository;
 import com.team8.project2.domain.image.service.S3Uploader;
 import com.team8.project2.domain.member.dto.FollowResDto;
+import com.team8.project2.domain.member.entity.Follow;
 import com.team8.project2.domain.member.entity.Member;
 import com.team8.project2.domain.member.entity.RoleEnum;
 import com.team8.project2.domain.member.repository.FollowRepository;
@@ -131,8 +132,9 @@ public class MemberServiceTest {
 
         when(memberRepository.findByUsername("user2")).thenReturn(Optional.of(followee));
         when(followRepository.findByFollowerAndFollowee(follower, followee)).thenReturn(Optional.empty());
-        when(followRepository.save(any())).thenReturn(new com.team8.project2.domain.member.entity.Follow());
-
+        Follow follow = new Follow();
+        follow.setFollowerAndFollowee(follower, followee);
+        when(followRepository.save(any())).thenReturn(follow);
         FollowResDto result = memberService.followUser(follower, "user2");
 
         assertNotNull(result);
