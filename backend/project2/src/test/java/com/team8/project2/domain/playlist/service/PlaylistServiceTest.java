@@ -761,6 +761,23 @@ class PlaylistServiceTest {
     }
 
 
+    @DisplayName("플레이리스트의 좋아요 개수를 조회한다")
+    @Test
+    void getPlaylistLikeCount() {
+        // given
+        Long playlistId = 1L;
+        String redisKey = "playlist_like:" + playlistId;
+
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
+        given(setOperations.size(redisKey)).willReturn(42L);
+
+        // when
+        long likeCount = playlistService.getLikeCount(playlistId);
+
+        // then
+        assertThat(likeCount).isEqualTo(42L);
+        verify(setOperations, times(1)).size(redisKey);
+    }
 
 
 
