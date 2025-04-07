@@ -56,9 +56,6 @@ public class ApiV1MemberController {
                 .ifPresent(member -> {
                     throw new ServiceException("409-1","사용중인 아이디");
                 });
-        //TODO: RoleEnum 초기화 방식 선정
-        //TODO: apikey할당 방식 선정
-        //join(String username, String password,RoleEnum role, String email, String profileImage)
 
         Member member = memberService.join(body.toEntity());
 
