@@ -38,7 +38,7 @@ public class ReportService {
                 .collect(Collectors.groupingBy(report -> report.getCuration().getId()));
 
         return curations.stream()
-                .map(curation -> new ReportedCurationsDetailResDto(
+                .map(curation -> ReportedCurationsDetailResDto.from(
                         curation,
                         reportsByCuration.getOrDefault(curation.getId(), new ArrayList<>()) // 신고 데이터가 없으면 빈 리스트
                 ))
