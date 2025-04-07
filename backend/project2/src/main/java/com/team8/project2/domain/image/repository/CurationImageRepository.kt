@@ -9,7 +9,7 @@ import java.util.*
 interface CurationImageRepository : JpaRepository<CurationImage?, Long?> {
     fun findByImageName(imageUrl: String?): Optional<CurationImage?>?
 
-    fun findByCurationId(curationId: Long?): List<CurationImage?>?
+    fun findByCurationId(curationId: Long?): List<CurationImage>
 
     fun deleteByImageName(imageName: String?)
 
