@@ -21,7 +21,7 @@ class CurationImageService(
         val curationImage = CurationImage(imageName)
         curationImageRepository.save(curationImage)
 
-        return s3Uploader.getBaseUrl() + imageName
+        return s3Uploader.baseUrl + imageName
     }
 
     @Transactional(readOnly = true)

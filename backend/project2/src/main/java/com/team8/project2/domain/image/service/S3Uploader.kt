@@ -18,12 +18,12 @@ import java.util.*
 
 @Service
 @RequiredArgsConstructor
-class S3Uploader {
-    private val s3Client: S3Client? = null
-    private val s3Presigner: S3Presigner? = null
-
+class S3Uploader(
+    private val s3Client: S3Client,
     @Value("\${spring.cloud.aws.s3.bucket}")
-    private val bucketName: String? = null
+    private val bucketName: String
+) {
+    private val s3Presigner: S3Presigner? = null
 
     @Transactional
     fun deleteFile(imageName: String?) {
