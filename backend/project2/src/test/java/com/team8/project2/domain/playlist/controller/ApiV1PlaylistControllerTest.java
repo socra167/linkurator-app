@@ -1,13 +1,19 @@
 package com.team8.project2.domain.playlist.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team8.project2.domain.link.dto.LinkReqDTO;
+import com.team8.project2.domain.link.entity.Link;
+import com.team8.project2.domain.link.service.LinkService;
 import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.playlist.dto.PlaylistItemDto;
+import com.team8.project2.global.dto.RsData;
 import com.team8.project2.domain.member.repository.MemberRepository;
 import com.team8.project2.domain.playlist.dto.PlaylistCreateDto;
 import com.team8.project2.domain.playlist.dto.PlaylistDto;
 import com.team8.project2.domain.playlist.dto.PlaylistItemOrderUpdateDto;
 import com.team8.project2.domain.playlist.entity.PlaylistItem;
 import com.team8.project2.domain.playlist.service.PlaylistService;
+import com.team8.project2.global.Rq;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,8 +23,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -28,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -48,9 +53,15 @@ class ApiV1PlaylistControllerTest {
     @Autowired
     private MemberRepository memberRepository;
 
+    @Mock
+    private Rq rq;
+
+    @Mock
+    private LinkService linkService;
+
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(playlistController).build(); // 🔹 여기서 초기화!
+        mockMvc = MockMvcBuilders.standaloneSetup(playlistController).build();
     }
 
     @Test
@@ -77,30 +88,55 @@ class ApiV1PlaylistControllerTest {
                 .andExpect(jsonPath("$.data.title").value("New Playlist"));
     }
 
-    @Test
     @DisplayName("플레이리스트에 링크 추가가 정상적으로 이루어져야 한다.")
+    @Test
     void addLinkToPlaylist() throws Exception {
+        // Given
         Long playlistId = 1L;
-        String linkIdStr = "100";
-        Map<String, String> request = new HashMap<>();
-        request.put("linkId", linkIdStr);
+        Long linkId = 100L;
 
-        PlaylistDto sampleDto = PlaylistDto.builder()
-                .id(playlistId)
-                .title("테스트 플레이리스트")
-                .description("테스트 설명")
+        LinkReqDTO linkReqDTO = new LinkReqDTO();
+        linkReqDTO.setUrl("https://example.com");
+        linkReqDTO.setTitle("테스트 링크");
+        linkReqDTO.setDescription("링크 설명");
+
+        Link dummyLink = Link.builder()
+                .id(linkId)
+                .title(linkReqDTO.getTitle())
+                .url(linkReqDTO.getUrl())
+                .description(linkReqDTO.getDescription())
                 .build();
 
-        when(playlistService.addPlaylistItem(eq(playlistId), anyLong(), eq(PlaylistItem.PlaylistItemType.LINK)))
-                .thenReturn(sampleDto);
+        PlaylistDto playlistDto = PlaylistDto.builder()
+                .id(playlistId)
+                .title("테스트 플레이리스트")
+                .description("설명")
+                .isPublic(true)
+                .items(List.of(
+                        PlaylistItemDto.builder()
+                                .itemId(linkId)
+                                .itemType("LINK")
+                                .title(dummyLink.getTitle())
+                                .url(dummyLink.getUrl())
+                                .description(dummyLink.getDescription())
+                                .build()
+                ))
+                .build();
 
+        when(linkService.addLink(any(LinkReqDTO.class))).thenReturn(dummyLink);
+        when(playlistService.addPlaylistItem(eq(playlistId), eq(linkId), eq(PlaylistItem.PlaylistItemType.LINK)))
+                .thenReturn(playlistDto);
+
+        // When & Then
         mockMvc.perform(post("/api/v1/playlists/{id}/items/link", playlistId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(linkReqDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(playlistId))
-                .andExpect(jsonPath("$.data.title").value("테스트 플레이리스트"));
+                .andExpect(jsonPath("$.data.title").value("테스트 플레이리스트"))
+                .andExpect(jsonPath("$.data.items[0].itemType").value("LINK"))
+                .andExpect(jsonPath("$.data.items[0].itemId").value(linkId));
     }
+
 
     @Test
     @DisplayName("플레이리스트에서 아이템이 삭제되어야 한다.")
@@ -149,24 +185,25 @@ class ApiV1PlaylistControllerTest {
     /**
      * ✅ 좋아요 증가 API 테스트
      */
-    @Test
     @DisplayName("좋아요 증가 API가 정상적으로 호출되어야 한다.")
+    @Test
     void shouldIncreaseLikeCount() throws Exception {
+        // given
         Long playlistId = 1L;
+        Long memberId = 100L;
 
-        Member mockMember = new Member();
-        mockMember.setUsername("testUser");
-        Member savedMember = memberRepository.save(mockMember);
+        Member mockMember = mock(Member.class);
+        given(mockMember.getId()).willReturn(memberId);
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(savedMember, null)
-        );
+        given(rq.getActor()).willReturn(mockMember);
+        doNothing().when(playlistService).likePlaylist(playlistId, memberId);
 
+        // when & then
         mockMvc.perform(post("/api/v1/playlists/{id}/like", playlistId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.msg").value("좋아요가 증가되었습니다."));
+                .andExpect(jsonPath("$.msg").value("좋아요 상태가 토글되었습니다."));
 
-        verify(playlistService, times(1)).likePlaylist(playlistId, savedMember.getId());
+        verify(playlistService, times(1)).likePlaylist(playlistId, memberId);
     }
 
     /**

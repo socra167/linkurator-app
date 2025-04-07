@@ -854,7 +854,4 @@ class PlaylistServiceTest {
         verify(playlistRepository, times(1)).findAllByIsPublicTrue();
     }
 
-
-
-
 }
