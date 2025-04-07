@@ -11,7 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -120,8 +119,8 @@ public class CurationDetailResDto {
 			this.createdAt = comment.getCreatedAt();
 			this.modifiedAt = comment.getModifiedAt();
 			this.replies = comment.getReplyComments().stream()
-				.map(ReplyCommentDto::fromEntity)
-				.sorted(Comparator.comparing(ReplyCommentDto::getCreatedAt))
+					.map(reply -> ReplyCommentDto.Companion.fromEntity(reply))
+					.sorted(Comparator.comparing(ReplyCommentDto::getCreatedAt))
 				.toList();
 		}
 	}

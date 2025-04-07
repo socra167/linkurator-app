@@ -10,34 +10,34 @@ import java.time.LocalDateTime
 data class ReplyCommentDto(
 
     /** 댓글 ID */
-    val id: Long? = null,
+    val id: Long?,
 
     /** 답글 작성자의 id */
-    val authorId: Long? = null,
+    val authorId: Long,
 
     /** 댓글 작성자의 사용자명 */
-    val authorName: String? = null,
+    val authorName: String,
 
     /** 답글 작성자의 프로필 이미지 */
-    val authorProfileImageUrl: String? = null,
+    val authorProfileImageUrl: String,
 
     /** 댓글 내용 */
-    val content: String? = null,
+    val content: String,
 
     /** 댓글 생성 시간 */
-    val createdAt: LocalDateTime? = null,
+    val createdAt: LocalDateTime?,
 
     /** 댓글 수정 시간 */
-    val modifiedAt: LocalDateTime? = null
+    val modifiedAt: LocalDateTime?
 
 ) {
     companion object {
         fun fromEntity(reply: ReplyComment): ReplyCommentDto {
             return ReplyCommentDto(
                 id = reply.id,
-                authorId = reply.getAuthorId(),
-                authorName = reply.getAuthorName(),
-                authorProfileImageUrl = reply.getAuthorProfileImageUrl(),
+                authorId = reply.author.id,
+                authorName = reply.author.username,
+                authorProfileImageUrl = reply.author.profileImage,
                 content = reply.content,
                 createdAt = reply.createdAt,
                 modifiedAt = reply.modifiedAt
