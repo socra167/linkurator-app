@@ -53,6 +53,7 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-data-redis")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
 	// 외부 링크의 메타 데이터 추출 라이브러리 Jsoup
 	implementation("org.jsoup:jsoup:1.15.4")
