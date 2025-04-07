@@ -819,6 +819,40 @@ class PlaylistServiceTest {
     }
 
 
+    @DisplayName("공개된 전체 플레이리스트를 조회한다")
+    @Test
+    void getAllPublicPlaylists() {
+        // given
+        Member actor = sampleMember;
+        Playlist playlist1 = Playlist.builder()
+                .id(1L)
+                .title("공개 플레이리스트 1")
+                .isPublic(true)
+                .member(actor)
+                .build();
+
+        Playlist playlist2 = Playlist.builder()
+                .id(2L)
+                .title("공개 플레이리스트 2")
+                .isPublic(true)
+                .member(actor)
+                .build();
+
+        given(rq.isLogin()).willReturn(true);
+        given(rq.getActor()).willReturn(actor);
+        given(playlistRepository.findAllByIsPublicTrue())
+                .willReturn(List.of(playlist1, playlist2));
+
+        // when
+        List<PlaylistDto> result = playlistService.getAllPublicPlaylists();
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getId()).isEqualTo(1L);
+        assertThat(result.get(1).getId()).isEqualTo(2L);
+
+        verify(playlistRepository, times(1)).findAllByIsPublicTrue();
+    }
 
 
 
