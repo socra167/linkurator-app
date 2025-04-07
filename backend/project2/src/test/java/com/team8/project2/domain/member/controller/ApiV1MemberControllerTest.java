@@ -66,6 +66,7 @@ public class ApiV1MemberControllerTest {
         memberReqDTO.setEmail("member1@gmail.com");
         memberReqDTO.setIntroduce("안녕");
 
+
         Member savedMember = memberRepository.findByUsername(memberReqDTO.getUsername())
                 .orElseGet(() -> {
                     Member newMember = memberRepository.save(memberReqDTO.toEntity());
@@ -153,7 +154,6 @@ public class ApiV1MemberControllerTest {
                 .andExpect(jsonPath("$.data.accessToken").exists())
                 .andExpect(jsonPath("$.msg").value("회원 가입이 완료되었습니다."));
 
-        //checkMember(resultActions, member);
     }
 
     @Test
@@ -351,7 +351,7 @@ public class ApiV1MemberControllerTest {
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200-1"))
@@ -369,7 +369,7 @@ public class ApiV1MemberControllerTest {
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("400-1"))
@@ -397,10 +397,11 @@ public class ApiV1MemberControllerTest {
             Long followeeId = 1L;
             Long followerId = 1L;
             Member followee = memberService.findById(followeeId).get();
+            System.out.println(followee.getMemberId());
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("400-1"))
@@ -416,7 +417,7 @@ public class ApiV1MemberControllerTest {
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/unfollow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/unfollow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200-1"))
@@ -433,7 +434,7 @@ public class ApiV1MemberControllerTest {
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/unfollow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/unfollow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("400-1"))
