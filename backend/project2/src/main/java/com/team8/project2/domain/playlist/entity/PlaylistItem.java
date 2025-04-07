@@ -8,7 +8,11 @@ import lombok.*;
 /**
  * 플레이리스트 항목(PlaylistItem) 엔티티 클래스입니다.
  * 플레이리스트에 포함된 개별 항목을 저장합니다.
+ * @deprecated Kotlin으로 마이그레이션됨. PlaylistItem.kt
+ *
  */
+
+@Deprecated
 @Entity
 @Getter
 @Setter
