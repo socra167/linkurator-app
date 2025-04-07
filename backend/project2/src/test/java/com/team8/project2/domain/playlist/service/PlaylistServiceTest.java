@@ -741,6 +741,25 @@ class PlaylistServiceTest {
         assertThat(updatedItem.getDescription()).isEqualTo("수정된 링크 설명");
     }
 
+    @DisplayName("현재 로그인한 사용자의 좋아요 여부를 확인한다")
+    @Test
+    void checkUserLikedPlaylist() {
+        // given
+        Long playlistId = 1L;
+        Long memberId = 1L;
+        String redisKey = "playlist_like:" + playlistId;
+
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
+        given(setOperations.isMember(redisKey, String.valueOf(memberId))).willReturn(true);
+
+        // when
+        boolean isLiked = playlistService.hasLikedPlaylist(playlistId, memberId);
+
+        // then
+        assertThat(isLiked).isTrue();
+        verify(setOperations, times(1)).isMember(redisKey, String.valueOf(memberId));
+    }
+
 
 
 
