@@ -45,6 +45,21 @@ class Member() {
     @Column
     var introduce: String? = null
 
+    fun getId(): Long {
+        return id!!
+    }
+
+    fun getUsername(): String? {
+        return username
+    }
+
+    fun setUsername(username: String?) {
+        this.username = username
+    }
+
+    fun getPassword(): String? {
+        return password
+    }
     constructor(
         memberId: String,
         password: String?,
