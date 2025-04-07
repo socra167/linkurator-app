@@ -16,5 +16,5 @@ interface CurationImageRepository : JpaRepository<CurationImage?, Long?> {
     fun deleteByCurationId(curationId: Long?)
 
     @Query("SELECT c FROM CurationImage c WHERE c.curationId IS NULL AND c.uploadedAt <= :cutoffDate")
-    fun findUnusedImages(cutoffDate: LocalDateTime?): List<CurationImage?>?
+    fun findUnusedImages(cutoffDate: LocalDateTime?): List<CurationImage>
 }
