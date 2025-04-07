@@ -2,6 +2,7 @@ package com.team8.project2.domain.curation.service;
 
 import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto;
 import com.team8.project2.domain.curation.curation.dto.CurationResDto;
+import com.team8.project2.domain.curation.curation.dto.TrendingCurationResDto;
 import com.team8.project2.domain.curation.curation.entity.Curation;
 import com.team8.project2.domain.curation.curation.entity.CurationLink;
 import com.team8.project2.domain.curation.curation.entity.CurationTag;
@@ -14,6 +15,7 @@ import com.team8.project2.domain.curation.curation.service.CurationService;
 import com.team8.project2.domain.curation.curation.service.CurationViewService;
 import com.team8.project2.domain.curation.like.entity.Like;
 import com.team8.project2.domain.curation.like.repository.LikeRepository;
+import com.team8.project2.domain.curation.report.entity.ReportType;
 import com.team8.project2.domain.curation.report.repository.ReportRepository;
 import com.team8.project2.domain.curation.tag.entity.Tag;
 import com.team8.project2.domain.curation.tag.service.TagService;
@@ -33,9 +35,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -45,8 +45,7 @@ import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -489,6 +488,197 @@ class CurationServiceTest {
 		verify(likeRepository, never()).findByCurationAndMember(any(Curation.class), any(Member.class));
 		verify(likeRepository, never()).save(any(Like.class));
 	}
+
+	@Test
+	@DisplayName("큐레이션 좋아요를 Redis에서 DB로 동기화합니다.")
+	void testSyncLikesToDatabase() {
+		String key = "curation_like:1";
+		Set<String> keys = Set.of(key);
+		Set<String> memberIds = Set.of("100", "101");
+
+		Curation curation = new Curation();
+		curation.setId(1L);
+
+		SetOperations<String, Object> setOperations = mock(SetOperations.class);
+
+		when(redisTemplate.keys("curation_like:*")).thenReturn(keys);
+		when(redisTemplate.opsForSet()).thenReturn(setOperations);
+		when(setOperations.members(key)).thenReturn(new HashSet<>(memberIds)); // ✅ 수정된 부분
+		when(setOperations.size(key)).thenReturn((long) memberIds.size());
+
+		when(curationRepository.findById(1L)).thenReturn(Optional.of(curation));
+		when(memberRepository.findByMemberId(anyString())).thenReturn(Optional.of(new Member()));
+
+		curationService.syncLikesToDatabase();
+
+		verify(likeRepository, times(2)).save(any(Like.class));
+		verify(curationRepository, times(3)).findById(1L); // 1: 좋아요 저장용, 2: likeCount 업데이트용
+		verify(curationRepository, times(1)).save(curation);
+	}
+
+
+	@Test
+	@DisplayName("큐레이션에 대한 좋아요 여부를 Redis에서 확인합니다.")
+	void testIsLikedByMember_ReturnsTrue() {
+		Long curationId = 1L;
+		Long memberId = 100L;
+		String key = "curation_like:" + curationId;
+
+		SetOperations<String, Object> setOperations = mock(SetOperations.class);
+		when(redisTemplate.opsForSet()).thenReturn(setOperations);
+		when(redisTemplate.opsForSet().isMember(key, String.valueOf(memberId))).thenReturn(true);
+
+		boolean result = curationService.isLikedByMember(curationId, memberId);
+
+		assertTrue(result);
+	}
+
+	@Test
+	@DisplayName("팔로잉한 유저의 큐레이션을 가져옵니다.")
+	void testGetFollowingCurations() {
+
+		List<Curation> mockCurations = List.of(curation);
+		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+		when(curationRepository.findFollowingCurations(eq(1L), any(Pageable.class))).thenReturn(mockCurations);
+
+		List<CurationResDto> result = curationService.getFollowingCurations(member, 0, 10);
+
+		assertEquals(1, result.size());
+	}
+
+
+	@Test
+	@DisplayName("큐레이션을 신고합니다.")
+	void testReportCuration() {
+		Member actor = new Member();
+		Curation curation = new Curation();
+		curation.setId(1L);
+
+		Rq rq = mock(Rq.class);
+		when(rq.getActor()).thenReturn(mock(Member.class));
+		ReflectionTestUtils.setField(curationService, "rq", rq);
+
+		when(rq.getActor()).thenReturn(actor);
+		when(curationRepository.findById(1L)).thenReturn(Optional.of(curation));
+
+		curationService.reportCuration(1L, ReportType.SPAM);
+
+		// 여기에 report 저장 등의 로직이 추가되었다면 검증해줘야 함
+		verify(rq, times(1)).getActor();
+	}
+
+	@Test
+	@DisplayName("조회수가 가장 높은 3개의 큐레이션을 가져옵니다.")
+	void testGetTrendingCuration_whenRedisHasData() {
+		// Given
+
+		Curation c1 = Curation.builder()
+				.id(1L)
+				.title("Test Title1")
+				.content("Test Content1")
+				.viewCount(0L)
+				.tags(new ArrayList<>())
+				.curationLinks(new ArrayList<>())
+				.comments(new ArrayList<>())
+				.member(member)
+				.build();
+		Curation c2 = Curation.builder()
+				.id(2L)
+				.title("Test Title2")
+				.content("Test Content2")
+				.viewCount(0L)
+				.tags(new ArrayList<>())
+				.curationLinks(new ArrayList<>())
+				.comments(new ArrayList<>())
+				.member(member)
+				.build();
+		Curation c3 = Curation.builder()
+				.id(3L)
+				.title("Test Title")
+				.content("Test Content")
+				.viewCount(0L)
+				.tags(new ArrayList<>())
+				.curationLinks(new ArrayList<>())
+				.comments(new ArrayList<>())
+				.member(member)
+				.build();
+
+		ZSetOperations<String, Object> zSetOperations = mock(ZSetOperations.class);
+		when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+
+		when(zSetOperations.reverseRange("day_view_count:", 0, 2)).thenReturn(Set.of("1", "2", "3"));
+
+		when(curationRepository.findById(1L)).thenReturn(Optional.of(c1));
+		when(curationRepository.findById(2L)).thenReturn(Optional.of(c2));
+		when(curationRepository.findById(3L)).thenReturn(Optional.of(c3));
+
+		when(zSetOperations.score("day_view_count:", "1")).thenReturn(50.0);
+		when(zSetOperations.score("day_view_count:", "2")).thenReturn(40.0);
+		when(zSetOperations.score("day_view_count:", "3")).thenReturn(30.0);
+
+		// When
+		TrendingCurationResDto result = curationService.getTrendingCuration();
+
+		// Then
+		assertNotNull(result);
+		assertEquals(3, result.getCurations().size());
+		assertEquals(50L, result.getCurations().get(0).getViewCount()); // 첫 번째 아이템의 조회수 검증
+	}
+
+	@Test
+	@DisplayName("조회수가 가장 높은 3개의 큐레이션을 가져올때 Redis에 데이터가 없을 경우 DB에서 가져옵니다.")
+	void testGetTrendingCuration_whenRedisIsEmpty_thenFallbackToDb() {
+		// Given
+		ZSetOperations<String, Object> zSetOperations = mock(ZSetOperations.class);
+		when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+		when(zSetOperations.reverseRange("day_view_count:", 0, 2)).thenReturn(Collections.emptySet());
+
+		Curation c1 = Curation.builder()
+				.id(1L)
+				.title("Test Title1")
+				.content("Test Content1")
+				.viewCount(100L)
+				.tags(new ArrayList<>())
+				.curationLinks(new ArrayList<>())
+				.comments(new ArrayList<>())
+				.member(member)
+				.build();
+		Curation c2 = Curation.builder()
+				.id(2L)
+				.title("Test Title2")
+				.content("Test Content2")
+				.viewCount(80L)
+				.tags(new ArrayList<>())
+				.curationLinks(new ArrayList<>())
+				.comments(new ArrayList<>())
+				.member(member)
+				.build();
+		Curation c3 = Curation.builder()
+				.id(3L)
+				.title("Test Title")
+				.content("Test Content")
+				.viewCount(60L)
+				.tags(new ArrayList<>())
+				.curationLinks(new ArrayList<>())
+				.comments(new ArrayList<>())
+				.member(member)
+				.build();
+
+		when(curationRepository.findTop3ByOrderByViewCountDesc()).thenReturn(List.of(c1, c2, c3));
+
+		// When
+		TrendingCurationResDto result = curationService.getTrendingCuration();
+
+		// Then
+		assertNotNull(result);
+		assertEquals(3, result.getCurations().size());
+		assertEquals(100, result.getCurations().get(0).getViewCount());
+	}
+
+
+
+
 
 
 }
