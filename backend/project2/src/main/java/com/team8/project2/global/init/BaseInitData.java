@@ -1,13 +1,5 @@
 package com.team8.project2.global.init;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import com.team8.project2.domain.comment.dto.CommentDto;
 import com.team8.project2.domain.comment.service.CommentService;
 import com.team8.project2.domain.curation.curation.entity.Curation;
@@ -26,8 +18,14 @@ import com.team8.project2.domain.playlist.entity.PlaylistItem;
 import com.team8.project2.domain.playlist.repository.PlaylistItemRepository;
 import com.team8.project2.domain.playlist.repository.PlaylistRepository;
 import com.team8.project2.domain.playlist.service.PlaylistService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -95,15 +93,15 @@ public class BaseInitData {
 	}
 
 	private Member createMember(String email, String username, String memberId, String displayName, String password, String profileImage, String introduce, RoleEnum role) {
-		Member member = Member.builder()
-				.email(email)
-				.role(role)
-				.memberId(memberId)
-				.username(displayName)
-				.password(password)
-				.profileImage(profileImage)
-				.introduce(introduce)
-				.build();
+		Member member = new Member(
+				memberId,
+				username,
+				password,
+				role != null ? role : RoleEnum.MEMBER, // 안전하게 기본값 처리
+				profileImage,
+				email,
+				introduce
+		);
 		return memberRepository.save(member);
 	}
 

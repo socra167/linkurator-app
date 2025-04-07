@@ -57,14 +57,14 @@ public class MemberReqDTO {
     }
 
     public Member toEntity() {
-        return Member.builder()
-                .memberId(this.memberId)
-                .password(this.password)
-                .email(this.email)
-                .username(this.username)
-                .profileImage(this.profileImage)
-                .introduce(this.introduce)
-                .role(this.role != null ? this.role : RoleEnum.MEMBER) // 기본값 설정
-                .build();
+        return new Member(
+                this.memberId,
+                this.username,
+                this.password,
+                this.role != null ? this.role : RoleEnum.MEMBER,
+                this.profileImage,
+                this.email,
+                this.introduce
+        );
     }
 }

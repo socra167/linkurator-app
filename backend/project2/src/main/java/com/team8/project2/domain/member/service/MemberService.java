@@ -1,23 +1,9 @@
 package com.team8.project2.domain.member.service;
 
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import com.team8.project2.domain.curation.curation.repository.CurationRepository;
 import com.team8.project2.domain.image.service.S3Uploader;
 import com.team8.project2.domain.member.dto.CuratorInfoDto;
-import com.team8.project2.domain.member.dto.MemberReqDTO;
-
-import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
+import com.team8.project2.domain.member.dto.FollowResDto;
 import com.team8.project2.domain.member.dto.FollowingResDto;
 import com.team8.project2.domain.member.dto.UnfollowResDto;
 import com.team8.project2.domain.member.entity.Follow;
@@ -26,11 +12,20 @@ import com.team8.project2.domain.member.entity.RoleEnum;
 import com.team8.project2.domain.member.event.ProfileImageUpdateEvent;
 import com.team8.project2.domain.member.repository.FollowRepository;
 import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.domain.member.dto.FollowResDto;
 import com.team8.project2.global.Rq;
 import com.team8.project2.global.exception.ServiceException;
-
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -60,13 +55,14 @@ public class MemberService {
 		if (role == null) {
 			role = RoleEnum.MEMBER;
 		}
-		Member member = Member.builder()
-			.memberId(memberId)
-			.password(password)
-			.profileImage(profileImage)
-			.email(email)
-			.introduce(introduce)
-			.build();
+		Member member = new Member(
+				memberId,
+				password,
+				RoleEnum.MEMBER, // 기본값 지정이 사라졌을 수 있으므로 명시
+				email,
+				profileImage,
+				introduce
+		);
 		return memberRepository.save(member);
 	}
 
@@ -109,7 +105,7 @@ public class MemberService {
 		long id = (long)payload.get("id");
 		String memberId = (String)payload.get("memberId");
 
-		return Optional.of(Member.builder().id(id).memberId(memberId).build());
+		return Optional.of(new Member(id,memberId));
 	}
 
 	public String genAccessToken(Member member) {
