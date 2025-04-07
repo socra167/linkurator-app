@@ -1,12 +1,15 @@
 package com.team8.project2.domain.member.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team8.project2.domain.curation.curation.service.CurationService;
-import com.team8.project2.domain.member.dto.MemberReqDTO;
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.domain.member.service.MemberService;
-import org.junit.jupiter.api.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,16 +20,13 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.UUID;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team8.project2.domain.curation.curation.service.CurationService;
+import com.team8.project2.domain.image.service.S3Uploader;
+import com.team8.project2.domain.member.dto.MemberReqDTO;
+import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.member.repository.MemberRepository;
+import com.team8.project2.domain.member.service.MemberService;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -46,23 +46,11 @@ public class ApiV1MemberControllerTest {
     @Autowired
     private CurationService curationService;
 
+    @Autowired
+    private S3Uploader s3Uploader;
+
     private MemberReqDTO memberReqDTO;
 
-    private static String validToken;
-    private static String invalidToken;
-
-    private Member member;
-
-
-    @BeforeAll
-    static void setupTokens() {
-        validToken = "Bearer valid.jwt.token";
-        invalidToken = "Bearer invalid.jwt.token";
-    }
-
-    private ResultActions joinRequest(String memberId, String password, String email) throws Exception{
-        return joinRequest(memberId,password,email,null,null,null);
-    }
     private ResultActions joinRequest(String memberId, String password, String email, String role, String profileImage, String introduce) throws Exception {
         return mvc
                 .perform(
@@ -199,17 +187,16 @@ public class ApiV1MemberControllerTest {
     @Test
     @DisplayName("username 기반 큐레이터 정보 조회")
     void getCuratorInfoTest() throws Exception {
-
-        Member savedMember = memberRepository.findByUsername(memberReqDTO.getUsername()).orElseThrow();
+        Member savedMember = memberRepository.findById(1L).orElseThrow();
         long curationCount = curationService.countByMember(savedMember);
 
         // When
-        mvc.perform(get("/api/v1/members/" + memberReqDTO.getUsername()))
+        mvc.perform(get("/api/v1/members/" + savedMember.getUsername()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200-4"))
-                .andExpect(jsonPath("$.data.username").value("초보"))
-                .andExpect(jsonPath("$.data.profileImage").value("www.url"))
-                .andExpect(jsonPath("$.data.introduce").value("안녕"))
+                .andExpect(jsonPath("$.data.username").value("username"))
+                .andExpect(jsonPath("$.data.profileImage").value(s3Uploader.getBaseUrl() + "default-profile.svg"))
+                .andExpect(jsonPath("$.data.introduce").value("test"))
                 .andExpect(jsonPath("$.data.curationCount").value(curationCount)) // ✅ 예상 값과 실제 값이 일치하도록 변경
                 .andDo(print());
     }
