@@ -18,7 +18,10 @@ import java.util.stream.Collectors;
 /**
  * 플레이리스트(Playlist) 엔티티 클래스입니다.
  * 사용자가 생성한 플레이리스트 정보를 저장합니다.
+ * @deprecated Kotlin으로 마이그레이션됨. Playlist.kt
  */
+
+@Deprecated
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Getter

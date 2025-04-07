@@ -8,6 +8,11 @@ import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDateTime
 
+/**
+ * 플레이리스트(Playlist) 엔티티 클래스입니다.
+ * 사용자가 생성한 플레이리스트 정보를 저장합니다.
+ */
+
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 class Playlist(
