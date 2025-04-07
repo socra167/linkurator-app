@@ -66,6 +66,7 @@ public class ApiV1MemberControllerTest {
         memberReqDTO.setEmail("member1@gmail.com");
         memberReqDTO.setIntroduce("안녕");
 
+
         Member savedMember = memberRepository.findByUsername(memberReqDTO.getUsername())
                 .orElseGet(() -> {
                     Member newMember = memberRepository.save(memberReqDTO.toEntity());
@@ -153,7 +154,6 @@ public class ApiV1MemberControllerTest {
                 .andExpect(jsonPath("$.data.accessToken").exists())
                 .andExpect(jsonPath("$.msg").value("회원 가입이 완료되었습니다."));
 
-        //checkMember(resultActions, member);
     }
 
     @Test
@@ -294,6 +294,50 @@ public class ApiV1MemberControllerTest {
                 .andDo(print());
     }
 
+    @Test
+    @DisplayName("회원 정보 업데이트 - 권한 있는 사용자가 본인 정보 수정 성공")
+    void updateMember_success() throws Exception {
+        //setup
+        MemberReqDTO memberReqDTO2 = new MemberReqDTO();
+        memberReqDTO2.setMemberId("member" + UUID.randomUUID());
+        memberReqDTO2.setUsername("user" + UUID.randomUUID());
+        memberReqDTO2.setPassword("1234");
+        memberReqDTO2.setRole("MEMBER");
+        memberReqDTO2.setProfileImage("www.url");
+        memberReqDTO2.setEmail("member1@gmail.com");
+        memberReqDTO2.setIntroduce("안녕");
+
+        // Given
+        Member member = memberService.join(memberReqDTO2.toEntity());
+        String accessToken = memberService.genAccessToken(member);
+
+        // 수정할 정보
+        String newUsername = "수정된이름";
+        String newEmail = "updated@email.com";
+        String newIntroduce = "자기소개 수정 테스트";
+
+        // When
+        mvc.perform(MockMvcRequestBuilders.put("/api/v1/members/{memberId}", member.getMemberId())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "memberId": "%s",
+                  "username": "%s",
+                  "email": "%s",
+                  "introduce": "%s"
+                }
+            """.formatted(member.getMemberId(), newUsername, newEmail, newIntroduce)))
+                // Then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200-5"))
+                .andExpect(jsonPath("$.msg").value("회원 정보가 수정되었습니다."))
+                .andExpect(jsonPath("$.data.username").value(newUsername))
+                .andExpect(jsonPath("$.data.email").value(newEmail))
+                .andExpect(jsonPath("$.data.introduce").value(newIntroduce))
+                .andDo(print());
+    }
+
     @Nested
     @DisplayName("팔로우")
     class Follow {
@@ -307,7 +351,7 @@ public class ApiV1MemberControllerTest {
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200-1"))
@@ -325,7 +369,7 @@ public class ApiV1MemberControllerTest {
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("400-1"))
@@ -356,7 +400,7 @@ public class ApiV1MemberControllerTest {
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("400-1"))
@@ -372,7 +416,7 @@ public class ApiV1MemberControllerTest {
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/unfollow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/unfollow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200-1"))
@@ -389,7 +433,7 @@ public class ApiV1MemberControllerTest {
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
-            mvc.perform(post("/api/v1/members/%s/unfollow".formatted(followee.getMemberId()))
+            mvc.perform(post("/api/v1/members/%s/unfollow".formatted(followee.getUsername()))
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("400-1"))

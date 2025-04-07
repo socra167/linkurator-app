@@ -57,8 +57,6 @@ public class MemberService {
 	public Member join(String memberId, String password, RoleEnum role, String email, String profileImage,
 		String introduce) {
 
-		//TODO: apikey 할당방식 지정
-		//TODO: RoleEnum 확인 이후 주입 로직 필요
 		if (role == null) {
 			role = RoleEnum.MEMBER;
 		}

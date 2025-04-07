@@ -56,9 +56,6 @@ public class ApiV1MemberController {
                 .ifPresent(member -> {
                     throw new ServiceException("409-1","사용중인 아이디");
                 });
-        //TODO: RoleEnum 초기화 방식 선정
-        //TODO: apikey할당 방식 선정
-        //join(String username, String password,RoleEnum role, String email, String profileImage)
 
         Member member = memberService.join(body.toEntity());
 
@@ -154,9 +151,19 @@ public class ApiV1MemberController {
         }
 
         Member existingMember = memberService.findByMemberId(memberId).get();
-        existingMember.setEmail(updateReqDTO.getEmail());
-        existingMember.setUsername(updateReqDTO.getUsername());
-        existingMember.setIntroduce(updateReqDTO.getIntroduce());
+
+        if (updateReqDTO.getEmail() != null) {
+            existingMember.setEmail(updateReqDTO.getEmail());
+        }
+        if (updateReqDTO.getUsername() != null) {
+            existingMember.setUsername(updateReqDTO.getUsername());
+        }
+        if (updateReqDTO.getProfileImage() != null) {
+            existingMember.setProfileImage(updateReqDTO.getProfileImage());
+        }
+        if (updateReqDTO.getIntroduce() != null) {
+            existingMember.setIntroduce(updateReqDTO.getIntroduce());
+        }
 
         Member updatedMember = memberService.updateMember(existingMember);
         return new RsData<>("200-5", "회원 정보가 수정되었습니다.", MemberResDTO.fromEntity(updatedMember));
