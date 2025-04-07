@@ -397,7 +397,6 @@ public class ApiV1MemberControllerTest {
             Long followeeId = 1L;
             Long followerId = 1L;
             Member followee = memberService.findById(followeeId).get();
-            System.out.println(followee.getMemberId());
             Member member = memberRepository.findById(followerId).get();
             String accessToken = memberService.genAccessToken(member);
 
