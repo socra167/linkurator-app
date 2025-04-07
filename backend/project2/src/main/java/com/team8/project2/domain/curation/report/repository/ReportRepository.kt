@@ -1,30 +1,18 @@
-package com.team8.project2.domain.curation.report.repository;
+package com.team8.project2.domain.curation.report.repository
 
-import com.team8.project2.domain.curation.curation.entity.Curation;
-import com.team8.project2.domain.member.entity.Member;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.team8.project2.domain.curation.report.entity.Report;
-import com.team8.project2.domain.curation.report.entity.ReportType;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
-import java.util.List;
+import com.team8.project2.domain.curation.report.entity.Report
+import com.team8.project2.domain.curation.report.entity.ReportType
+import com.team8.project2.domain.member.entity.Member
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
 
 @Repository
-public interface ReportRepository extends JpaRepository<Report, Long> {
-	boolean existsByCurationIdAndReporterIdAndReportType(Long curationId, Long id, ReportType reportType);
+interface ReportRepository : JpaRepository<Report, Long> {
+    fun existsByCurationIdAndReporterIdAndReportType(curationId: Long, id: Long?, reportType: ReportType): Boolean
 
-	@Query("SELECT r.curation.id, r.reportType, COUNT(r) " +
-			"FROM Report r " +
-			"WHERE r.curation.id IN :curationIds " +
-			"GROUP BY r.curation.id, r.reportType")
-	List<Object[]> countReportsByCurationIds(@Param("curationIds") List<Long> curationIds);
+    fun findByCurationIdIn(reportedCurationIds: List<Long>): List<Report>
 
-	List<Report> findByCurationIdIn(List<Long> reportedCurationIds);
+    fun deleteByCurationId(curationId: Long)
 
-	void deleteByCurationId(Long curationId);
-
-	List<Report> findAllByReporter(Member reporter);
+    fun findAllByReporter(reporter: Member): List<Report>
 }
