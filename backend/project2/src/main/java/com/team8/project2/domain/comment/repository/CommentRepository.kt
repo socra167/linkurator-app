@@ -10,17 +10,17 @@ import org.springframework.stereotype.Repository
  * JPA를 사용하여 데이터베이스 연산을 수행합니다.
  */
 @Repository
-interface CommentRepository : JpaRepository<Comment?, Long?> {
+interface CommentRepository : JpaRepository<Comment, Long> {
     /**
      * 특정 큐레이션 ID에 해당하는 모든 댓글을 조회합니다.
      * @param curationId 큐레이션 ID
      * @return 해당 큐레이션에 속한 댓글 리스트
      */
-    fun findByCurationId(curationId: Long?): List<Comment?>?
+    fun findByCurationId(curationId: Long): List<Comment>
 
-    fun findAllByAuthor_Id(memberId: Long?): List<Comment?>?
+    fun findAllByAuthor_Id(memberId: Long): List<Comment>
 
-    fun findAllByAuthor(author: Member?): List<Comment?>?
+    fun findAllByAuthor(author: Member): List<Comment>
 
-    fun deleteByAuthor(member: Member?)
+    fun deleteByAuthor(member: Member)
 }
