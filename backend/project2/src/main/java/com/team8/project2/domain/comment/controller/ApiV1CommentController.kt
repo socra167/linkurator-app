@@ -35,9 +35,12 @@ class ApiV1CommentController(
 	): RsData<CommentDto> {
 		val actor: Member = rq.getActor()
 		val createdComment = commentService.createComment(actor, curationId, commentDto)
-		return RsData("200-2", "댓글이 작성되었습니다.", createdComment)
+		return RsData.success("댓글이 작성되었습니다.", createdComment)
 	}
 
+	/**
+	 * 댓글에 답글을 작성합니다.
+	 */
 	@PostMapping("/{id}/reply")
 	@PreAuthorize("isAuthenticated()")
 	fun createReplyComment(
@@ -46,27 +49,22 @@ class ApiV1CommentController(
 		@RequestBody replyDto: CommentDto
 	): RsData<ReplyCommentDto> {
 		val replyCommentDto = commentService.createReplyComment(curationId, commentId, replyDto.content)
-		return RsData("200-2", "댓글의 답글이 작성되었습니다.", replyCommentDto)
+		return RsData.success("댓글의 답글이 작성되었습니다.", replyCommentDto)
 	}
 
 	/**
 	 * 특정 큐레이션에 속한 댓글 목록을 조회합니다.
-	 * @param curationId 큐레이션 ID
-	 * @return 해당 큐레이션의 댓글 목록을 포함한 응답
 	 */
 	@GetMapping
 	fun getCommentsByCurationId(
 		@PathVariable curationId: Long
 	): RsData<List<CommentDto>> {
 		val comments = commentService.getCommentsByCurationId(curationId)
-		return RsData("200-2", "댓글이 조회되었습니다.", comments)
+		return RsData.success("댓글이 조회되었습니다.", comments)
 	}
 
 	/**
 	 * 특정 댓글을 수정합니다.
-	 * @param commentId 수정할 댓글 ID
-	 * @param commentDto 댓글 수정 요청 데이터
-	 * @return 수정된 댓글
 	 */
 	@PutMapping("/{id}")
 	@PreAuthorize("@commentService.canEditComment(#commentId, #userDetails)")
@@ -76,16 +74,11 @@ class ApiV1CommentController(
 		@AuthenticationPrincipal userDetails: UserDetails
 	): RsData<CommentDto> {
 		val updatedComment = commentService.updateComment(commentId, commentDto)
-		return RsData("200-2", "댓글이 수정되었습니다.", updatedComment)
+		return RsData.success("댓글이 수정되었습니다.", updatedComment)
 	}
 
 	/**
 	 * 특정 답글을 수정합니다.
-	 * @param commentId 댓글 ID
-	 * @param replyId 답글 ID
-	 * @param replyDto 변경할 답글 내용 DTO
-	 * @param userDetails 인증 정보
-	 * @return 수정된 답글
 	 */
 	@PutMapping("/{commentId}/reply/{id}")
 	@PreAuthorize("@commentService.canEditReply(#replyId, #userDetails)")
@@ -96,13 +89,11 @@ class ApiV1CommentController(
 		@AuthenticationPrincipal userDetails: UserDetails
 	): RsData<ReplyCommentDto> {
 		val updatedReplyDto = commentService.updateReply(replyId, replyDto)
-		return RsData("200-2", "답글이 수정되었습니다.", updatedReplyDto)
+		return RsData.success("답글이 수정되었습니다.", updatedReplyDto)
 	}
 
 	/**
 	 * 특정 댓글을 삭제합니다.
-	 * @param commentId 삭제할 댓글 ID
-	 * @return 빈 응답 객체를 포함한 응답
 	 */
 	@DeleteMapping("/{id}")
 	@PreAuthorize("@commentService.canDeleteComment(#commentId, #userDetails)")
@@ -111,9 +102,12 @@ class ApiV1CommentController(
 		@AuthenticationPrincipal userDetails: UserDetails
 	): RsData<Void> {
 		commentService.deleteComment(commentId)
-		return RsData("200-1", "댓글이 삭제되었습니다.")
+		return RsData.success("댓글이 삭제되었습니다.", null)
 	}
 
+	/**
+	 * 특정 답글을 삭제합니다.
+	 */
 	@DeleteMapping("/{commentId}/reply/{id}")
 	@PreAuthorize("@commentService.canDeleteReply(#replyId, #userDetails)")
 	fun deleteReply(
@@ -122,6 +116,6 @@ class ApiV1CommentController(
 		@AuthenticationPrincipal userDetails: UserDetails
 	): RsData<Void> {
 		commentService.deleteReply(replyId)
-		return RsData("200-1", "답글이 삭제되었습니다.")
+		return RsData.success("답글이 삭제되었습니다.", null)
 	}
 }
