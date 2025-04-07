@@ -13,24 +13,41 @@ import java.time.LocalDateTime
     AuditingEntityListener::class
 )
 class Member() {
-    @Id // PRIMARY KEY
+    @Id // 기본키
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT
-    private var id: Long? = null // long -> null X, Long -> null O
+    private var id: Long? = null
+
+    //nullable인데 null 예외 처리가 되어있음
+    @get:JvmName("getId") // Java에서 getId()로 보이게
+    val idOrThrow: Long?
+        get() = id ?: throw UninitializedPropertyAccessException("id is not initialized")
 
     @CreatedDate
-    private val createdDate: LocalDateTime? = null
+    val createdDate: LocalDateTime? = null
 
     @LastModifiedDate
-    private val modifiedDate: LocalDateTime? = null
+    val modifiedDate: LocalDateTime? = null
 
     @Column(length = 100, unique = true)
-    lateinit var memberId: String
+    private var memberId: String? = null
+
+    @get:JvmName("getMemberId")
+    val memberIdOrThrow: String
+        get() = memberId ?: throw UninitializedPropertyAccessException("memberId is not initialized")
+
+    @Column(nullable = false)
+    private var password: String? = null
+
+    @get:JvmName("getPassword")
+    val passwordOrThrow: String
+        get() = password ?: throw UninitializedPropertyAccessException("password is not initialized")
 
     @Column(length = 100, unique = true, nullable = true)
     private var username: String? = null
 
-    @Column(nullable = false)
-    private var password: String? = null
+    @get:JvmName("getUsername")
+    val usernameOrThrow: String
+        get() = username ?: throw UninitializedPropertyAccessException("password is not initialized")
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) //@Builder.Default
@@ -45,21 +62,7 @@ class Member() {
     @Column
     var introduce: String? = null
 
-    fun getId(): Long {
-        return id!!
-    }
-
-    fun getUsername(): String? {
-        return username
-    }
-
-    fun setUsername(username: String?) {
-        this.username = username
-    }
-
-    fun getPassword(): String? {
-        return password
-    }
+    //생성자
     constructor(
         memberId: String,
         password: String?,
@@ -99,7 +102,12 @@ class Member() {
         this.introduce = introduce
     }
 
+    // setter
+    fun setUsername(newName: String) {
+        this.username = newName
+    }
 
+    // 상태 체크
     val isAdmin: Boolean
         get() = this.role == RoleEnum.ADMIN
     val isMember: Boolean
