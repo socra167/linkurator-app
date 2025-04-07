@@ -32,9 +32,7 @@ public class UnusedImageCleanerServiceTest {
 	public void testCleanUnusedImages() {
 		var imageName = "imageName.png";
 		when(curationImageRepository.findUnusedImages(any(LocalDateTime.class)))
-			.thenReturn(List.of(CurationImage.builder()
-				.imageName(imageName)
-				.build()));
+			.thenReturn(List.of(new CurationImage(imageName)));
 
 		// when: cleanUnusedImages 메서드 호출
 		unusedImageCleanerService.cleanUnusedImages();

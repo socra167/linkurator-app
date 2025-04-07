@@ -14,13 +14,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
@@ -43,6 +41,10 @@ public class CurationImage {
 	@Setter(AccessLevel.PRIVATE)
 	@Column(name = "uploadedAt", nullable = false, updatable = false)
 	private LocalDateTime uploadedAt;
+
+	public CurationImage(String imageName) {
+		this.imageName = imageName;
+	}
 
 	public void setCurationIdIfNull(Long curationId) {
 		if (this.curationId == null) {
