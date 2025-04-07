@@ -65,6 +65,10 @@ dependencies {
 
 	// Redis
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 }
 
 tasks.test {
