@@ -151,7 +151,19 @@ public class ApiV1MemberController {
         }
 
         Member existingMember = memberService.findByMemberId(memberId).get();
-        updateReqDTO.ToMemberReqDTO(existingMember);
+
+        if (updateReqDTO.getEmail() != null) {
+            existingMember.setEmail(updateReqDTO.getEmail());
+        }
+        if (updateReqDTO.getUsername() != null) {
+            existingMember.setUsername(updateReqDTO.getUsername());
+        }
+        if (updateReqDTO.getProfileImage() != null) {
+            existingMember.setProfileImage(updateReqDTO.getProfileImage());
+        }
+        if (updateReqDTO.getIntroduce() != null) {
+            existingMember.setIntroduce(updateReqDTO.getIntroduce());
+        }
 
         Member updatedMember = memberService.updateMember(existingMember);
         return new RsData<>("200-5", "회원 정보가 수정되었습니다.", MemberResDTO.fromEntity(updatedMember));

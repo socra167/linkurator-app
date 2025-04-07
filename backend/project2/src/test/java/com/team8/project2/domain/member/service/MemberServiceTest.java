@@ -35,11 +35,6 @@ public class MemberServiceTest {
     @Mock private MemberRepository memberRepository;
     @Mock private AuthTokenService authTokenService;
     @Mock private FollowRepository followRepository;
-    @Mock private Rq rq;
-    @Mock private ApplicationEventPublisher eventPublisher;
-    @Mock private CurationRepository curationRepository;
-    @Mock
-    private S3Uploader s3Uploader;
 
     @Test
     @DisplayName("회원 가입 - null 가능 필드가 모두 채워졌을 때 정상 저장된다.")

@@ -33,10 +33,4 @@ public class MemberUpdateReqDTO {
     @JsonProperty("introduce")
     private String introduce;
 
-    public void ToMemberReqDTO(Member member) {
-        if (this.email != null) member.setEmail(this.email);
-        if (this.username != null) member.setUsername(this.username);
-        if (this.profileImage != null) member.setProfileImage(this.profileImage);
-        if (this.introduce != null) member.setIntroduce(this.introduce);
-    }
 }
