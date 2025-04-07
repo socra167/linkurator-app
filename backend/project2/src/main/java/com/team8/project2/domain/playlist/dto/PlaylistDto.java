@@ -1,5 +1,6 @@
 package com.team8.project2.domain.playlist.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.team8.project2.domain.member.entity.Member;
 import com.team8.project2.domain.playlist.entity.Playlist;
 import lombok.Builder;
@@ -37,6 +38,7 @@ public class PlaylistDto {
     /**
      * 플레이리스트 공개 여부
      */
+    @JsonProperty("isPublic")
     private boolean isPublic;
 
     /**
