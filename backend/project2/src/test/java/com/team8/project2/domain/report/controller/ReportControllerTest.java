@@ -47,7 +47,7 @@ class ReportControllerTest {
     @DisplayName("신고한 큐레이션 목록을 조회할 수 있다")
     void getMyReportedCurations() throws Exception {
         Curation curation = curationRepository.findById(1L).orElseThrow();
-        reportRepository.save(Report.builder().reporter(reporter).curation(curation).reportType(ReportType.ABUSE).build());
+        reportRepository.save(new Report(curation, ReportType.ABUSE, reporter));
 
         mockMvc.perform(get("/api/v1/reports/myreported/{memberId}", reporter.getId())
                         .header("Authorization", "Bearer " + accessToken))

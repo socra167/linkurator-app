@@ -29,7 +29,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
@@ -54,4 +53,10 @@ public class Report {
 
 	@CreatedDate
 	private LocalDateTime reportDate;
+
+	public Report(Curation curation, ReportType reportType, Member reporter) {
+		this.curation = curation;
+		this.reporter = reporter;
+		this.reportType = reportType;
+	}
 }

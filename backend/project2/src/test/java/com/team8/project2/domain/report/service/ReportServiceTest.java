@@ -39,23 +39,9 @@ class ReportServiceTest {
         Member reporter1 = memberRepository.findById(2L).orElseThrow();
         Member reporter2 = memberRepository.findById(3L).orElseThrow();
 
-        reportRepository.save(Report.builder()
-                .curation(curation)
-                .reporter(reporter1)
-                .reportType(ReportType.ABUSE)
-                .build());
-
-        reportRepository.save(Report.builder()
-                .curation(curation)
-                .reporter(reporter2)
-                .reportType(ReportType.SPAM)
-                .build());
-
-        reportRepository.save(Report.builder()
-                .curation(curation)
-                .reporter(reporter1)
-                .reportType(ReportType.ABUSE)
-                .build());
+        reportRepository.save(new Report(curation, ReportType.ABUSE, reporter1));
+        reportRepository.save(new Report(curation, ReportType.SPAM, reporter2));
+        reportRepository.save(new Report(curation, ReportType.ABUSE, reporter1));
 
         // when
         List<ReportedCurationsDetailResDto> result = reportService.getReportedCurationsDetailResDtos(List.of(curation.getId()));
