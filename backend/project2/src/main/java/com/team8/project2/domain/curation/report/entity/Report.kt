@@ -1,62 +1,41 @@
-package com.team8.project2.domain.curation.report.entity;
+package com.team8.project2.domain.curation.report.entity
 
-import java.time.LocalDateTime;
+import com.team8.project2.domain.curation.curation.entity.Curation
+import com.team8.project2.domain.member.entity.Member
+import jakarta.persistence.*
+import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
+import java.time.LocalDateTime
 
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import com.team8.project2.domain.curation.curation.entity.Curation;
-import com.team8.project2.domain.member.entity.Member;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
 @Entity
 @Table(name = "Report")
-public class Report {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "reportId")
-	private Long id;
+@EntityListeners(AuditingEntityListener::class)
+class Report(
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "curationId")
-	private Curation curation;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "reportId")
+    val id: Long? = null,
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "reporterId")
-	private Member reporter;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "curationId")
+    var curation: Curation,
 
-	@Enumerated(EnumType.STRING)
-	private ReportType reportType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporterId")
+    var reporter: Member,
 
-	@CreatedDate
-	private LocalDateTime reportDate;
+    @Enumerated(EnumType.STRING)
+    var reportType: ReportType,
 
-	public Report(Curation curation, ReportType reportType, Member reporter) {
-		this.curation = curation;
-		this.reporter = reporter;
-		this.reportType = reportType;
-	}
+    @CreatedDate
+    @Column(updatable = false)
+    var reportDate: LocalDateTime? = null
+) {
+    constructor(curation: Curation, reportType: ReportType, reporter: Member) : this(
+        id = null,
+        curation = curation,
+        reporter = reporter,
+        reportType = reportType
+    )
 }
