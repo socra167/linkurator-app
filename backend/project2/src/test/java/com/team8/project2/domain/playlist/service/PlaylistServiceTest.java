@@ -17,8 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
@@ -29,7 +28,9 @@ import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.util.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -597,10 +598,8 @@ class PlaylistServiceTest {
                 .member(sampleMember)
                 .build();
 
-        // Given: Redis 캐시가 없음을 설정 (cache miss)
         when(valueOperations.get("playlist:recommend:" + playlistId)).thenReturn(null);
 
-        // Given: Redis의 ZSet 연산 모킹 - trending 및 popular 플레이리스트 설정
         Set<Object> trendingPlaylists = new HashSet<>(Arrays.asList("2", "3"));
         Set<Object> popularPlaylists = new HashSet<>(Arrays.asList("3", "4"));
 
@@ -618,7 +617,6 @@ class PlaylistServiceTest {
                 .when(zSetOperations)
                 .reverseRange(eq("popular:24h"), eq(0L), eq(5L));
 
-        // Given: 추천 플레이리스트 ID 목록과 mock 추천 플레이리스트 데이터 준비
         List<Long> recommendedPlaylistIds = Arrays.asList(2L, 3L, 4L);
         List<Playlist> mockPlaylists = Arrays.asList(
                 Playlist.builder().id(2L).title("추천1").description("설명1")
@@ -629,17 +627,55 @@ class PlaylistServiceTest {
                         .tags(new HashSet<>()).member(sampleMember).build()
         );
 
-        // Given: Repository 모킹 설정
         when(playlistRepository.findAllById(any())).thenReturn(mockPlaylists);
         when(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist));
         when(rq.getActor()).thenReturn(sampleMember);
 
-        // When: 캐시가 없으므로 추천 알고리즘을 실행하여 추천 리스트를 생성
+        // When
         List<PlaylistDto> recommendations = playlistService.recommendPlaylist(playlistId, sortType);
 
-        // Then: 추천 결과가 3건이어야 하며, Redis 캐시에 추천 결과가 저장되어야 함
+        // Then
         assertEquals(3, recommendations.size());
         verify(valueOperations, times(1))
                 .set(eq("playlist:recommend:" + playlistId), any(), any());
     }
+
+
+    @DisplayName("공개 플레이리스트를 내 플레이리스트로 복사한다.")
+    @Test
+    void addPublicPlaylistToMyPlaylist() {
+        // given
+        Member member = Member.builder().id(1L).username("testUser").build();
+        Playlist originalPlaylist = Playlist.builder()
+                .id(100L)
+                .title("공개 플레이리스트")
+                .description("공개 설명")
+                .isPublic(true)
+                .items(new ArrayList<>())
+                .member(Member.builder().id(2L).build())
+                .build();
+
+        given(rq.getActor()).willReturn(member);
+        given(playlistRepository.findById(originalPlaylist.getId()))
+                .willReturn(Optional.of(originalPlaylist));
+        given(playlistRepository.save(any(Playlist.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        PlaylistDto result = playlistService.addPublicPlaylist(originalPlaylist.getId());
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.isOwner()).isTrue();
+        assertThat(result.getTitle()).isEqualTo(originalPlaylist.getTitle());
+        assertThat(result.getDescription()).isEqualTo(originalPlaylist.getDescription());
+        assertThat(result.isPublic()).isFalse();
+        assertThat(result.getItems()).hasSize(originalPlaylist.getItems().size());
+    }
+
+
+
+
+
+
 }
