@@ -11,7 +11,10 @@ import lombok.NoArgsConstructor;
 /**
  * 플레이리스트 생성 요청을 위한 DTO 클래스입니다.
  * 클라이언트가 전송하는 플레이리스트 데이터를 검증하고 전달합니다.
+ * @deprecated Kotlin으로 마이그레이션됨. PlaylistCreateDto.kt
  */
+
+@Deprecated
 @Data
 @Builder
 @NoArgsConstructor
