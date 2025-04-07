@@ -1,38 +1,47 @@
 package com.team8.project2.domain.curation.service;
 
 import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto;
+import com.team8.project2.domain.curation.curation.dto.CurationResDto;
 import com.team8.project2.domain.curation.curation.entity.Curation;
 import com.team8.project2.domain.curation.curation.entity.CurationLink;
 import com.team8.project2.domain.curation.curation.entity.CurationTag;
 import com.team8.project2.domain.curation.curation.entity.SearchOrder;
+import com.team8.project2.domain.curation.curation.event.CurationUpdateEvent;
 import com.team8.project2.domain.curation.curation.repository.CurationLinkRepository;
 import com.team8.project2.domain.curation.curation.repository.CurationRepository;
 import com.team8.project2.domain.curation.curation.repository.CurationTagRepository;
 import com.team8.project2.domain.curation.curation.service.CurationService;
+import com.team8.project2.domain.curation.curation.service.CurationViewService;
 import com.team8.project2.domain.curation.like.entity.Like;
 import com.team8.project2.domain.curation.like.repository.LikeRepository;
+import com.team8.project2.domain.curation.report.repository.ReportRepository;
 import com.team8.project2.domain.curation.tag.entity.Tag;
 import com.team8.project2.domain.curation.tag.service.TagService;
 import com.team8.project2.domain.link.entity.Link;
 import com.team8.project2.domain.link.service.LinkService;
 import com.team8.project2.domain.member.entity.Member;
 import com.team8.project2.domain.member.repository.MemberRepository;
+import com.team8.project2.domain.member.service.MemberService;
+import com.team8.project2.global.Rq;
 import com.team8.project2.global.exception.ServiceException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.aspectj.util.Reflection;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.ListOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.*;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -69,6 +78,18 @@ class CurationServiceTest {
 	@Mock
 	private RedisTemplate<String, Object> redisTemplate;
 
+	@Mock
+	private ApplicationEventPublisher eventPublisher;
+
+	@Mock
+	private ReportRepository reportRepository;
+
+	@Mock
+	private MemberService memberService;
+
+	@Mock
+	private CurationViewService  curationViewService;
+
 	@InjectMocks
 	private  CurationService curationService;
 
@@ -90,6 +111,10 @@ class CurationServiceTest {
 				.id(1L)
 				.title("Test Title")
 				.content("Test Content")
+				.viewCount(0L)
+				.tags(new ArrayList<>())
+				.curationLinks(new ArrayList<>())
+				.comments(new ArrayList<>())
 				.member(member)
 				.build();
 
@@ -157,6 +182,7 @@ class CurationServiceTest {
 		when(curationRepository.save(any(Curation.class))).thenReturn(curation);
 		when(curationLinkRepository.saveAll(ArgumentMatchers.anyList())).thenReturn(List.of(new CurationLink()));
 		when(curationTagRepository.saveAll(ArgumentMatchers.anyList())).thenReturn(List.of(new CurationTag()));
+		doNothing().when(eventPublisher).publishEvent(any(CurationUpdateEvent.class));
 
 		// When: 큐레이션 업데이트 호출
 		Curation updatedCuration = curationService.updateCuration(1L, "Updated Title", "Updated Content", urls, tags, member);
@@ -201,6 +227,10 @@ class CurationServiceTest {
 
 		// Mocking the actual delete operation
 		doNothing().when(curationRepository).deleteById(anyLong());
+		doNothing().when(reportRepository).deleteByCurationId(anyLong());
+
+		ZSetOperations<String, Object> zSetOperations = mock(ZSetOperations.class);
+		when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
 		// Execute the service method to delete curation
 		curationService.deleteCuration(1L, member);
@@ -234,9 +264,18 @@ class CurationServiceTest {
 
 		ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
 		when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+		SetOperations<String, Object> setOperations = mock(SetOperations.class);
+		when(redisTemplate.opsForSet()).thenReturn(setOperations);
 
 		// Mocking repository to return a Curation
 		when(curationRepository.findById(anyLong())).thenReturn(Optional.of(curation));
+
+		when(memberService.isFollowed(any(), any())).thenReturn(true);
+
+		Rq rq = mock(Rq.class);
+		when(rq.isLogin()).thenReturn(true);
+		when(rq.getActor()).thenReturn(mock(Member.class));
+		ReflectionTestUtils.setField(curationService, "rq", rq);
 
 		CurationDetailResDto retrievedCuration = curationService.getCuration(1L, request);
 
@@ -257,9 +296,20 @@ class CurationServiceTest {
 		// Given: Redis와 큐레이션 관련 의존성 준비
 		ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
 		when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+		ZSetOperations<String, Object> zSetOperations = mock(ZSetOperations.class);
+		when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+		SetOperations<String, Object> setOperations = mock(SetOperations.class);
+		when(redisTemplate.opsForSet()).thenReturn(setOperations);
+
+		Rq rq = mock(Rq.class);
+		when(rq.isLogin()).thenReturn(true);
+		when(rq.getActor()).thenReturn(mock(Member.class));
+		ReflectionTestUtils.setField(curationService, "rq", rq);
+
+		doNothing().when(curationViewService).increaseViewCount(curation);
 
 		// 첫 번째 조회에서만 true 반환하고, 그 이후에는 false 반환하도록 설정
-		when(valueOperations.setIfAbsent(anyString(), eq("true"), eq(Duration.ofMinutes(10))))
+		when(valueOperations.setIfAbsent(anyString(), eq("true"), eq(Duration.ofDays(1))))
 				.thenReturn(true)  // 첫 번째 조회에서는 키가 없으므로 true 반환
 				.thenReturn(false); // 두 번째 이후의 조회에서는 키가 이미 있으므로 false 반환
 
@@ -275,7 +325,7 @@ class CurationServiceTest {
 		curationService.getCuration(1L, request);  // 세 번째 조회
 
 		// Then: 조회수는 한 번만 증가해야 한다
-		assertEquals(initialViewCount + 1, curation.getViewCount()); // 조회수가 1만 증가해야 한다.
+		verify(curationViewService, times(1)).increaseViewCount(curation);
 	}
 
 	@Test
@@ -301,11 +351,15 @@ class CurationServiceTest {
 
 	@Test
 	void findAllCuration() {
-		when(curationRepository.searchByFilters(ArgumentMatchers.anyList(), anyInt(), anyString(), anyString(), any(), any()))
-			.thenReturn(List.of(curation));
 
-		List<Curation> foundCurations = curationService.searchCurations(List.of("tag"), "title", "content", null,
-			SearchOrder.LATEST);
+		SetOperations<String, Object> setOperations = mock(SetOperations.class);
+		when(redisTemplate.opsForSet()).thenReturn(setOperations);
+
+		when(curationRepository.searchByFilters(ArgumentMatchers.anyList(), anyInt(), anyString(), anyString(), any(), any()))
+			.thenReturn(new PageImpl<>(List.of(curation), PageRequest.of(0, 20), 1));
+
+		List<CurationResDto> foundCurations = curationService.searchCurations(List.of("tag"), "title", "content", null,
+			SearchOrder.LATEST,1,20).getCurations();
 
 		// Verify the result
 		assert foundCurations != null;
@@ -319,69 +373,83 @@ class CurationServiceTest {
 	@Test
 	@DisplayName("큐레이션 좋아요 기능을 테스트합니다.")
 	void likeCuration() {
-		Long expectedId = 1L;
+		Long curationId = 1L;
+		Long memberId = 1L;
 
-		ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
-		when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+		String redisKey = "curation_like:" + curationId;
+		String redisValue = String.valueOf(memberId);
 
-		ListOperations<String, Object> listOps = mock(ListOperations.class);
-		when(listOps.rightPop(anyString(), any(Duration.class)))
-				.thenReturn(expectedId.toString())
-				.thenReturn(null);
+		// 실제 큐레이션과 멤버 객체
+		Curation mockCuration = mock(Curation.class);
+		Member mockMember = mock(Member.class);
 
-		when(redisTemplate.opsForList()).thenReturn(listOps);
-		when(curationRepository.findById(anyLong())).thenReturn(Optional.of(curation));
-		when(memberRepository.findById(anyLong())).thenReturn(Optional.of(new Member()));
-		when(likeRepository.findByCurationAndMember(any(Curation.class), any(Member.class))).thenReturn(
-			Optional.empty());
+		// 레디스 LUA 실행 결과: 1이면 좋아요 추가, 0이면 삭제
+		when(redisTemplate.execute(
+				any(DefaultRedisScript.class),
+				eq(Collections.singletonList(redisKey)),
+				eq(redisValue)
+		)).thenReturn(1L); // 좋아요 추가된 상황 가정
 
-		curationService.likeCuration(1L, expectedId);
+		// 저장소 모킹
+		when(curationRepository.findById(curationId)).thenReturn(Optional.of(mockCuration));
+		when(memberRepository.findById(memberId)).thenReturn(Optional.of(mockMember));
 
-		await().atMost(Duration.ofSeconds(5)).until(() -> {
-			// verify를 await() 안에 넣어서 특정 조건이 만족될 때까지 기다립니다.
-			verify(curationRepository, times(1)).findById(anyLong());
-			verify(memberRepository, times(1)).findById(anyLong());
-			verify(likeRepository, times(1)).findByCurationAndMember(any(Curation.class), any(Member.class));
-			verify(likeRepository, times(1)).save(any(Like.class));
-			return true;  // 모든 verify가 실행되었음을 확인하고 종료
-		});
+		// 실행
+		curationService.likeCuration(curationId, memberId);
 
+		// 검증
+		verify(curationRepository, times(1)).findById(curationId);
+		verify(memberRepository, times(1)).findById(memberId);
+		verify(redisTemplate, times(1)).execute(
+				any(DefaultRedisScript.class),
+				eq(Collections.singletonList(redisKey)),
+				eq(redisValue)
+		);
 	}
+
+
 
 
 	@Test
-	@DisplayName("큐레이션 좋아요를 한 번 더 누르면 취소되고 카운트가 감소해야 합니다.")
+	@DisplayName("큐레이션 좋아요를 한 번 더 누르면 Redis에서 취소 처리가 되어야 합니다.")
 	void likeCurationWithCancel() {
-		Long expectedId = 1L;
+		Long curationId = 1L;
+		Long memberId = 1L;
 
-		ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
-		when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+		String redisKey = "curation_like:" + curationId;
+		String redisValue = String.valueOf(memberId);
 
-		ListOperations<String, Object> listOps = mock(ListOperations.class);
-		when(listOps.rightPop(anyString(), any(Duration.class)))
-				.thenReturn(expectedId.toString())
-				.thenReturn(null);
+		// Redis에서 좋아요가 이미 있어서 제거됨
+		when(redisTemplate.execute(
+				any(DefaultRedisScript.class),
+				eq(Collections.singletonList(redisKey)),
+				eq(redisValue)
+		)).thenReturn(0L);
 
-		when(redisTemplate.opsForList()).thenReturn(listOps);
-		when(curationRepository.findById(anyLong())).thenReturn(Optional.of(curation));
-		when(memberRepository.findById(anyLong())).thenReturn(Optional.of(new Member()));
-		when(likeRepository.findByCurationAndMember(any(Curation.class), any(Member.class)))
-				.thenReturn(Optional.of(new Like()));
-		doNothing().when(likeRepository).delete(any(Like.class));
+		Curation mockCuration = mock(Curation.class);
+		Member mockMember = mock(Member.class);
 
-		curationService.likeCuration(1L, expectedId);
+		when(curationRepository.findById(eq(curationId))).thenReturn(Optional.of(mockCuration));
+		when(memberRepository.findById(eq(memberId))).thenReturn(Optional.of(mockMember));
 
-		await().atMost(Duration.ofSeconds(5)).until(() -> {
-			// Verify that the like was deleted (cancelled)
-			verify(likeRepository, times(1)).findByCurationAndMember(any(), any());
-			verify(likeRepository, times(1)).delete(any(Like.class));
+		curationService.likeCuration(curationId, memberId);
 
-			// Verify that the like count was decreased
-			verify(curationRepository, times(1)).save(any(Curation.class)); // Just verify the save method was called
-			return true;  // 모든 verify가 실행되었음을 확인하고 종료
-		});
+		// 검증
+		verify(redisTemplate, times(1)).execute(
+				any(DefaultRedisScript.class),
+				eq(Collections.singletonList(redisKey)),
+				eq(redisValue)
+		);
 
+		verify(curationRepository, times(1)).findById(eq(curationId));
+		verify(memberRepository, times(1)).findById(eq(memberId));
+
+		// likeRepository는 호출되지 않아야 함
+		verifyNoInteractions(likeRepository);
 	}
+
+
+
 
 	@Test
 	@DisplayName("존재하지 않는 큐레이션에 좋아요를 누르면 예외가 발생해야 합니다.")
