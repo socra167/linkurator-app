@@ -780,6 +780,46 @@ class PlaylistServiceTest {
     }
 
 
+    @DisplayName("현재 로그인한 사용자가 좋아요한 플레이리스트 목록 조회한다")
+    @Test
+    void getLikedPlaylists() {
+        // given
+        Long memberId = 1L;
+        String redisKey = "member_liked_playlists:" + memberId;
+
+        Playlist playlist1 = Playlist.builder()
+                .id(10L)
+                .title("좋아요한 첫 번째 플레이리스트")
+                .member(sampleMember)
+                .build();
+
+        Playlist playlist2 = Playlist.builder()
+                .id(20L)
+                .title("좋아요한 두 번째 플레이리스트")
+                .member(sampleMember)
+                .build();
+
+        Set<Object> likedIds = new HashSet<>(Arrays.asList("10", "20"));
+
+        given(rq.getActor()).willReturn(sampleMember);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
+        given(setOperations.members(redisKey)).willReturn(likedIds);
+        given(playlistRepository.findAllById(anyList())).willReturn(List.of(playlist1, playlist2));
+
+        // when
+        List<PlaylistDto> result = playlistService.getLikedPlaylistsFromRedis(memberId);
+
+        // then
+        assertThat(result).hasSize(2);
+        List<Long> ids = result.stream().map(PlaylistDto::getId).toList();
+        assertThat(ids).containsExactlyInAnyOrder(10L, 20L);
+
+        verify(setOperations, times(1)).members(redisKey);
+        verify(playlistRepository, times(1)).findAllById(anyList());
+    }
+
+
+
 
 
 
