@@ -73,6 +73,6 @@ class ReportControllerTest {
         mockMvc.perform(get("/api/v1/reports/myreported/{memberId}", 3L)
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("$.code").value("404-1"));
+                .andExpect(jsonPath("$.code").value("403-1"));
     }
 }

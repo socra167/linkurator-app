@@ -38,7 +38,7 @@ public class Member {
     @Id // PRIMARY KEY
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT
     @Setter(AccessLevel.PRIVATE)
-    private Long id; // long -> null X, Long -> null O
+    public Long id; // long -> null X, Long -> null O // 임시 public
 
     @CreatedDate
     @Setter(AccessLevel.PRIVATE)
