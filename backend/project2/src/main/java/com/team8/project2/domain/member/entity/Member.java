@@ -26,11 +26,6 @@ public class Member {
     @Setter(AccessLevel.PRIVATE)
     private Long id; // long -> null X, Long -> null O
 
-    // TODO : ✅ Kotlin에서 접근 가능하도록 명시적 getter 추가
-    public Long getId() {
-        return this.id;
-    }
-
     @CreatedDate
     @Setter(AccessLevel.PRIVATE)
     private LocalDateTime createdDate;
@@ -80,5 +75,20 @@ public class Member {
         }
 
         return authorities;
+    }
+
+    // TODO : ✅ Kotlin에서 접근 가능하도록 명시적 getter 추가
+    public Long getId() {
+        return this.id;
+    }
+
+    // TODO : ✅ Kotlin에서 접근 가능하도록 명시적 getter 추가
+    public String getUsername() {
+        return this.username;
+    }
+
+    // TODO : ✅ Kotlin에서 접근 가능하도록 명시적 getter 추가
+    public String getProfileImage() {
+        return this.profileImage;
     }
 }
