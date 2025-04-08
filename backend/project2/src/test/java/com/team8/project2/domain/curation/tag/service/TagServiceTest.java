@@ -35,7 +35,7 @@ class TagServiceTest {
     @DisplayName("태그가 존재하면 존재하는 태그 반환한다.")
     void getTag_WhenTagExists_ShouldReturnExistingTag() {
         // given
-        when(tagRepository.findByName("testTag")).thenReturn(Optional.of(tag));
+        when(tagRepository.findByName("testTag")).thenReturn(tag);
 
         // when
         Tag result = tagService.getTag("testTag");
@@ -50,7 +50,7 @@ class TagServiceTest {
     @DisplayName("태그가 존재하지 않으면 태그를 생성한다")
     void getTag_WhenTagDoesNotExist_ShouldCreateAndReturnNewTag() {
         // given
-        when(tagRepository.findByName("newTag")).thenReturn(Optional.empty());
+        when(tagRepository.findByName("newTag")).thenReturn(null);
         when(tagRepository.save(any(Tag.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
