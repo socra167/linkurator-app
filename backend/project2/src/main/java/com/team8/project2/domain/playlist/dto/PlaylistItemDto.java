@@ -7,7 +7,9 @@ import lombok.Data;
 /**
  * 플레이리스트 항목(PlaylistItem) 데이터를 전송하는 DTO 클래스입니다.
  * 엔티티를 DTO로 변환하여 클라이언트에 전달할 데이터를 구성합니다.
+ * @deprecated Kotlin으로 마이그레이션됨. PlaylistItemDto.kt
  */
+@Deprecated
 @Data
 @Builder
 public class PlaylistItemDto {
