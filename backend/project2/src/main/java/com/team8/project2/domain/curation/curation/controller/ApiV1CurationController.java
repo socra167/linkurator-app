@@ -1,5 +1,20 @@
 package com.team8.project2.domain.curation.curation.controller;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto;
 import com.team8.project2.domain.curation.curation.dto.CurationReqDTO;
 import com.team8.project2.domain.curation.curation.dto.CurationResDto;
@@ -12,7 +27,6 @@ import com.team8.project2.domain.curation.report.entity.ReportType;
 import com.team8.project2.domain.curation.tag.dto.TagResDto;
 import com.team8.project2.domain.curation.tag.service.TagService;
 import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.service.MemberService;
 import com.team8.project2.domain.playlist.dto.PlaylistDto;
 import com.team8.project2.domain.playlist.service.PlaylistService;
 import com.team8.project2.global.Rq;
@@ -21,17 +35,8 @@ import com.team8.project2.global.dto.RsData;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import kotlin.Unit;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 큐레이션(Curation) API 컨트롤러 클래스입니다.
@@ -175,7 +180,7 @@ public class ApiV1CurationController {
 
 	@PostMapping("/{id}/report")
 	@PreAuthorize("isAuthenticated()")
-	public RsData<Void> reportCuration(@PathVariable Long id,
+	public RsData<Unit> reportCuration(@PathVariable Long id,
 		@RequestBody @Valid CurationReportReqDto curationReportReqDto) {
 		ReportType reportType = ReportType.fromString(curationReportReqDto.reportType());
 		curationService.reportCuration(id, reportType);
