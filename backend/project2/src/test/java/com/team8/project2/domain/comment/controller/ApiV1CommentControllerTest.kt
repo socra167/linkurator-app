@@ -70,7 +70,7 @@ class ApiV1CommentControllerTest {
                 .content(ObjectMapper().writeValueAsString(commentDto))
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.code").value("200-2"))
+            .andExpect(jsonPath("$.code").value("200-1"))
             .andExpect(jsonPath("$.data.authorName").value("username"))
             .andExpect(jsonPath("$.data.content").value("BaseInitData 댓글 작성 테스트"))
 
@@ -102,7 +102,7 @@ class ApiV1CommentControllerTest {
 
         mockMvc.perform(get("/api/v1/curations/1/comments"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.code").value("200-2"))
+            .andExpect(jsonPath("$.code").value("200-1"))
             .andExpect(jsonPath("$.msg").value("댓글이 조회되었습니다."))
             .andExpect(jsonPath("$.data[0].id").value("1"))
             .andExpect(jsonPath("$.data[0].authorName").value("other"))
@@ -121,7 +121,7 @@ class ApiV1CommentControllerTest {
                 .content(ObjectMapper().writeValueAsString(replyDto))
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.code").value("200-2"))
+            .andExpect(jsonPath("$.code").value("200-1"))
             .andExpect(jsonPath("$.msg").value("댓글의 답글이 작성되었습니다."))
             .andExpect(jsonPath("$.data.content").value("답글 테스트"))
     }
@@ -148,7 +148,7 @@ class ApiV1CommentControllerTest {
                 .content("""{ "content": "수정된 답글" }""")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.code").value("200-2"))
+            .andExpect(jsonPath("$.code").value("200-1"))
             .andExpect(jsonPath("$.msg").value("답글이 수정되었습니다."))
             .andExpect(jsonPath("$.data.content").value("수정된 답글"))
     }
@@ -167,7 +167,7 @@ class ApiV1CommentControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ObjectMapper().writeValueAsString(commentDto))
         ).andReturn().response.contentAsString
-        val commentId = JsonPath.read<String>(commentResponse, "$.data.id").toLong()
+        val commentId = JsonPath.read<Any>(commentResponse, "$.data.id").toString().toLong()
 
         val replyDto = CommentDto(content = "남의 답글")
         val replyResponse = mockMvc.perform(
@@ -176,7 +176,7 @@ class ApiV1CommentControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ObjectMapper().writeValueAsString(replyDto))
         ).andReturn().response.contentAsString
-        val replyId = JsonPath.read<String>(replyResponse, "$.data.id").toLong()
+        val replyId = JsonPath.read<Int>(replyResponse, "$.data.id").toString().toLong()
 
         mockMvc.perform(
             delete("/api/v1/curations/1/comments/$commentId/reply/$replyId")

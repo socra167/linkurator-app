@@ -10,6 +10,7 @@ import com.team8.project2.domain.curation.curation.repository.CurationRepository
 import com.team8.project2.domain.member.entity.Member
 import com.team8.project2.global.Rq
 import com.team8.project2.global.exception.ServiceException
+import com.team8.project2.global.security.SecurityUser
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -143,9 +144,14 @@ class CommentService(
 		val reply = replyCommentRepository.findById(replyId)
 			.orElseThrow { ServiceException("404-2", "해당 답글을 찾을 수 없습니다.") }
 
-		if (reply.author.id.toString() != userDetails.username) {
+		if (userDetails !is SecurityUser) {
+			throw ServiceException("401-3", "잘못된 인증 정보입니다.")
+		}
+
+		if (reply.author.id != userDetails.id) {
 			throw ServiceException("403-2", "답글을 수정할 권한이 없습니다.")
 		}
+
 		return true
 	}
 
