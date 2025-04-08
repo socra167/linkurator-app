@@ -74,8 +74,7 @@ public class ApiV1CurationControllerTest {
 		linkReqDTO.setUrl("https://example.com");
 
 		// TagReqDTO
-		TagReqDto tagReqDto = new TagReqDto();
-		tagReqDto.setName("test");
+		TagReqDto tagReqDto = new TagReqDto("test");
 
 		// 링크 리스트에 추가
 		curationReqDTO.setLinkReqDtos(Collections.singletonList(linkReqDTO));
