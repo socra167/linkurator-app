@@ -53,7 +53,7 @@ public class Curation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "curationId", nullable = false)
-    private Long id;
+    public Long id; // 임시 public
 
     /**
      * 큐레이션 제목 (필수값)
