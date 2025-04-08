@@ -45,6 +45,6 @@ class ApiV1GlobalCommentController(
     fun deleteComment(@PathVariable("id") commentId: Long): RsData<Void> {
         val author = rq.getActor()
         commentService.deleteComment(commentId)
-        return RsData.success("댓글이 삭제되었습니다.", null)
+        return RsData.success("댓글이 삭제되었습니다.")
     }
 }
