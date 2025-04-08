@@ -14,6 +14,7 @@ class CurationImage(
 ) {
     @Column(name = "curationId")
     var curationId: Long? = null
+        private set
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +23,7 @@ class CurationImage(
 
     @CreatedDate
     @Column(name = "uploadedAt", nullable = false, updatable = false)
-    var uploadedAt: LocalDateTime? = null
+    val uploadedAt: LocalDateTime? = null
 
     fun setCurationIdIfNull(curationId: Long) {
         if (this.curationId == null) {

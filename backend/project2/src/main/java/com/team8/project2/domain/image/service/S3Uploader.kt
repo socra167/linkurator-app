@@ -20,7 +20,7 @@ class S3Uploader(
     private val bucketName: String
 ) {
     @Transactional
-    fun deleteFile(imageName: String?) {
+    fun deleteFile(imageName: String) {
         val deleteObjectRequest = DeleteObjectRequest.builder()
             .bucket(bucketName)
             .key(imageName)
