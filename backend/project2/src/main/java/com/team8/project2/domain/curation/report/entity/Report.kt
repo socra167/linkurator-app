@@ -11,31 +11,26 @@ import java.time.LocalDateTime
 @Table(name = "Report")
 @EntityListeners(AuditingEntityListener::class)
 class Report(
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reportId")
     val id: Long? = null,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curationId")
-    var curation: Curation,
-
+    val curation: Curation,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporterId")
-    var reporter: Member,
-
+    val reporter: Member,
     @Enumerated(EnumType.STRING)
-    var reportType: ReportType,
-
+    val reportType: ReportType,
     @CreatedDate
     @Column(updatable = false)
-    var reportDate: LocalDateTime? = null
+    val reportDate: LocalDateTime? = null,
 ) {
     constructor(curation: Curation, reportType: ReportType, reporter: Member) : this(
         id = null,
         curation = curation,
         reporter = reporter,
-        reportType = reportType
+        reportType = reportType,
     )
 }
