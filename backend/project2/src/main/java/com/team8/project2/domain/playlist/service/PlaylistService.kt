@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.time.Duration
-import java.util.stream.Collectors
 
 /**
  * 플레이리스트(Playlist) 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
@@ -543,7 +542,7 @@ class PlaylistService(
 
         if (itemToUpdate.itemType == PlaylistItem.PlaylistItemType.LINK) {
             val updatedLink = linkService.updateLinkDetails(
-                itemToUpdate.link.id,
+                itemToUpdate.link!!.id,
                 updateDto.title,
                 updateDto.url,
                 updateDto.description
@@ -594,7 +593,11 @@ class PlaylistService(
         addRecommendations(recommendedPlaylistIds, popularRecent)
         addRecommendations(recommendedPlaylistIds, trendingPlaylists)
         addRecommendations(recommendedPlaylistIds, popularPlaylists)
-        similarPlaylists.forEach { recommendedPlaylistIds.add(it.id) }
+        similarPlaylists
+            .filterNotNull()
+            .mapNotNull { it.id }
+            .forEach { recommendedPlaylistIds.add(it) }
+
 
         recommendedPlaylistIds.removeAll(userPlaylistIds)
 
@@ -609,7 +612,8 @@ class PlaylistService(
         println("Redis 캐시 저장 완료 Playlist ID $playlistId | 추천 리스트: $recommendedPlaylistIds")
 
 
-        return getSortedPlaylists(recommendedPlaylistIds.toList(), sortType)
+        return getSortedPlaylists(recommendedPlaylistIds.mapNotNull { it }, sortType ?: "combined")
+
     }
 
     /**
