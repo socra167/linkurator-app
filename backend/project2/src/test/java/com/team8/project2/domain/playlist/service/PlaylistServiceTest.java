@@ -424,6 +424,8 @@ class PlaylistServiceTest {
 
         // 사용자의 플레이리스트 없음
         when(playlistRepository.findByMember(sampleMember)).thenReturn(Collections.emptyList());
+        // rq.getActor()시 Member가 null임 따라서 rq.getActor()가 아닌 sampleMember를 mock하겠습니다.
+        when(rq.getActor()).thenReturn(sampleMember);
 
         // When
         List<PlaylistDto> result = playlistService.recommendPlaylist(playlistId, sortType);
