@@ -13,10 +13,11 @@ import com.team8.project2.global.Rq
 import com.team8.project2.global.exception.BadRequestException
 import com.team8.project2.global.exception.NotFoundException
 import jakarta.servlet.http.HttpServletRequest
-import jakarta.transaction.Transactional
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.script.DefaultRedisScript
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.time.Duration
@@ -244,5 +245,91 @@ class PlaylistService(
         }
         playlistRepository.deleteById(id)
     }
+
+
+    /**
+     * 플레이리스트 좋아요를 토글 처리합니다.
+     * Redis로 좋아요 토글, 좋아요 수 업데이트 후 DB에 반영합니다.
+     *
+     * @param playlistId 대상 플레이리스트 ID
+     * @param memberId 좋아요 한 사용자 ID
+     */
+    @Transactional
+    fun likePlaylist(playlistId: Long, memberId: Long) {
+        val redisKey = "playlist_like:$playlistId"
+        val memberLikedKey = "member_liked_playlists:$memberId"
+        val memberStr = memberId.toString()
+
+        val luaScript = """
+            if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 1 then
+                redis.call('SREM', KEYS[1], ARGV[1]); return 0;
+            else 
+                redis.call('SADD', KEYS[1], ARGV[1]); return 1;
+            end
+        """.trimIndent()
+
+        val result: Long?  = redisTemplate.execute(
+            DefaultRedisScript(luaScript, Long::class.java),
+            listOf(redisKey),
+            memberStr
+        )
+
+        if (result != null && result == 1L) {
+            redisTemplate.opsForSet().add(memberLikedKey, playlistId.toString())
+        } else if (result != null && result == 0L) {
+            redisTemplate.opsForSet().remove(memberLikedKey, playlistId.toString())
+        }
+
+        val likeCount = redisTemplate.opsForSet().size(redisKey)?: 0L
+
+        val playlist = playlistRepository.findById(playlistId)
+            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+
+        playlist.likeCount = likeCount
+        playlistRepository.save(playlist)
+    }
+
+    /**
+     * 사용자가 특정 플레이리스트에 좋아요를 눌렀는지 여부를 확인합니다.
+     *
+     * @param playlistId 대상 플레이리스트 ID
+     * @param memberId 사용자 ID
+     * @return 좋아요 여부
+     */
+    fun hasLikedPlaylist(playlistId: Long, memberId: Long): Boolean {
+        val redisKey = "playlist_like:$playlistId"
+        return redisTemplate.opsForSet().isMember(redisKey, memberId.toString()) == true
+    }
+
+
+    /**
+     * 특정 플레이리스트의 전체 좋아요 수를 조회합니다.
+     *
+     * @param playlistId 대상 플레이리스트 ID
+     * @return 좋아요 수 (없을 경우 0)
+     */
+    @Transactional(readOnly = true)
+    fun getLikeCount(playlistId: Long): Long {
+        val redisKey = "playlist_like:$playlistId"
+        val count = redisTemplate.opsForSet().size(redisKey)
+        return count ?: 0L
+    }
+
+    /**
+     * 사용자가 좋아요한 모든 플레이리스트 목록을 조회합니다.
+     *
+     * @param memberId 사용자 ID
+     * @return 좋아요한 플레이리스트 DTO 리스트
+     */
+    @Transactional(readOnly = true)
+    fun getLikedPlaylists(memberId: Long): List<PlaylistDto> {
+        val likedEntities = playlistLikeRepository.findByIdMemberId(memberId)
+        val actor = rq.actor
+
+        val likedPlaylists = likedEntities.map { it.playlist }
+
+        return likedPlaylists.map { PlaylistDto.fromEntity(it, actor) }
+    }
+
 
 }
