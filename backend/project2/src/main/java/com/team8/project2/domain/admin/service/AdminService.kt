@@ -42,8 +42,11 @@ class AdminService(
 		curationRepository.deleteByMember(member)
 		followRepository.deleteByFollowerOrFollowee(member, member)
 
+		// ✅ Lombok의 @Getter에 의해 Kotlin에서는 프로퍼티 접근으로 가능
 		memberService.deleteMember(member.memberId)
 	}
+
+
 
 	fun deleteMemberById(id: Long) {
 		if (!memberRepository.existsById(id)) {

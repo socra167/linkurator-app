@@ -36,7 +36,7 @@ class ApiV1AdminController(
 
     // ✅ 멤버 삭제
     @DeleteMapping("/members/{memberId}")
-    fun deleteMember(@PathVariable memberId: Long): RsData<String> {
+    fun deleteMember(@PathVariable memberId: Long): RsData<Unit> {
         val member = memberService.findById(memberId)
             .orElseThrow {
                 ServiceException(
