@@ -57,7 +57,7 @@ class ApiV1GlobalCommentControllerTest {
         // memberId=2L이 작성한 댓글을 찾는다
         List<Comment> comments = commentRepository.findAll();
         Comment myComment = comments.stream()
-                .filter(c -> c.getAuthor().getId().equals(2L))
+                .filter(c -> c.getAuthor().getId()==2L)
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("BaseInitData: memberId=2의 댓글 없음"));
 

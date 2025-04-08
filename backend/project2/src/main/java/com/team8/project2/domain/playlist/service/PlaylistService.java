@@ -569,7 +569,7 @@ public class PlaylistService {
                 .orElseThrow(() -> new NotFoundException("해당 플레이리스트를 찾을 수 없습니다."));
 
         Member actor = rq.getActor();
-        if (!playlist.getMember().getId().equals(actor.getId())) {
+        if (!(playlist.getMember().getId()==(actor.getId()))) {
             throw new BadRequestException("자신이 소유한 플레이리스트만 삭제할 수 있습니다.");
         }
 
@@ -590,7 +590,7 @@ public class PlaylistService {
         int newDisplayOrder = playlist.getItems().size();
         Member actor = rq.getActor();
 
-        if (!playlist.getMember().getId().equals(actor.getId())) {
+        if (!(playlist.getMember().getId()==actor.getId())) {
             throw new BadRequestException("자신의 플레이리스트에만 아이템을 추가할 수 있습니다.");
         }
 
@@ -621,7 +621,7 @@ public class PlaylistService {
         }
 
         Member actor = rq.getActor();
-        if (!playlist.getMember().getId().equals(actor.getId())) {
+        if (!(playlist.getMember().getId()==actor.getId())) {
             throw new BadRequestException("자신이 소유한 플레이리스트 아이템만 삭제할 수 있습니다.");
         }
 
