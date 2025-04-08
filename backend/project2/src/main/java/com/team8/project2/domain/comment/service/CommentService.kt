@@ -78,9 +78,14 @@ class CommentService(
 		val comment = commentRepository.findById(commentId)
 			.orElseThrow { ServiceException("404-2", "해당 댓글을 찾을 수 없습니다.") }
 
-		if (comment.author.id.toString() != userDetails.username) {
+		if (userDetails !is SecurityUser) {
+			throw ServiceException("401-3", "잘못된 인증 정보입니다.")
+		}
+
+		if (comment.author.id != userDetails.id) {
 			throw ServiceException("403-2", "댓글을 수정할 권한이 없습니다.")
 		}
+
 		return true
 	}
 

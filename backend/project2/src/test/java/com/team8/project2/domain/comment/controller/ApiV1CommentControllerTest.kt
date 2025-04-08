@@ -234,7 +234,7 @@ class ApiV1CommentControllerTest {
                 .content("""{ "content": "new content" }""".trimIndent())
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.code").value("200-2"))
+            .andExpect(jsonPath("$.code").value("200-1"))
             .andExpect(jsonPath("$.msg").value("댓글이 수정되었습니다."))
     }
 
