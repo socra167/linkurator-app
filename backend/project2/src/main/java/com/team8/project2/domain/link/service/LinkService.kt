@@ -85,9 +85,9 @@ class LinkService(
     @Transactional
     fun addLink(linkReqDTO: LinkReqDTO): Link {
         val link = Link.builder()
-            .title(linkReqDTO.title)
-            .url(linkReqDTO.url)
-            .description(linkReqDTO.description)
+            .title(linkReqDTO.title.orEmpty()) // nullable → non-null
+            .url(linkReqDTO.url!!)              // NotNull 어노테이션 기반 강제 non-null
+            .description(linkReqDTO.description.orEmpty())
             .click(0)
             .build()
         return linkRepository.save(link)
@@ -139,16 +139,20 @@ class LinkService(
      */
     @Transactional
     fun getLink(url: String?): Link {
-        val opLink = linkRepository.findByUrl(url)
+        val actualUrl = url ?: throw ServiceException("400", "URL은 필수입니다.")
+
+        val opLink = linkRepository.findByUrl(actualUrl)
         if (opLink.isPresent) {
             return opLink.get()
         }
+
         val link = Link.builder()
-            .url(url)
+            .url(actualUrl)
             .build()
         link.loadMetadata()
         return linkRepository.save(link)
     }
+
 
 
     /**
@@ -161,18 +165,16 @@ class LinkService(
      * @return 수정된 링크 객체
      */
     @Transactional
-    fun updateLinkDetails(linkId: Long, title: String, url: String, description: String): Link {
+    fun updateLinkDetails(linkId: Long, title: String?, url: String?, description: String?): Link {
         val link = linkRepository.findById(linkId)
-            .orElseThrow {
-                ServiceException(
-                    "404",
-                    "해당 링크를 찾을 수 없습니다."
-                )
-            }
-        link.title = title
-        link.url = url
-        link.description = description
+            .orElseThrow { ServiceException("404", "해당 링크를 찾을 수 없습니다.") }
+
+        link.title = title.orEmpty()
+        link.url = url ?: throw ServiceException("400", "url은 필수입니다.")
+        link.description = description.orEmpty()
+
         return linkRepository.save(link)
     }
+
 
 }
