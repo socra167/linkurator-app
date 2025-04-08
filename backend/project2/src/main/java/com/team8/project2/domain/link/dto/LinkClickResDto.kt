@@ -4,15 +4,14 @@ import com.team8.project2.domain.link.entity.Link
 import java.time.LocalDateTime
 
 data class LinkClickResDto(
-    var id: Long,
-    var url: String,
-    var title: String,
-    var description: String,
-    var metaImageUrl: String,
+    var id: Long?,
+    var url: String?,
+    var title: String?,
+    var description: String?,
+    var metaImageUrl: String?,
     var click: Int,
-    var createdAt: LocalDateTime
+    var createdAt: LocalDateTime?
 ) {
-
     companion object {
         fun fromEntity(link: Link): LinkClickResDto {
             return LinkClickResDto(
@@ -27,3 +26,4 @@ data class LinkClickResDto(
         }
     }
 }
+
