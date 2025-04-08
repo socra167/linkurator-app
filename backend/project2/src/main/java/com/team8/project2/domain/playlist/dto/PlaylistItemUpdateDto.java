@@ -6,6 +6,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * 플레이리스트 아이템 수정 요청용 DTO입니다.
+ * @deprecated Kotlin으로 마이그레이션됨. PlaylistItemUpdateDto.kt
+ */
+@Deprecated
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
