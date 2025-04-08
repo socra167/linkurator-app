@@ -21,6 +21,7 @@ import com.team8.project2.global.Rq;
 import com.team8.project2.global.dto.RsData;
 import com.team8.project2.global.exception.ServiceException;
 
+import kotlin.Unit;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -46,7 +47,7 @@ public class ApiV1AdminController {
 
 	// ✅ 멤버 삭제
 	@DeleteMapping("/members/{memberId}")
-	public RsData<Void> deleteMember(@PathVariable Long memberId) {
+	public RsData<Unit> deleteMember(@PathVariable Long memberId) {
 		Member member = memberService.findById(memberId)
 			.orElseThrow(() -> new ServiceException("404-1", "해당 회원을 찾을 수 없습니다."));
 		adminService.deleteMember(member);

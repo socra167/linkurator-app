@@ -100,7 +100,7 @@ class ApiV1CommentController(
 	fun deleteComment(
 		@PathVariable("id") commentId: Long,
 		@AuthenticationPrincipal userDetails: UserDetails
-	): RsData<Void> {
+	): RsData<Unit> {
 		commentService.deleteComment(commentId)
 		return RsData.success("댓글이 삭제되었습니다.")
 	}
@@ -114,7 +114,7 @@ class ApiV1CommentController(
 		@PathVariable commentId: Long,
 		@PathVariable("id") replyId: Long,
 		@AuthenticationPrincipal userDetails: UserDetails
-	): RsData<Void> {
+	): RsData<Unit> {
 		commentService.deleteReply(replyId)
 		return RsData.success("답글이 삭제되었습니다.")
 	}

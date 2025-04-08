@@ -7,13 +7,14 @@ import com.fasterxml.jackson.annotation.JsonInclude
 data class RsData<T>(
     val code: String,
     val msg: String,
-    val data: T = Empty as T
+    val data: T? = null
 ) {
     @get:JsonIgnore
     val statusCode: Int
         get() = code.split("-")[0].toInt()
 
-    constructor(code: String, msg: String) : this(code, msg, Empty as T)
+    // Java 에서 default 파라미터 지원이 안되어서 임시로 사용 -> Kotlin 전환 완료 시 제거
+    constructor(code: String, msg: String) : this(code, msg, null)
 
     companion object {
         @JvmStatic
@@ -22,8 +23,8 @@ data class RsData<T>(
         }
 
         @JvmStatic
-        fun success(msg: String = "Success"): RsData<Void> {
-            return RsData("200-1", msg)
+        fun success(msg: String = "Success"): RsData<Unit> {
+            return RsData("200-1", msg, Unit)
         }
     }
 }

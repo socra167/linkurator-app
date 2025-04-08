@@ -42,7 +42,7 @@ class ApiV1GlobalCommentController(
      * @return 삭제 성공 응답
      */
     @DeleteMapping("/{id}")
-    fun deleteComment(@PathVariable("id") commentId: Long): RsData<Void> {
+    fun deleteComment(@PathVariable("id") commentId: Long): RsData<Unit> {
         val author = rq.getActor()
         commentService.deleteComment(commentId)
         return RsData.success("댓글이 삭제되었습니다.")
