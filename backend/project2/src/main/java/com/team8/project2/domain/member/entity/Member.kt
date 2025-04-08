@@ -115,11 +115,13 @@ class Member() {
         this.introduce = introduce
     }
 
+    // Test 용 생성자
     constructor(id: Long, username: String, email: String) : this() {
         this.id = id
         this.username = username
         this.email = email
         this.password = "blank"
+        this.memberId = "0"
     }
 
     constructor(memberId: String) : this() {
@@ -131,6 +133,8 @@ class Member() {
         this.id = id
         this.password = "blank"
     }
+
+
     // setter
     fun setUsername(newName: String) {
         this.username = newName

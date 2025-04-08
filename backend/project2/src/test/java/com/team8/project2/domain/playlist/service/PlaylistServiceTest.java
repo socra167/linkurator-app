@@ -70,7 +70,7 @@ class PlaylistServiceTest {
 
     @BeforeEach
     void setUp() {
-        Member sampleMember = new Member(1L, "테스트 유저", "test@example.com");
+        sampleMember = new Member(1L, "테스트 유저", "test@example.com");
 
         samplePlaylist = Playlist.builder()
                 .id(1L)
