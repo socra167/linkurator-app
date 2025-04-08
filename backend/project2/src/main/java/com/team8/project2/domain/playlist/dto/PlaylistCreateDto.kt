@@ -25,7 +25,7 @@ data class PlaylistCreateDto(
      * 플레이리스트 공개 여부 (기본값: true)
      */
     @field:NotNull(message = "플레이리스트 공개 여부는 필수 입력 사항입니다.")
-    private val isPublic: Boolean? = true
+    val isPublic: Boolean? = true
 ) {
     /**
      * isPublic이 null인 경우 기본값(true)을 반환합니다.

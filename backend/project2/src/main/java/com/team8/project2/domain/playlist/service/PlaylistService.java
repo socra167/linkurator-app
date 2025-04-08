@@ -499,7 +499,7 @@ public class PlaylistService {
                 .collect(Collectors.toList());
     }
 
-    /*
+    /**
      * 공개 플레이리스트 전체 조회
      */
     public List<PlaylistDto> getAllPublicPlaylists() {
