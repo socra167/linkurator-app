@@ -23,7 +23,7 @@ class ApiV1ReportController(
     // ✅ 신고 조회
     @GetMapping("/myreported/{memberId}")
     fun getReports(@PathVariable memberId: Long): RsData<List<ReportDto>> {
-        val member = rq.actor ?: throw ServiceException("401-1", "로그인이 필요합니다.")
+        val member = rq.actor
 
         if (!member.id.equals(memberId)) {
             throw ServiceException("403-1", "회원 정보가 일치하지 않습니다.")

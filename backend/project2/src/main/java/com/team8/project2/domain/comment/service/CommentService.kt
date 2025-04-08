@@ -136,7 +136,7 @@ class CommentService(
 			.orElseThrow { ServiceException("404-2", "댓글이 존재하지 않습니다.") }
 
 		val reply = ReplyComment(
-			author = rq.getActor(),
+			author = rq.actor,
 			comment = comment,
 			curation = curation,
 			content = content
