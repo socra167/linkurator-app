@@ -1,13 +1,5 @@
 package com.team8.project2.global.init;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
 import com.team8.project2.domain.comment.dto.CommentDto;
 import com.team8.project2.domain.comment.service.CommentService;
 import com.team8.project2.domain.curation.curation.entity.Curation;
@@ -26,8 +18,14 @@ import com.team8.project2.domain.playlist.entity.PlaylistItem;
 import com.team8.project2.domain.playlist.repository.PlaylistItemRepository;
 import com.team8.project2.domain.playlist.repository.PlaylistRepository;
 import com.team8.project2.domain.playlist.service.PlaylistService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -179,9 +177,14 @@ public class BaseInitData {
 			commentService.createComment(
 					commenter,
 					curation.getId(),
-					CommentDto.builder()
-							.content(comments[i % comments.length])
-							.build()
+					new CommentDto(
+							null,       // id
+							null,       // authorName
+							null,       // authorProfileImageUrl
+							comments[i % comments.length], // content
+							null,       // createdAt
+							null        // modifiedAt
+					)
 			);
 		}
 	}
