@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 @RequiredArgsConstructor
 class ReportService(
     private val reportRepository: ReportRepository,
-    private val curationRepository: CurationRepository
+    private val curationRepository: CurationRepository,
 ) {
     @Transactional
     fun getReportedCurationsDetailResDtos(reportedCurationIds: List<Long>): List<ReportedCurationsDetailResDto> {
@@ -37,6 +37,6 @@ class ReportService(
 
         // Report 엔티티를 ReportDto로 변환하여 반환
         return reports
-            .map { obj: Report -> ReportDto.from(obj) }  // ReportDto의 from() 메서드를 사용하여 변환
+            .map { obj: Report -> ReportDto.from(obj) } // ReportDto의 from() 메서드를 사용하여 변환
     }
 }

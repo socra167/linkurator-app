@@ -8,7 +8,11 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface ReportRepository : JpaRepository<Report, Long> {
-    fun existsByCurationIdAndReporterIdAndReportType(curationId: Long, id: Long?, reportType: ReportType): Boolean
+    fun existsByCurationIdAndReporterIdAndReportType(
+        curationId: Long,
+        id: Long?,
+        reportType: ReportType,
+    ): Boolean
 
     fun findByCurationIdIn(reportedCurationIds: List<Long>): List<Report>
 

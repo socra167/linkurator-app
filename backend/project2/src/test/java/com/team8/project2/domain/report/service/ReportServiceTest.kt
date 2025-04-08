@@ -1,57 +1,56 @@
-package com.team8.project2.domain.report.service;
+package com.team8.project2.domain.report.service
 
-import com.team8.project2.domain.curation.curation.entity.Curation;
-import com.team8.project2.domain.curation.curation.repository.CurationRepository;
-import com.team8.project2.domain.curation.report.dto.ReportedCurationsDetailResDto;
-import com.team8.project2.domain.curation.report.entity.Report;
-import com.team8.project2.domain.curation.report.entity.ReportType;
-import com.team8.project2.domain.curation.report.repository.ReportRepository;
-import com.team8.project2.domain.curation.report.service.ReportService;
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.repository.MemberRepository;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import com.team8.project2.domain.curation.curation.repository.CurationRepository
+import com.team8.project2.domain.curation.report.entity.Report
+import com.team8.project2.domain.curation.report.entity.ReportType
+import com.team8.project2.domain.curation.report.repository.ReportRepository
+import com.team8.project2.domain.curation.report.service.ReportService
+import com.team8.project2.domain.member.repository.MemberRepository
+import org.assertj.core.api.AssertionsForInterfaceTypes.assertThat
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-class ReportServiceTest {
+internal class ReportServiceTest {
+    @Autowired
+    lateinit var reportService: ReportService
 
     @Autowired
-    private ReportService reportService;
-    @Autowired private ReportRepository reportRepository;
-    @Autowired private CurationRepository curationRepository;
-    @Autowired private MemberRepository memberRepository;
+    lateinit var reportRepository: ReportRepository
+
+    @Autowired
+    lateinit var curationRepository: CurationRepository
+
+    @Autowired
+    lateinit var memberRepository: MemberRepository
 
     @Test
     @DisplayName("신고가 여러 건 존재할 때 유형별 개수를 올바르게 집계한다")
-    void testGetReportedCurationsDetail() {
+    fun testGetReportedCurationsDetail() {
         // given
-        Curation curation = curationRepository.findById(1L).orElseThrow();
-        Member reporter1 = memberRepository.findById(2L).orElseThrow();
-        Member reporter2 = memberRepository.findById(3L).orElseThrow();
+        val curation = curationRepository.findById(1L).orElseThrow()
+        val reporter1 = memberRepository.findById(2L).orElseThrow()
+        val reporter2 = memberRepository.findById(3L).orElseThrow()
 
-        reportRepository.save(new Report(curation, ReportType.ABUSE, reporter1));
-        reportRepository.save(new Report(curation, ReportType.SPAM, reporter2));
-        reportRepository.save(new Report(curation, ReportType.ABUSE, reporter1));
+        reportRepository.save(Report(curation, ReportType.ABUSE, reporter1))
+        reportRepository.save(Report(curation, ReportType.SPAM, reporter2))
+        reportRepository.save(Report(curation, ReportType.ABUSE, reporter1))
 
         // when
-        List<ReportedCurationsDetailResDto> result = reportService.getReportedCurationsDetailResDtos(List.of(curation.getId()));
+        val result = reportService.getReportedCurationsDetailResDtos(listOf(curation.getId()))
 
         // then
-        assertThat(result).hasSize(1);
-        ReportedCurationsDetailResDto dto = result.get(0);
-        assertThat(dto.getReportTypeCounts()).hasSize(2); // ABUSE, SPAM
-        assertThat(dto.getReportTypeCounts()).anySatisfy(type ->
-                assertThat(type.getReportType()).isIn(ReportType.ABUSE, ReportType.SPAM));
+        assertThat(result).hasSize(1)
+        val dto = result[0]
+        assertThat(dto.reportTypeCounts).hasSize(2) // ABUSE, SPAM
+        assertThat(dto.reportTypeCounts).anySatisfy { type ->
+            assertThat(type.reportType).isIn(ReportType.ABUSE, ReportType.SPAM)
+        }
     }
 }
-
