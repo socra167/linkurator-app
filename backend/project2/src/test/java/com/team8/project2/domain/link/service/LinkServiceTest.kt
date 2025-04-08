@@ -9,8 +9,8 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
-import org.mockito.Mockito.*
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.*
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.ValueOperations
 import java.time.Duration
@@ -39,39 +39,41 @@ class LinkServiceTest {
     @BeforeEach
     fun setUp() {
         link = Link.builder()
-            //.id(1L)
             .url("https://example.com")
             .click(0)
             .build()
     }
 
     @Test
-    fun `링크 추가`() {
+    @DisplayName("링크를 추가할 수 있다")
+    fun addLink() {
         val dto = LinkReqDTO("https://example.com", "테스트 제목", "테스트 설명")
-        `when`(linkRepository.save(any())).thenReturn(link)
+        whenever(linkRepository.save(any())).thenReturn(link)
 
         val created = linkService.addLink(dto)
 
         Assertions.assertNotNull(created)
         Assertions.assertEquals(dto.url, created.url)
-        verify(linkRepository, times(1)).save(any())
+        verify(linkRepository).save(any())
     }
 
     @Test
-    fun `링크 수정`() {
+    @DisplayName("링크를 수정할 수 있다")
+    fun updateLink() {
         val newUrl = "https://updated-example.com"
-        `when`(linkRepository.findById(1L)).thenReturn(Optional.of(link))
-        `when`(linkRepository.save(any())).thenReturn(link)
+        whenever(linkRepository.findById(1L)).thenReturn(Optional.of(link))
+        whenever(linkRepository.save(any())).thenReturn(link)
 
         val updated = linkService.updateLink(1L, newUrl)
 
         Assertions.assertEquals(newUrl, updated.url)
-        verify(linkRepository, times(1)).save(any())
+        verify(linkRepository).save(any())
     }
 
     @Test
-    fun `링크 수정 실패 - 링크 없음`() {
-        `when`(linkRepository.findById(1L)).thenReturn(Optional.empty())
+    @DisplayName("링크 수정 시 링크가 존재하지 않으면 예외가 발생한다")
+    fun updateLinkNotFound() {
+        whenever(linkRepository.findById(1L)).thenReturn(Optional.empty())
 
         val ex = Assertions.assertThrows(ServiceException::class.java) {
             linkService.updateLink(1L, "https://updated.com")
@@ -82,9 +84,9 @@ class LinkServiceTest {
     }
 
     @Test
-    fun `링크 삭제`() {
-        `when`(linkRepository.findById(1L)).thenReturn(Optional.of(link))
-        doNothing().`when`(linkRepository).delete(any())
+    @DisplayName("링크를 삭제할 수 있다")
+    fun deleteLink() {
+        whenever(linkRepository.findById(1L)).thenReturn(Optional.of(link))
 
         linkService.deleteLink(1L)
 
@@ -92,8 +94,9 @@ class LinkServiceTest {
     }
 
     @Test
-    fun `링크 삭제 실패 - 링크 없음`() {
-        `when`(linkRepository.findById(1L)).thenReturn(Optional.empty())
+    @DisplayName("링크 삭제 시 링크가 존재하지 않으면 예외가 발생한다")
+    fun deleteLinkNotFound() {
+        whenever(linkRepository.findById(1L)).thenReturn(Optional.empty())
 
         val ex = Assertions.assertThrows(ServiceException::class.java) {
             linkService.deleteLink(1L)
@@ -104,10 +107,11 @@ class LinkServiceTest {
     }
 
     @Test
-    fun `링크 조회 - 없으면 생성`() {
+    @DisplayName("링크가 존재하지 않으면 생성해서 반환한다")
+    fun getLinkOrCreate() {
         val url = "https://example.com"
-        `when`(linkRepository.findByUrl(url)).thenReturn(Optional.empty())
-        `when`(linkRepository.save(any())).thenReturn(link)
+        whenever(linkRepository.findByUrl(url)).thenReturn(Optional.empty())
+        whenever(linkRepository.save(any())).thenReturn(link)
 
         val found = linkService.getLink(url)
 
@@ -116,9 +120,10 @@ class LinkServiceTest {
     }
 
     @Test
-    fun `링크 조회 - 있으면 기존 반환`() {
+    @DisplayName("링크가 존재하면 기존 링크를 반환한다")
+    fun getExistingLink() {
         val url = "https://example.com"
-        `when`(linkRepository.findByUrl(url)).thenReturn(Optional.of(link))
+        whenever(linkRepository.findByUrl(url)).thenReturn(Optional.of(link))
 
         val found = linkService.getLink(url)
 
@@ -127,16 +132,16 @@ class LinkServiceTest {
     }
 
     @Test
-    @DisplayName("링크 클릭수는 한 번만 증가해야 한다")
-    fun `클릭수 단 1회만 증가`() {
-        val valueOps = mock(ValueOperations::class.java) as ValueOperations<String, String>
-        `when`(redisTemplate.opsForValue()).thenReturn(valueOps)
-        `when`(request.remoteAddr).thenReturn("192.168.0.1")
-        `when`(valueOps.setIfAbsent(anyString(), eq("true"), eq(Duration.ofMinutes(10))))
+    @DisplayName("링크 클릭 수는 한 번만 증가해야 한다")
+    fun increaseClickOnce() {
+        val valueOps: ValueOperations<String, String> = mock()
+        whenever(redisTemplate.opsForValue()).thenReturn(valueOps)
+        whenever(request.remoteAddr).thenReturn("192.168.0.1")
+        whenever(valueOps.setIfAbsent(any(), eq("true"), eq(Duration.ofMinutes(10))))
             .thenReturn(true)
             .thenReturn(false)
 
-        `when`(linkRepository.findById(1L)).thenReturn(Optional.of(link))
+        whenever(linkRepository.findById(1L)).thenReturn(Optional.of(link))
 
         repeat(3) { linkService.getLinkAndIncrementClick(1L, request) }
 
@@ -144,31 +149,29 @@ class LinkServiceTest {
     }
 
     @Test
-    @DisplayName("이미 클릭한 경우 클릭수는 증가하지 않는다")
-    fun `이미 클릭한 경우 클릭수 증가 안 함`() {
-        val valueOps = mock(ValueOperations::class.java) as ValueOperations<String, String>
-        `when`(redisTemplate.opsForValue()).thenReturn(valueOps)
-        `when`(request.remoteAddr).thenReturn("192.168.0.1")
-        `when`(valueOps.setIfAbsent(anyString(), eq("true"), eq(Duration.ofMinutes(10)))).thenReturn(false)
+    @DisplayName("이미 클릭한 경우 클릭 수는 증가하지 않는다")
+    fun doNotIncreaseIfAlreadyClicked() {
+        val valueOps: ValueOperations<String, String> = mock()
+        whenever(redisTemplate.opsForValue()).thenReturn(valueOps)
+        whenever(request.remoteAddr).thenReturn("192.168.0.1")
+        whenever(valueOps.setIfAbsent(any(), eq("true"), eq(Duration.ofMinutes(10)))).thenReturn(false)
+        whenever(linkRepository.findById(1L)).thenReturn(Optional.of(link))
 
-        `when`(linkRepository.findById(1L)).thenReturn(Optional.of(link))
-
-        val beforeClick = link.click
+        val before = link.click
         linkService.getLinkAndIncrementClick(1L, request)
 
-        Assertions.assertEquals(beforeClick, link.click)
+        Assertions.assertEquals(before, link.click)
         verify(linkClickService, never()).increaseClickCount(any())
     }
 
     @Test
-    @DisplayName("링크 조회 시 존재하지 않으면 예외 발생")
-    fun `링크 조회 실패 - 존재하지 않음`() {
-        val valueOps = mock(ValueOperations::class.java) as ValueOperations<String, String>
-        `when`(redisTemplate.opsForValue()).thenReturn(valueOps)
-        `when`(request.remoteAddr).thenReturn("192.168.0.1")
-        `when`(valueOps.setIfAbsent(anyString(), eq("true"), eq(Duration.ofMinutes(10)))).thenReturn(true)
-
-        `when`(linkRepository.findById(1L)).thenReturn(Optional.empty())
+    @DisplayName("링크 조회 시 존재하지 않으면 예외가 발생한다")
+    fun getLinkThrowsIfNotFound() {
+        val valueOps: ValueOperations<String, String> = mock()
+        whenever(redisTemplate.opsForValue()).thenReturn(valueOps)
+        whenever(request.remoteAddr).thenReturn("192.168.0.1")
+        whenever(valueOps.setIfAbsent(any(), eq("true"), eq(Duration.ofMinutes(10)))).thenReturn(true)
+        whenever(linkRepository.findById(1L)).thenReturn(Optional.empty())
 
         val ex = Assertions.assertThrows(ServiceException::class.java) {
             linkService.getLinkAndIncrementClick(1L, request)
