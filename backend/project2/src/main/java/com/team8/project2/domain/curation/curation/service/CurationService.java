@@ -3,8 +3,6 @@ package com.team8.project2.domain.curation.curation.service;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -394,6 +392,7 @@ public class CurationService {
 	}
 
 	@Scheduled(fixedRate = 600000) // 10분마다 실행
+	@Transactional
 	public void syncLikesToDatabase() {
 		// Redis에서 모든 큐레이션의 좋아요 개수를 가져와서 DB에 업데이트
 		Set<String> keys = redisTemplate.keys("curation_like:*");
