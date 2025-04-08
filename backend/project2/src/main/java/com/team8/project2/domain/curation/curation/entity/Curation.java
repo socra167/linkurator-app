@@ -59,7 +59,7 @@ public class Curation {
      * 큐레이션 제목 (필수값)
      */
     @Column(name = "title", nullable = false)
-    private String title;
+    public String title; // 임시 public
 
     /**
      * 큐레이션 내용 (필수값, TEXT 타입 지정)
