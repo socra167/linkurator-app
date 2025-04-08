@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.time.Duration
+import java.util.stream.Collectors
 
 /**
  * 플레이리스트(Playlist) 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
@@ -268,7 +269,7 @@ class PlaylistService(
             end
         """.trimIndent()
 
-        val result: Long?  = redisTemplate.execute(
+        val result: Long? = redisTemplate.execute(
             DefaultRedisScript(luaScript, Long::class.java),
             listOf(redisKey),
             memberStr
@@ -280,7 +281,7 @@ class PlaylistService(
             redisTemplate.opsForSet().remove(memberLikedKey, playlistId.toString())
         }
 
-        val likeCount = redisTemplate.opsForSet().size(redisKey)?: 0L
+        val likeCount = redisTemplate.opsForSet().size(redisKey) ?: 0L
 
         val playlist = playlistRepository.findById(playlistId)
             .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
@@ -414,8 +415,9 @@ class PlaylistService(
     fun addPlaylistItem(
         playlistId: Long,
         itemId: Long,
-        itemType: PlaylistItem.PlaylistItemType)
-    : PlaylistDto {
+        itemType: PlaylistItem.PlaylistItemType
+    )
+            : PlaylistDto {
         val playlist = playlistRepository.findById(playlistId)
             .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
@@ -555,4 +557,184 @@ class PlaylistService(
     }
 
 
+    /**
+     * 플레이리스트를 추천합니다.
+     * Redis에 캐시된 추천 리스트가 있으면 우선 반환하고,
+     * 없을 경우 24시간 인기, 전체 인기(조회수 + 좋아요), 동일 태그를 병합해 추천합니다.
+     * 추천 결과는 Redis에 30분간 캐싱되며, 정렬 기준(likes, views, combined)에 따라 반환됩니다.
+     *
+     * @param playlistId 추천 기준이 되는 플레이리스트 ID
+     * @param sortType 정렬 기준 (likes, views, combined)
+     * @return 추천된 플레이리스트 DTO 리스트
+     */
+    fun recommendPlaylist(playlistId: Long, sortType: String?): List<PlaylistDto> {
+        val cacheKey = "$RECOMMEND_KEY$playlistId"
+        val cachedRecommendationsStr = redisTemplate.opsForValue().get(cacheKey) as? String
+
+        if (!cachedRecommendationsStr.isNullOrEmpty()) {
+            val cachedRecommendations = cachedRecommendationsStr.split(",").mapNotNull { it.toLongOrNull() }
+            println("Redis 캐시 HIT Playlist ID $playlistId | 추천 리스트: $cachedRecommendations")
+            return getPlaylistsByIds(cachedRecommendations)
+        }
+
+        val trendingRecent = redisTemplate.opsForZSet().reverseRange("trending:24h", 0, 5) ?: emptySet()
+        val popularRecent = redisTemplate.opsForZSet().reverseRange("popular:24h", 0, 5) ?: emptySet()
+
+        val trendingPlaylists = redisTemplate.opsForZSet().reverseRange(VIEW_COUNT_KEY, 0, 5) ?: emptySet()
+        val popularPlaylists = redisTemplate.opsForZSet().reverseRange(LIKE_COUNT_KEY, 0, 5) ?: emptySet()
+
+        val currentPlaylist = playlistRepository.findById(playlistId).orElse(null)
+        val similarPlaylists = currentPlaylist?.let { findSimilarPlaylistsByTag(it) } ?: emptyList()
+
+        val currentMember = rq.actor
+        val userPlaylistIds = playlistRepository.findByMember(currentMember).map { it.id }
+
+        val recommendedPlaylistIds = mutableSetOf<Long>()
+        addRecommendations(recommendedPlaylistIds, trendingRecent)
+        addRecommendations(recommendedPlaylistIds, popularRecent)
+        addRecommendations(recommendedPlaylistIds, trendingPlaylists)
+        addRecommendations(recommendedPlaylistIds, popularPlaylists)
+        similarPlaylists.forEach { recommendedPlaylistIds.add(it.id) }
+
+        recommendedPlaylistIds.removeAll(userPlaylistIds)
+
+        if (recommendedPlaylistIds.isEmpty()) return emptyList()
+
+        redisTemplate.opsForValue().set(
+            "$RECOMMEND_KEY$playlistId",
+            recommendedPlaylistIds.joinToString(","),
+            Duration.ofMinutes(30)
+        )
+
+        println("Redis 캐시 저장 완료 Playlist ID $playlistId | 추천 리스트: $recommendedPlaylistIds")
+
+
+        return getSortedPlaylists(recommendedPlaylistIds.toList(), sortType)
+    }
+
+    /**
+     * 추천된 플레이리스트 ID 리스트를 받아 PlaylistDto 리스트로 변환합니다.
+     *
+     * @param playlistIds 추천된 플레이리스트 ID 목록
+     * @return 해당 ID의 PlaylistDto 리스트
+     */
+    private fun getPlaylistsByIds(playlistIds: List<Long>): List<PlaylistDto> {
+        val playlists = playlistRepository.findAllById(playlistIds)
+        val actor = if (rq.isLogin) rq.actor else null
+
+        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+    }
+
+    /**
+     * 현재 플레이리스트와 동일 태그를 가진 플레이리스트를 찾습니다.
+     *
+     * 태그가 3개 이상 겹치면 유사 플레이리스트로 판단하여 추천
+     * 유사한 플레이리스트가 없을 경우 전체 중 랜덤으로 최대 3개 반환
+     *
+     * @param currentPlaylist 기준이 되는 플레이리스트
+     * @return 유사한 플레이리스트 리스트
+     */
+    private fun findSimilarPlaylistsByTag(currentPlaylist: Playlist): List<Playlist?> {
+        val allPlaylists = playlistRepository.findAll()
+        val currentTags = currentPlaylist.tagNames
+
+        val similarPlaylists = allPlaylists.filter { other ->
+            other.id != currentPlaylist.id &&
+                    other.tagNames.intersect(currentTags).size >= 3
+        }
+
+        return if (similarPlaylists.isEmpty()) {
+            allPlaylists.shuffled().take(3)
+        } else {
+            similarPlaylists
+        }
+    }
+
+    /**
+     * Redis에서 가져온 추천 ID를 추천 목록에 병합합니다.
+     *
+     * @param recommendedPlaylistIds 추천 ID를 담을 Set
+     * @param redisResults Redis에서 가져온 추천 ID Object Set
+     */
+    private fun addRecommendations(
+        recommendedPlaylistIds: MutableSet<Long>,
+        redisResults: Set<Any>?
+    ) {
+        redisResults?.forEach { id ->
+            id.toString().toLongOrNull()?.let {
+                recommendedPlaylistIds.add(it)
+            } ?: System.err.println("addRecommendations() 오류: 파싱 불가한 값 = $id")
+        }
+    }
+
+
+    /**
+     * 정렬 기준에 따라 플레이리스트를 정렬하여 반환합니다.
+     * 정렬 기준: 좋아요, 조회수, 좋아요 + 조회수
+     *
+     * @param playlistIds 정렬할 플레이리스트 ID 리스트
+     * @param sortType 정렬 기준 (likes, views, combined)
+     * @return 정렬된 PlaylistDto 리스트
+     */
+    private fun getSortedPlaylists(playlistIds: List<Long>, sortType: String): List<PlaylistDto> {
+        val playlists = playlistRepository.findAllById(playlistIds).toMutableList()
+        val actor = rq.actor
+
+        when (sortType) {
+            "likes" -> playlists.sortByDescending { it.likeCount }
+            "views" -> playlists.sortByDescending { it.viewCount }
+            "combined" -> playlists.sortByDescending { it.likeCount + it.viewCount }
+            else -> {}
+        }
+        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+    }
+
+    /**
+     * 공개 플레이리스트를 현재 로그인한 사용자의 플레이리스트로 복사합니다.
+     *
+     * @param playlistId 복사할 공개 플레이리스트 ID
+     * @return 복사된 내 플레이리스트 DTO
+     */
+    fun addPublicPlaylist(playlistId: Long): PlaylistDto {
+        val publicPlaylist = playlistRepository.findById(playlistId)
+            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+
+        val actor = rq.actor
+
+        val copiedPlaylist = Playlist(
+            title = publicPlaylist.title,
+            description = publicPlaylist.description,
+            isPublic = false,
+            member = actor
+        )
+
+        val savedPlaylist = playlistRepository.save(copiedPlaylist)
+
+        publicPlaylist.items.forEach { item ->
+            val copiedItem = PlaylistItem(
+                itemId = item.itemId,
+                itemType = item.itemType,
+                displayOrder = item.displayOrder,
+                playlist = savedPlaylist
+            )
+            savedPlaylist.items.add(copiedItem)
+        }
+
+        return PlaylistDto.fromEntity(savedPlaylist, actor)
+    }
+
+    /**
+     * 사용자가 작성한 플레이리스트 중 특정 큐레이션을 포함한 플레이리스를 조회합니다.
+     * 특정 큐레이션에 연결된 사용자의 플레이리스트 목록을 조회할 때 사용됩니다.
+     *
+     * @param member 조회할 사용자
+     * @param curationId 포함된 큐레이션 ID
+     * @return 해당 조건을 만족하는 플레이리스트 DTO 리스트
+     */
+    fun getPlaylistsByMemberAndCuration(member: Member, curationId: Long): List<PlaylistDto> {
+        val playlists = playlistRepository.findByMemberAndCuration(member, curationId)
+        val actor = rq.actor
+
+        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+    }
 }

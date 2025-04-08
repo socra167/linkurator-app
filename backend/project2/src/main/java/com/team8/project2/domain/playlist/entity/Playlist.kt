@@ -8,59 +8,43 @@ import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDateTime
 
-/**
- * 플레이리스트(Playlist) 엔티티 클래스입니다.
- * 사용자가 생성한 플레이리스트 정보를 저장합니다.
- */
+/** 사용자가 생성한 플레이리스트 정보를 나타내는 Playlist 엔티티입니다. */
 
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 class Playlist(
 
-    /**
-     * 플레이리스트의 고유 ID (자동 생성)
-     */
+    /** 플레이리스트의 고유 ID (자동 생성) */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
 
-    /**
-     * 플레이리스트 제목 (필수값)
-     */
+    /** 제목 (필수값) */
     @Column(nullable = false)
     var title: String,
 
-    /**
-     * 플레이리스트 설명 (필수값)
-     */
+    /** 설명 (필수값) */
     @Column(nullable = false)
     var description: String,
 
-    /**
-     * 플레이리스트 공개 여부 (기본값: 공개)
-     */
+    /** 공개 여부 (기본값: 공개) */
     @Column(nullable = false)
     var isPublic: Boolean = true,
 
-    /**
-     * 플레이리스트 조회수 및 좋아요 수 추가
-     */
+    /** 조회수 */
     @Column(nullable = false)
     var viewCount: Long = 0L,
 
+    /** 좋아요 수 */
     @Column(nullable = false)
     var likeCount: Long = 0L,
 
-    /**
-     * 플레이리스트에 포함된 항목 목록 (1:N 관계)
-     */
+    /** 플레이리스트에 포함된 항목 목록 (1:N 관계) */
     @OneToMany(mappedBy = "playlist", cascade = [CascadeType.ALL], orphanRemoval = true)
     @OrderBy("displayOrder ASC")
     var items: MutableList<PlaylistItem> = mutableListOf(),
 
-    /**
-     * 플레이리스트 연관 추천 태그
-     */
+    /** 플레이리스트 연관 추천 태그 */
     @ManyToMany
     @JoinTable(
         name = "PlaylistTag",
@@ -92,13 +76,11 @@ class Playlist(
         isPublic?.let { this.isPublic = it }
     }
 
-    /**
-     * 태그 목록을 문자열 Set으로 변환하여 반환
-     */
-    fun getTagNames(): Set<String> {
-        return tags.map { it.name }.toSet()
-    }
+    /**  태그 이름을 문자열 Set으로 반환 */
+    val tagNames: Set<String>
+        get() = tags.map { it.name }.toSet()
 
+    /** 좋아요 수 갱신 */
     fun updateLikeCount(newLikeCount: Long) {
         this.likeCount = newLikeCount
     }
