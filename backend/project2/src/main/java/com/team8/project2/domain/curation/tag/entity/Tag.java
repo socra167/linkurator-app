@@ -13,11 +13,14 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "tags")
 public class Tag {
+
+    public Tag(String name) {
+        this.name = name;
+    }
 
     /**
      * 태그의 고유 ID (자동 생성)

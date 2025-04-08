@@ -28,7 +28,7 @@ class TagServiceTest {
 
     @BeforeEach
     void setUp() {
-        tag = Tag.builder().name("testTag").build();
+        tag = new Tag("testTag");
     }
 
     @Test

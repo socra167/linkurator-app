@@ -2,8 +2,6 @@ package com.team8.project2.domain.curation.tag.service;
 
 import java.util.List;
 
-import com.team8.project2.domain.curation.curation.controller.ApiV1CurationController;
-import com.team8.project2.domain.curation.curation.repository.CurationRepository;
 import com.team8.project2.domain.curation.tag.dto.TagResDto;
 import com.team8.project2.domain.curation.tag.entity.Tag;
 import com.team8.project2.domain.curation.tag.repository.TagRepository;
@@ -22,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class TagService {
 
     private final TagRepository tagRepository;
-    private final CurationRepository curationRepository;
 
     /**
      * 태그가 존재하면 기존 태그를 반환하고, 존재하지 않으면 새로 생성하여 반환합니다.
@@ -31,7 +28,7 @@ public class TagService {
      */
     public Tag getTag(String name) {
         return tagRepository.findByName(name)
-                .orElseGet(() -> tagRepository.save(Tag.builder().name(name).build()));
+                .orElseGet(() -> tagRepository.save(new Tag(name)));
     }
 
     // 많이 사용된 tag 수 반환
