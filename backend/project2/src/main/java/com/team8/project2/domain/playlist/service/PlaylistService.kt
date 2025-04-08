@@ -3,10 +3,9 @@ package com.team8.project2.domain.playlist.service
 import com.team8.project2.domain.link.service.LinkService
 import com.team8.project2.domain.member.entity.Member
 import com.team8.project2.domain.member.repository.MemberRepository
-import com.team8.project2.domain.playlist.dto.PlaylistCreateDto
-import com.team8.project2.domain.playlist.dto.PlaylistDto
-import com.team8.project2.domain.playlist.dto.PlaylistUpdateDto
+import com.team8.project2.domain.playlist.dto.*
 import com.team8.project2.domain.playlist.entity.Playlist
+import com.team8.project2.domain.playlist.entity.PlaylistItem
 import com.team8.project2.domain.playlist.entity.PlaylistLike
 import com.team8.project2.domain.playlist.repository.PlaylistLikeRepository
 import com.team8.project2.domain.playlist.repository.PlaylistRepository
@@ -404,8 +403,156 @@ class PlaylistService(
         }
     }
 
+    /**
+     * 플레이리스트에 새 아이템을 추가합니다.
+     *
+     * @param playlistId 아이템을 추가할 플레이리스트 ID
+     * @param itemId 추가할 아이템의 ID
+     * @param itemType 아이템 타입 (LINK, CURATION)
+     * @return 아이템이 추가된 플레이리스트 DTO
+     */
+    fun addPlaylistItem(
+        playlistId: Long,
+        itemId: Long,
+        itemType: PlaylistItem.PlaylistItemType)
+    : PlaylistDto {
+        val playlist = playlistRepository.findById(playlistId)
+            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+
+        val newDisplayOrder = playlist.items.size
+        val actor = rq.actor
+
+        if (playlist.member.id != actor.id) {
+            throw BadRequestException("자신의 플레이리스트에만 아이템을 추가할 수 있습니다.")
+        }
+
+        val newItem = PlaylistItem(
+            itemId = itemId,
+            itemType = itemType,
+            playlist = playlist,
+            displayOrder = newDisplayOrder
+        )
+
+        playlist.items.add(newItem)
+        playlistRepository.save(playlist)
+
+        return PlaylistDto.fromEntity(playlist, actor)
+    }
 
 
+    /**
+     * 플레이리스트 아이템을 삭제합니다.
+     *
+     * @param playlistId 아이템을 삭제할 플레이리스트 ID
+     * @param itemId 삭제할 아이템의 ID
+     */
+    @Transactional
+    fun deletePlaylistItem(playlistId: Long?, itemId: Long) {
+        val playlist = playlistRepository.findById(playlistId)
+            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+
+        val removed = playlist.items.removeIf { it.id == itemId }
+        if (!removed) {
+            throw NotFoundException("해당 플레이리스트 아이템을 찾을 수 없습니다.")
+        }
+
+        val actor = rq.actor
+        if (playlist.member.id != actor.id) {
+            throw BadRequestException("자신이 소유한 플레이리스트 아이템만 삭제할 수 있습니다.")
+        }
+
+        playlistRepository.save(playlist)
+    }
+
+
+    /**
+     * 플레이리스트 아이템의 순서를 변경합니다.
+     *
+     * @param playlistId 대상 플레이리스트 ID
+     * @param orderUpdates 변경할 순서 리스트
+     * @return 순서가 변경된 플레이리스트 DTO
+     */
+    @Transactional
+    fun updatePlaylistItemOrder(
+        playlistId: Long,
+        orderUpdates: List<PlaylistItemOrderUpdateDto>
+    ): PlaylistDto {
+        val playlist = playlistRepository.findById(playlistId)
+            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+
+        val totalOrderCount = orderUpdates.sumOf { 1 + (it.children?.size ?: 0) }
+
+        if (playlist.items.size != totalOrderCount) {
+            throw BadRequestException(
+                "플레이리스트 아이템 개수가 일치하지 않습니다. Expected: ${playlist.items.size}, but received: $totalOrderCount"
+            )
+        }
+
+        val itemMap = playlist.items.associateBy { it.id }
+
+        var mainIndex = 0
+        for (dto in orderUpdates) {
+            val mainItem = itemMap[dto.id]
+                ?: throw BadRequestException("존재하지 않는 플레이리스트 아이템 ID: ${dto.id}")
+            val mainOrder = mainIndex * 100
+
+            mainItem.displayOrder = mainOrder
+            mainItem.parentItemId = null
+
+            dto.children?.forEachIndexed { childIndex, childId ->
+                val childItem = itemMap[childId]
+                    ?: throw BadRequestException("존재하지 않는 그룹 내부 아이템 ID: $childId")
+
+                childItem.displayOrder = mainOrder + childIndex + 1
+                childItem.parentItemId = mainItem.id
+            }
+            mainIndex++
+        }
+
+        val actor = rq.actor
+
+        playlistRepository.save(playlist)
+        return PlaylistDto.fromEntity(playlist, actor)
+    }
+
+    /**
+     * 특정 플레이리스트 아이템의 내용을 수정합니다.
+     * LinkService를 통해 제목, URL, 설명을 수정합니다.
+     *
+     * @param playlistId 대상 플레이리스트 ID
+     * @param playlistItemId 수정할 아이템 ID
+     * @param updateDto 수정할 내용 DTO (제목, URL, 설명)
+     * @return 수정된 플레이리스트 DTO
+     */
+    @Transactional
+    fun updatePlaylistItem(
+        playlistId: Long,
+        playlistItemId: Long,
+        updateDto: PlaylistItemUpdateDto
+    ): PlaylistDto {
+        val playlist = playlistRepository.findById(playlistId)
+            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+
+        val actor = rq.actor
+
+        val itemToUpdate = playlist.items
+            .firstOrNull { it.id == playlistItemId }
+            ?: throw NotFoundException("해당 플레이리스트 아이템을 찾을 수 없습니다.")
+
+        if (itemToUpdate.itemType == PlaylistItem.PlaylistItemType.LINK) {
+            val updatedLink = linkService.updateLinkDetails(
+                itemToUpdate.link.id,
+                updateDto.title,
+                updateDto.url,
+                updateDto.description
+            )
+            itemToUpdate.link = updatedLink
+        } else {
+            throw BadRequestException("현재 아이템은 수정할 수 없습니다.")
+        }
+
+        return PlaylistDto.fromEntity(playlist, actor)
+    }
 
 
 }
