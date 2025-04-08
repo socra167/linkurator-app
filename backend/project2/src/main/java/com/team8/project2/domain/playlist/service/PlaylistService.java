@@ -32,7 +32,9 @@ import java.util.stream.Collectors;
 /**
  * 플레이리스트(Playlist) 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
  * 플레이리스트 생성, 조회, 수정, 삭제 기능을 제공합니다.
+ * @deprecated Kotlin으로 마이그레이션됨. PlaylistService.kt
  */
+@Deprecated
 @Slf4j
 @Service
 @RequiredArgsConstructor
