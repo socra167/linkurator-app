@@ -3,8 +3,6 @@ package com.team8.project2.domain.curation.curation.service;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -137,9 +135,9 @@ public class CurationService {
 		}
 
 		for (String imageName : imageNames) {
-			Optional<CurationImage> opImage = curationImageRepository.findByImageName(imageName);
-			if (opImage.isPresent()) {
-				CurationImage curationImage = opImage.get();
+			CurationImage image = curationImageRepository.findByImageName(imageName);
+			if (image != null) {
+				CurationImage curationImage = image;
 				curationImage.setCurationIdIfNull(curation.getId());
 				curationImageRepository.save(curationImage);
 			}
