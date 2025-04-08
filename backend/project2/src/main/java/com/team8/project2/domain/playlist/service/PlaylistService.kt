@@ -7,6 +7,7 @@ import com.team8.project2.domain.playlist.dto.PlaylistCreateDto
 import com.team8.project2.domain.playlist.dto.PlaylistDto
 import com.team8.project2.domain.playlist.dto.PlaylistUpdateDto
 import com.team8.project2.domain.playlist.entity.Playlist
+import com.team8.project2.domain.playlist.entity.PlaylistLike
 import com.team8.project2.domain.playlist.repository.PlaylistLikeRepository
 import com.team8.project2.domain.playlist.repository.PlaylistRepository
 import com.team8.project2.global.Rq
@@ -330,6 +331,81 @@ class PlaylistService(
 
         return likedPlaylists.map { PlaylistDto.fromEntity(it, actor) }
     }
+
+
+    /**
+     * Redis에 저장된 사용자의 좋아요 플레이리스트 목록을 조회합니다.
+     *
+     * @param memberId 사용자 ID
+     * @return 좋아요한 플레이리스트 DTO 리스트 (없으면 빈 리스트)
+     */
+    @Transactional(readOnly = true)
+    fun getLikedPlaylistsFromRedis(memberId: Long): List<PlaylistDto> {
+        val memberLikedKey = "member_liked_playlists:$memberId"
+        val playlistIdObjs = redisTemplate.opsForSet().members(memberLikedKey)
+
+        if (playlistIdObjs == null || playlistIdObjs.isEmpty()) {
+            return emptyList()
+        }
+
+        val playlistIds = playlistIdObjs.map { it.toString().toLong() }
+        val playlists = playlistRepository.findAllById(playlistIds)
+        val actor = rq.actor
+
+        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+    }
+
+
+    /**
+     * Redis에 저장된 플레이리스트 좋아요 수를 DB에 동기화합니다.
+     *
+     * Redis의 좋아요를 기반으로 DB에 PlaylistLike 엔티티로 반영하고,
+     * 기존 DB와 비교해 좋아요를 반영합니다.
+     */
+    @Scheduled(fixedRate = 600000)
+    @Transactional
+    fun syncPlaylistLikesToDB() {
+        val keys = redisTemplate.keys("playlist_like:*") ?: return
+
+        for (key in keys) {
+            val playlistId = key.split(":").getOrNull(1)?.toLongOrNull() ?: continue
+
+            val playlist = playlistRepository.findById(playlistId).orElse(null) ?: continue
+            val rawMemberIds = redisTemplate.opsForSet().members(key) ?: continue
+            val memberIds = rawMemberIds.map { it.toString() }.toSet()
+
+            for (memberStr in memberIds) {
+                val memberId = memberStr.toLongOrNull() ?: continue
+                val member = memberRepository.findById(memberId).orElse(null) ?: continue
+
+                val likeId = PlaylistLike.PlaylistLikeId().apply {
+                    this.playlistId = playlistId
+                    this.memberId = memberId
+                }
+
+                if (!playlistLikeRepository.existsById(likeId)) {
+                    val like = PlaylistLike.createLike(playlist, member)
+                    playlistLikeRepository.save(like)
+                }
+            }
+
+            val likeCount = redisTemplate.opsForSet().size(key)
+            playlist.likeCount = likeCount ?: 0L
+            playlistRepository.save(playlist)
+
+            val currentLikesInDB = playlistLikeRepository.findAllById_PlaylistId(playlistId)
+            val currentMemberIdSet = memberIds.mapNotNull { it.toLongOrNull() }.toSet()
+
+            for (dbLike in currentLikesInDB) {
+                if (!currentMemberIdSet.contains(dbLike.member.getId())) {
+                    playlistLikeRepository.delete(dbLike)
+                }
+            }
+        }
+    }
+
+
+
 
 
 }
