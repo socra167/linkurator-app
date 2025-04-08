@@ -1,19 +1,20 @@
 package com.team8.project2.domain.curation.curation.dto;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.team8.project2.domain.comment.dto.ReplyCommentDto;
 import com.team8.project2.domain.comment.entity.Comment;
 import com.team8.project2.domain.curation.curation.entity.Curation;
 import com.team8.project2.domain.curation.tag.entity.Tag;
 import com.team8.project2.domain.link.entity.Link;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Builder
@@ -112,9 +113,9 @@ public class CurationDetailResDto {
 
 		public CommentResDto(Comment comment) {
 			this.commentId = comment.getId();
-			this.authorId = comment.getAuthorId();
-			this.authorName = comment.getAuthorName();
-			this.authorImgUrl = comment.getAuthorImgUrl();
+			this.authorId = comment.getAuthor().getId();
+			this.authorName = comment.getAuthor().getUsername();
+			this.authorImgUrl = comment.getAuthor().getProfileImage();
 			this.content = comment.getContent();
 			this.createdAt = comment.getCreatedAt();
 			this.modifiedAt = comment.getModifiedAt();
