@@ -3,6 +3,7 @@ package com.team8.project2.global.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import kotlin.jvm.JvmOverloads;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,6 +15,8 @@ public class RsData<T> {
 	private String msg;
 	private T data;
 
+	// TODO : @JVvmOverloads 명시
+	@JvmOverloads
 	public RsData(String code, String msg) {
 		this(code, msg, null);
 	}
