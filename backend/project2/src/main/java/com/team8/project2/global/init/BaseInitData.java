@@ -95,7 +95,7 @@ public class BaseInitData {
 	private Member createMember(String email, String username, String memberId, String displayName, String password, String profileImage, String introduce, RoleEnum role) {
 		Member member = new Member(
 				memberId,
-				username,
+				displayName,
 				password,
 				role != null ? role : RoleEnum.MEMBER, // 안전하게 기본값 처리
 				profileImage,

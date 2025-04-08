@@ -1,14 +1,11 @@
 package com.team8.project2.domain.member.service;
 
-import com.team8.project2.domain.curation.curation.repository.CurationRepository;
-import com.team8.project2.domain.image.service.S3Uploader;
 import com.team8.project2.domain.member.dto.FollowResDto;
 import com.team8.project2.domain.member.entity.Follow;
 import com.team8.project2.domain.member.entity.Member;
 import com.team8.project2.domain.member.entity.RoleEnum;
 import com.team8.project2.domain.member.repository.FollowRepository;
 import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.global.Rq;
 import com.team8.project2.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -18,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Map;
 import java.util.Optional;
@@ -33,22 +29,25 @@ public class MemberServiceTest {
     @InjectMocks
     private MemberService memberService;
 
-    @Mock private MemberRepository memberRepository;
-    @Mock private AuthTokenService authTokenService;
-    @Mock private FollowRepository followRepository;
+    @Mock
+    private MemberRepository memberRepository;
+    @Mock
+    private AuthTokenService authTokenService;
+    @Mock
+    private FollowRepository followRepository;
 
     @Test
     @DisplayName("회원 가입 - null 가능 필드가 모두 채워졌을 때 정상 저장된다.")
     void join_Succeeds_WhenAllNullableFieldsAreFilled() {
-        Member member = Member.builder()
-                .memberId("fullUser")
-                .password("fullpw")
-                .email("full@test.com")
-                .profileImage("fullImage.png")
-                .username("Full Name")
-                .introduce("Hello, I'm full user!")
-                .role(RoleEnum.MEMBER)
-                .build();
+        Member member = new Member(
+                "fullUser",                  // memberId
+                "Full Name",                 // username
+                "fullpw",                    // password
+                RoleEnum.MEMBER,             // roleEnum
+                "fullImage.png",             // profileImage
+                "full@test.com",             // email
+                "Hello, I'm full user!"      // introduce
+        );
 
         when(memberRepository.save(any(Member.class))).thenReturn(member);
 
@@ -66,11 +65,14 @@ public class MemberServiceTest {
     @Test
     @DisplayName("회원 가입 - null 가능 필드가 모두 비어 있을 때 정상 저장된다.")
     void join_Succeeds_WhenAllNullableFieldsAreNull() {
-        Member member = Member.builder()
-                .memberId("minimalUser")
-                .password("minpw")
-                .role(RoleEnum.MEMBER)
-                .build();
+        Member member = new Member(
+                "minimalUser",     // memberId
+                "minpw",           // password
+                RoleEnum.MEMBER,   // roleEnum
+                null,              // email
+                null,              // profileImage
+                null               // introduce
+        );
 
         when(memberRepository.save(any(Member.class))).thenReturn(member);
 
@@ -78,7 +80,7 @@ public class MemberServiceTest {
 
         assertNotNull(result);
         assertEquals("minimalUser", result.getMemberId());
-        assertNull(result.getUsername());
+        assertEquals("Anonymous", result.getUsername());
         assertNull(result.getEmail());
         assertNull(result.getProfileImage());
     }
@@ -87,9 +89,7 @@ public class MemberServiceTest {
     @DisplayName("회원 삭제 - 존재하는 회원이면 정상적으로 삭제된다.")
     void deleteMember_Succeeds_WhenMemberExists() {
         // given
-        Member member = Member.builder()
-                .memberId("user1")
-                .build();
+        Member member = new Member("user1");
 
         when(memberRepository.findByMemberId("user1")).thenReturn(Optional.of(member));
 
@@ -103,7 +103,7 @@ public class MemberServiceTest {
     @Test
     @DisplayName("JWT 발급 - 회원 정보를 이용해 accessToken을 생성한다.")
     void getAuthToken_ReturnsAccessToken_WhenMemberIsValid() {
-        Member member = Member.builder().id(1L).memberId("user").build();
+        Member member = new Member(1L, "user");
         when(authTokenService.genAccessToken(member)).thenReturn("mocked.jwt.token");
 
         String token = memberService.getAuthToken(member);
@@ -127,8 +127,9 @@ public class MemberServiceTest {
     @Test
     @DisplayName("팔로우 - 정상적으로 팔로우 관계가 저장된다.")
     void followUser_Succeeds_WhenValidFolloweeIsGiven() {
-        Member follower = Member.builder().id(1L).memberId("user1").build();
-        Member followee = Member.builder().id(2L).memberId("user2").build();
+        Member follower = new Member(1L, "user1");
+        Member followee = new Member(2L, "user2");
+
 
         when(memberRepository.findByUsername("user2")).thenReturn(Optional.of(followee));
         when(followRepository.findByFollowerAndFollowee(follower, followee)).thenReturn(Optional.empty());
@@ -144,10 +145,10 @@ public class MemberServiceTest {
     @Test
     @DisplayName("팔로우 - 자기 자신은 팔로우할 수 없다.")
     void followUser_Fails_WhenFollowSelf() {
-        Member follower = Member.builder().id(1L).memberId("user1").build();
-        Member followee = Member.builder().id(2L).memberId("user1").build(); // same ID
+        Member follower = new Member(1L, "user1");
 
-        when(memberRepository.findByUsername("user1")).thenReturn(Optional.of(followee));
+        // followee도 동일한 user1로 세팅
+        when(memberRepository.findByUsername("user1")).thenReturn(Optional.of(follower));
 
         ServiceException ex = assertThrows(ServiceException.class, () ->
                 memberService.followUser(follower, "user1"));

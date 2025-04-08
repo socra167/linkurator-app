@@ -13,20 +13,30 @@ import java.time.LocalDateTime
     AuditingEntityListener::class
 )
 class Member() {
-    @Id // 기본키
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="id")
+    private var _id: Long? = null // TODO: 추후에 코틀린 전환 과정에서 해결
+
+    var id: Long
+        get() = _id ?: 0
+        set(value) {
+            _id = value
+        }
+    /*@Id // 기본키
     @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT
     private var id: Long? = null
 
     //nullable인데 null 예외 처리가 되어있음
     @get:JvmName("getId") // Java에서 getId()로 보이게
     val idOrThrow: Long?
-        get() = id ?: throw UninitializedPropertyAccessException("id is not initialized")
+        get() = id ?: throw UninitializedPropertyAccessException("id is not initialized")*/
 
     @CreatedDate
-    val createdDate: LocalDateTime? = null
+    var createdDate: LocalDateTime? = null
 
     @LastModifiedDate
-    val modifiedDate: LocalDateTime? = null
+    var modifiedDate: LocalDateTime? = null
 
     @Column(length = 100, unique = true)
     private var memberId: String? = null
@@ -47,7 +57,9 @@ class Member() {
 
     @get:JvmName("getUsername")
     val usernameOrThrow: String
-        get() = username ?: throw UninitializedPropertyAccessException("password is not initialized")
+        get() = username ?: "Anonymous"
+
+    //username null시 annoymous 할당
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) //@Builder.Default
@@ -82,6 +94,7 @@ class Member() {
     constructor(id: Long, memberId: String) : this() {
         this.id = id
         this.memberId = memberId
+        this.password = "blank"
     }
 
     constructor(
@@ -102,6 +115,22 @@ class Member() {
         this.introduce = introduce
     }
 
+    constructor(id: Long, username: String, email: String) : this() {
+        this.id = id
+        this.username = username
+        this.email = email
+        this.password = "blank"
+    }
+
+    constructor(memberId: String) : this() {
+        this.memberId = memberId
+        this.password = "blank"
+    }
+
+    constructor(id: Long) : this() {
+        this.id = id
+        this.password = "blank"
+    }
     // setter
     fun setUsername(newName: String) {
         this.username = newName

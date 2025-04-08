@@ -163,7 +163,7 @@ public class CurationService {
 		Curation curation = curationRepository.findById(curationId)
 			.orElseThrow(() -> new ServiceException("404-1", "해당 큐레이션을 찾을 수 없습니다."));
 
-		if (!curation.getMember().getId().equals(member.getId())) {
+		if (!(curation.getMember().getId()==member.getId())) {
 			throw new ServiceException("403", "권한이 없습니다.");
 		}
 

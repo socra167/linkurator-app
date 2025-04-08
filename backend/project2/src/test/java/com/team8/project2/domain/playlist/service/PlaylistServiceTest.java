@@ -70,11 +70,7 @@ class PlaylistServiceTest {
 
     @BeforeEach
     void setUp() {
-        sampleMember = Member.builder()
-                .id(1L)
-                .username("테스트 유저")
-                .email("test@example.com")
-                .build();
+        Member sampleMember = new Member(1L, "테스트 유저", "test@example.com");
 
         samplePlaylist = Playlist.builder()
                 .id(1L)
@@ -518,11 +514,7 @@ class PlaylistServiceTest {
         Long playlistId = 1L;
         String sortType = "combined";
 
-        Member sampleMember = Member.builder()
-                .id(1L)
-                .username("테스트 유저")
-                .email("test@example.com")
-                .build();
+        Member sampleMember = new Member(1L, "테스트 유저", "test@example.com");
 
         Playlist samplePlaylist = Playlist.builder()
                 .id(playlistId)
@@ -587,11 +579,8 @@ class PlaylistServiceTest {
         Long playlistId = 1L;
         String sortType = "combined";
 
-        Member sampleMember = Member.builder()
-                .id(1L)
-                .username("테스트 유저")
-                .email("test@example.com")
-                .build();
+        Member sampleMember = new Member(1L, "테스트 유저", "test@example.com");
+
         Playlist samplePlaylist = Playlist.builder()
                 .id(playlistId)
                 .title("테스트 플레이리스트")
@@ -647,14 +636,14 @@ class PlaylistServiceTest {
     @Test
     void addPublicPlaylistToMyPlaylist() {
         // given
-        Member member = Member.builder().id(1L).username("testUser").build();
+        Member member = new Member(1L, "testUser");
         Playlist originalPlaylist = Playlist.builder()
                 .id(100L)
                 .title("공개 플레이리스트")
                 .description("공개 설명")
                 .isPublic(true)
                 .items(new ArrayList<>())
-                .member(Member.builder().id(2L).build())
+                .member(new Member(2L))
                 .build();
 
         given(rq.getActor()).willReturn(member);
@@ -683,10 +672,7 @@ class PlaylistServiceTest {
         Long playlistItemId = 10L;
         Long linkId = 100L;
 
-        Member member = Member.builder()
-                .id(1L)
-                .username("testUser")
-                .build();
+        Member member = new Member(1L, "testUser");
 
         Link link = Link.builder()
                 .id(linkId)
