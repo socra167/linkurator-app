@@ -23,10 +23,12 @@ class Report(
     val reporter: Member,
     @Enumerated(EnumType.STRING)
     val reportType: ReportType,
+) {
     @CreatedDate
     @Column(updatable = false)
-    val reportDate: LocalDateTime? = null,
-) {
+    lateinit var reportDate: LocalDateTime
+        private set
+
     constructor(curation: Curation, reportType: ReportType, reporter: Member) : this(
         id = null,
         curation = curation,
