@@ -514,8 +514,6 @@ class PlaylistServiceTest {
         Long playlistId = 1L;
         String sortType = "combined";
 
-        Member sampleMember = new Member(1L, "테스트 유저", "test@example.com");
-
         Playlist samplePlaylist = Playlist.builder()
                 .id(playlistId)
                 .title("테스트 플레이리스트")

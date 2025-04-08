@@ -1,12 +1,12 @@
 package com.team8.project2.domain.member.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team8.project2.domain.curation.curation.service.CurationService;
+import com.team8.project2.domain.image.service.S3Uploader;
+import com.team8.project2.domain.member.dto.MemberReqDTO;
+import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.member.repository.MemberRepository;
+import com.team8.project2.domain.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,13 +20,13 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team8.project2.domain.curation.curation.service.CurationService;
-import com.team8.project2.domain.image.service.S3Uploader;
-import com.team8.project2.domain.member.dto.MemberReqDTO;
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.domain.member.service.MemberService;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -59,13 +59,14 @@ public class ApiV1MemberControllerTest {
                                         {
                                             "memberId": "%s",
                                             "password": "%s",
+                                            "username": "%s",
                                             "email": "%s",
                                             "role": "%s",
                                             "profileImage": "%s",
                                             "introduce": "%s"
                                         }
                                         """
-                                        .formatted(memberId, password, email, role, profileImage, introduce)
+                                        .formatted(memberId, memberId, password, email, role, profileImage, introduce)
                                         .stripIndent())
                                 .contentType(
                                         new MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)

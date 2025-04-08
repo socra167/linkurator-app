@@ -41,23 +41,12 @@ class Member() {
     @Column(length = 100, unique = true)
     private var memberId: String? = null
 
-    @get:JvmName("getMemberId")
-    val memberIdOrThrow: String
-        get() = memberId ?: throw UninitializedPropertyAccessException("memberId is not initialized")
 
     @Column(nullable = false)
     private var password: String? = null
 
-    @get:JvmName("getPassword")
-    val passwordOrThrow: String
-        get() = password ?: throw UninitializedPropertyAccessException("password is not initialized")
-
     @Column(length = 100, unique = true, nullable = true)
     private var username: String? = null
-
-    @get:JvmName("getUsername")
-    val usernameOrThrow: String
-        get() = username ?: "Anonymous"
 
     //username null시 annoymous 할당
 
@@ -75,21 +64,6 @@ class Member() {
     var introduce: String? = null
 
     //생성자
-    constructor(
-        memberId: String,
-        password: String?,
-        roleEnum: RoleEnum?,
-        email: String?,
-        profileImage: String?,
-        introduce: String?
-    ) : this() {
-        this.memberId = memberId
-        this.password = password
-        this.role = roleEnum ?: RoleEnum.MEMBER
-        this.email = email
-        this.profileImage = profileImage
-        this.introduce = introduce
-    }
 
     constructor(id: Long, memberId: String) : this() {
         this.id = id
@@ -116,6 +90,22 @@ class Member() {
     }
 
     // Test 용 생성자
+    constructor(
+        memberId: String,
+        password: String?,
+        role: RoleEnum,
+        email: String?,
+        profileImage: String?,
+        introduce: String?
+    ) : this() {
+        this.memberId = memberId
+        this.password = password
+        this.role = role
+        this.email = email
+        this.profileImage = profileImage
+        this.introduce = introduce
+    }
+
     constructor(id: Long, username: String, email: String) : this() {
         this.id = id
         this.username = username
@@ -134,7 +124,16 @@ class Member() {
         this.password = "blank"
     }
 
-
+    //getter
+    fun getMemberId(): String {
+        return memberId ?: throw UninitializedPropertyAccessException("memberId is not initialized")
+    }
+    fun getUsername(): String {
+        return username ?: throw UninitializedPropertyAccessException("username is not initialized")
+    }
+    fun getPassword(): String {
+        return password ?: throw UninitializedPropertyAccessException("password is not initialized")
+    }
     // setter
     fun setUsername(newName: String) {
         this.username = newName

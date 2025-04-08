@@ -23,7 +23,6 @@ import java.util.*
 
 @Service
 class MemberService(
-
     private val memberRepository: MemberRepository,
     private val authTokenService: AuthTokenService,
     private val followRepository: FollowRepository,
@@ -84,14 +83,14 @@ class MemberService(
 
     @Transactional
     fun deleteMember(memberId: String?) {
-        val member = memberRepository!!.findByMemberId(memberId)
+        val member = memberRepository.findByMemberId(memberId)
             .orElseThrow { ServiceException("404-1", "해당 회원을 찾을 수 없습니다.") }
         memberRepository.delete(member)
     }
 
     @Transactional
     fun getMemberByAccessToken(accessToken: String?): Optional<Member> {
-        val payload = authTokenService!!.getPayload(accessToken)
+        val payload = authTokenService.getPayload(accessToken)
         if (payload == null) {
             return Optional.empty()
         }
@@ -110,7 +109,7 @@ class MemberService(
     fun followUser(follower: Member, username: String?): FollowResDto {
         val followee = findByUsername(username).orElseThrow { ServiceException("404-1", "존재하지 않는 사용자입니다.") }
 
-        if (follower.memberIdOrThrow == followee.memberIdOrThrow) {
+        if (follower.getMemberId() == followee.getMemberId()) {
             throw ServiceException("400-1", "자신을 팔로우할 수 없습니다.")
         }
 
@@ -129,7 +128,7 @@ class MemberService(
     fun unfollowUser(follower: Member, followeeId: String?): UnfollowResDto {
         val followee = findByUsername(followeeId).orElseThrow { ServiceException("404-1", "존재하지 않는 사용자입니다.") }
 
-        if (follower.memberIdOrThrow == followee.memberIdOrThrow) {
+        if (follower.getMemberId() == followee.getMemberId()) {
             throw ServiceException("400-1", "자신을 팔로우할 수 없습니다.")
         }
 
@@ -145,36 +144,33 @@ class MemberService(
 
     @Transactional(readOnly = true)
     fun getFollowingUsers(actor: Member?): FollowingResDto {
-        val followings = followRepository!!.findByFollower(actor)
-            .stream()
-            .sorted(Comparator.comparing { obj: Follow -> obj.followedAt }
-                .reversed())
-            .toList()
+        val followings = followRepository.findByFollower(actor)
+            .sortedByDescending { it.followedAt }
         return FollowingResDto.fromEntity(followings)
     }
 
     @Transactional
     fun updateMember(member: Member): Member {
-        return memberRepository!!.save(member)
+        return memberRepository.save(member)
     }
 
     @Transactional(readOnly = true)
     fun isFollowed(followeeId: Long?, followerId: Long?): Boolean {
-        return followRepository!!.existsByFollowerIdAndFolloweeId(followerId, followeeId)
+        return followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId)
     }
 
     @Transactional(readOnly = true)
     fun getCuratorInfo(username: String?): CuratorInfoDto {
-        val member = memberRepository!!.findByUsername(username)
+        val member = memberRepository.findByUsername(username)
             .orElseThrow { ServiceException("404-1", "해당 큐레이터를 찾을 수 없습니다.") }
 
-        val curationCount = curationRepository!!.countByMember(member)
+        val curationCount = curationRepository.countByMember(member)
         var isLogin = false
         var isFollowed = false
-        if (rq!!.isLogin) {
+        if (rq.isLogin) {
             isLogin = true
             val actor = rq.actor
-            isFollowed = followRepository!!.existsByFollowerIdAndFolloweeId(actor.id, member.id)
+            isFollowed = followRepository.existsByFollowerIdAndFolloweeId(actor.id, member.id)
         }
 
         return CuratorInfoDto(
@@ -186,12 +182,12 @@ class MemberService(
     @Transactional
     @Throws(IOException::class)
     fun updateProfileImage(imageFile: MultipartFile?) {
-        val actor = rq!!.actor
-        val imageFileName = s3Uploader!!.uploadFile(imageFile)
+        val actor = rq.actor
+        val imageFileName = s3Uploader.uploadFile(imageFile)
         val oldProfileImageUrl = actor.profileImage
         actor.profileImage = s3Uploader.baseUrl + imageFileName
 
-        memberRepository!!.save(actor)
-        eventPublisher!!.publishEvent(ProfileImageUpdateEvent(oldProfileImageUrl))
+        memberRepository.save(actor)
+        eventPublisher.publishEvent(ProfileImageUpdateEvent(oldProfileImageUrl))
     }
 }
