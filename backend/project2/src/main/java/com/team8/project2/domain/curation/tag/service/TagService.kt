@@ -3,7 +3,6 @@ package com.team8.project2.domain.curation.tag.service
 import com.team8.project2.domain.curation.tag.dto.TagResDto
 import com.team8.project2.domain.curation.tag.entity.Tag
 import com.team8.project2.domain.curation.tag.repository.TagRepository
-import lombok.RequiredArgsConstructor
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional
  * 태그(Tag) 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
  * 태그 조회 및 생성 기능을 제공합니다.
  */
-@RequiredArgsConstructor
 @Service
 class TagService(
     private val tagRepository: TagRepository,
