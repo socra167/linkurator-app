@@ -46,8 +46,8 @@ class Like {
         ): Like {
             val likeId =
                 LikeId(
-                    curationId = curation.id!!,
-                    memberId = member.id!!,
+                    curationId = curation.id,
+                    memberId = member.id,
                 )
             return Like().apply {
                 id = likeId
