@@ -7,7 +7,6 @@ import com.team8.project2.domain.link.service.LinkService
 import com.team8.project2.global.dto.RsData
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
-import lombok.RequiredArgsConstructor
 import org.springframework.web.bind.annotation.*
 
 /**

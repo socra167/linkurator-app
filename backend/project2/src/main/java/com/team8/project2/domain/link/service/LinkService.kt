@@ -6,7 +6,6 @@ import com.team8.project2.domain.link.entity.Link
 import com.team8.project2.domain.link.repository.LinkRepository
 import com.team8.project2.global.exception.ServiceException
 import jakarta.servlet.http.HttpServletRequest
-import lombok.RequiredArgsConstructor
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
