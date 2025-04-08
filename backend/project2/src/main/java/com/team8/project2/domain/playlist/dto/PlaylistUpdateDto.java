@@ -5,7 +5,9 @@ import lombok.Data;
 /**
  * 플레이리스트 수정 요청을 위한 DTO 클래스입니다.
  * 클라이언트가 전송하는 수정 데이터를 검증하고 전달합니다.
+ * @deprecated Kotlin으로 마이그레이션됨. PlaylistUpdateDto.kt
  */
+@Deprecated
 @Data
 public class PlaylistUpdateDto {
 
