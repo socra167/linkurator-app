@@ -1,201 +1,197 @@
-package com.team8.project2.domain.member.service;
+package com.team8.project2.domain.member.service
 
-import com.team8.project2.domain.curation.curation.repository.CurationRepository;
-import com.team8.project2.domain.image.service.S3Uploader;
-import com.team8.project2.domain.member.dto.CuratorInfoDto;
-import com.team8.project2.domain.member.dto.FollowResDto;
-import com.team8.project2.domain.member.dto.FollowingResDto;
-import com.team8.project2.domain.member.dto.UnfollowResDto;
-import com.team8.project2.domain.member.entity.Follow;
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.entity.RoleEnum;
-import com.team8.project2.domain.member.event.ProfileImageUpdateEvent;
-import com.team8.project2.domain.member.repository.FollowRepository;
-import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.global.Rq;
-import com.team8.project2.global.exception.ServiceException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+import com.team8.project2.domain.curation.curation.repository.CurationRepository
+import com.team8.project2.domain.image.service.S3Uploader
+import com.team8.project2.domain.member.dto.CuratorInfoDto
+import com.team8.project2.domain.member.dto.FollowResDto
+import com.team8.project2.domain.member.dto.FollowingResDto
+import com.team8.project2.domain.member.dto.UnfollowResDto
+import com.team8.project2.domain.member.entity.Follow
+import com.team8.project2.domain.member.entity.Member
+import com.team8.project2.domain.member.entity.RoleEnum
+import com.team8.project2.domain.member.event.ProfileImageUpdateEvent
+import com.team8.project2.domain.member.repository.FollowRepository
+import com.team8.project2.domain.member.repository.MemberRepository
+import com.team8.project2.global.Rq
+import com.team8.project2.global.exception.ServiceException
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
+import java.io.IOException
+import java.util.*
 
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-@Slf4j
 @Service
-@RequiredArgsConstructor
-public class MemberService {
+class MemberService(
 
-	private final MemberRepository memberRepository;
-	private final AuthTokenService authTokenService;
-	private final FollowRepository followRepository;
-	private final Rq rq;
-	private final CurationRepository curationRepository;
-	private final S3Uploader s3Uploader;
-	private final ApplicationEventPublisher eventPublisher;
+    private val memberRepository: MemberRepository,
+    private val authTokenService: AuthTokenService,
+    private val followRepository: FollowRepository,
+    private val rq: Rq,
+    private val curationRepository: CurationRepository,
+    private val s3Uploader: S3Uploader,
+    private val eventPublisher: ApplicationEventPublisher
 
-	public Member join(String memberId, String password, RoleEnum role, String email, String profileImage) {
-		return join(memberId, password, role, email, profileImage, null);
-	}
+) {
+    fun join(memberId: String?, password: String?, role: RoleEnum?, email: String?, profileImage: String?): Member {
+        return join(memberId, password, role, email, profileImage, null)
+    }
 
-	public long count() {
-		return memberRepository.count();
-	}
+    fun count(): Long {
+        return memberRepository.count()
+    }
 
-	@Transactional
-	public Member join(String memberId, String password, RoleEnum role, String email, String profileImage,
-		String introduce) {
+    @Transactional
+    fun join(
+        memberId: String?, password: String?, role: RoleEnum?, email: String?, profileImage: String?,
+        introduce: String?
+    ): Member {
+        var role = role
+        if (role == null) {
+            role = RoleEnum.MEMBER
+        }
+        val member = Member(
+            memberId!!,
+            password,
+            RoleEnum.MEMBER,  // 기본값 지정이 사라졌을 수 있으므로 명시
+            email,
+            profileImage,
+            introduce
+        )
+        return memberRepository.save(member)
+    }
 
-		if (role == null) {
-			role = RoleEnum.MEMBER;
-		}
-		Member member = new Member(
-				memberId,
-				password,
-				RoleEnum.MEMBER, // 기본값 지정이 사라졌을 수 있으므로 명시
-				email,
-				profileImage,
-				introduce
-		);
-		return memberRepository.save(member);
-	}
+    @Transactional
+    fun join(member: Member): Member {
+        return memberRepository.save(member)
+    }
 
-	@Transactional
-	public Member join(Member member) {
-		return memberRepository.save(member);
-	}
+    fun findByMemberId(memberId: String?): Optional<Member> {
+        return memberRepository.findByMemberId(memberId)
+    }
 
-	public Optional<Member> findByMemberId(String memberId) {
-		return memberRepository.findByMemberId(memberId);
-	}
+    fun findByUsername(username: String?): Optional<Member> {
+        return memberRepository.findByUsername(username)
+    }
 
-	public Optional<Member> findByUsername(String username) {
-		return memberRepository.findByUsername(username);
-	}
+    fun findById(id: Long): Optional<Member> {
+        return memberRepository.findById(id)
+    }
 
-	public Optional<Member> findById(long id) {
-		return memberRepository.findById(id);
-	}
+    fun getAuthToken(member: Member?): String {
+        return authTokenService!!.genAccessToken(member)
+    }
 
-	public String getAuthToken(Member member) {
-		return authTokenService.genAccessToken(member);
-	}
+    @Transactional
+    fun deleteMember(memberId: String?) {
+        val member = memberRepository!!.findByMemberId(memberId)
+            .orElseThrow { ServiceException("404-1", "해당 회원을 찾을 수 없습니다.") }
+        memberRepository.delete(member)
+    }
 
-	@Transactional
-	public void deleteMember(String memberId) {
-		Member member = memberRepository.findByMemberId(memberId)
-				.orElseThrow(() -> new ServiceException("404-1", "해당 회원을 찾을 수 없습니다."));
-		memberRepository.delete(member);
-	}
+    @Transactional
+    fun getMemberByAccessToken(accessToken: String?): Optional<Member> {
+        val payload = authTokenService!!.getPayload(accessToken)
+        if (payload == null) {
+            return Optional.empty()
+        }
 
-	@Transactional
-	public Optional<Member> getMemberByAccessToken(String accessToken) {
-		Map<String, Object> payload = authTokenService.getPayload(accessToken);
-		log.info("[JWT PAYLOAD] :" + payload);
-		if (payload == null) {
-			return Optional.empty();
-		}
+        val id = payload["id"] as Long
+        val memberId = payload["memberId"] as String?
 
-		long id = (long)payload.get("id");
-		String memberId = (String)payload.get("memberId");
+        return Optional.of(Member(id, memberId!!))
+    }
 
-		return Optional.of(new Member(id,memberId));
-	}
+    fun genAccessToken(member: Member?): String {
+        return authTokenService!!.genAccessToken(member)
+    }
 
-	public String genAccessToken(Member member) {
-		return authTokenService.genAccessToken(member);
-	}
+    @Transactional
+    fun followUser(follower: Member, username: String?): FollowResDto {
+        val followee = findByUsername(username).orElseThrow { ServiceException("404-1", "존재하지 않는 사용자입니다.") }
 
-	@Transactional
-	public FollowResDto followUser(Member follower, String username) {
-		Member followee = findByUsername(username).orElseThrow(
-			() -> new ServiceException("404-1", "존재하지 않는 사용자입니다."));
+        if (follower.memberIdOrThrow == followee.memberIdOrThrow) {
+            throw ServiceException("400-1", "자신을 팔로우할 수 없습니다.")
+        }
 
-		if (follower.getMemberId().equals(followee.getMemberId())) {
-			throw new ServiceException("400-1", "자신을 팔로우할 수 없습니다.");
-		}
+        var follow = Follow()
+        follow.setFollowerAndFollowee(follower, followee)
 
-		Follow follow = new Follow();
-		follow.setFollowerAndFollowee(follower, followee);
+        followRepository!!.findByFollowerAndFollowee(follower, followee).ifPresent { _f: Follow? ->
+            throw ServiceException("400-1", "이미 팔로우중인 사용자입니다.")
+        }
 
-		followRepository.findByFollowerAndFollowee(follower, followee).ifPresent(_f -> {
-			throw new ServiceException("400-1", "이미 팔로우중인 사용자입니다.");
-		});
+        follow = followRepository.save(follow)
+        return FollowResDto.fromEntity(follow)
+    }
 
-		follow = followRepository.save(follow);
-		return FollowResDto.fromEntity(follow);
-	}
+    @Transactional
+    fun unfollowUser(follower: Member, followeeId: String?): UnfollowResDto {
+        val followee = findByUsername(followeeId).orElseThrow { ServiceException("404-1", "존재하지 않는 사용자입니다.") }
 
-	@Transactional
-	public UnfollowResDto unfollowUser(Member follower, String followeeId) {
-		Member followee = findByUsername(followeeId).orElseThrow(
-			() -> new ServiceException("404-1", "존재하지 않는 사용자입니다."));
+        if (follower.memberIdOrThrow == followee.memberIdOrThrow) {
+            throw ServiceException("400-1", "자신을 팔로우할 수 없습니다.")
+        }
 
-		if (follower.getMemberId().equals(followee.getMemberId())) {
-			throw new ServiceException("400-1", "자신을 팔로우할 수 없습니다.");
-		}
+        val follow = Follow()
+        follow.setFollowerAndFollowee(follower, followee)
 
-		Follow follow = new Follow();
-		follow.setFollowerAndFollowee(follower, followee);
+        followRepository.findByFollowerAndFollowee(follower, followee)
+            .orElseThrow { ServiceException("400-1", "팔로우중이 아닙니다.") }
 
-		followRepository.findByFollowerAndFollowee(follower, followee)
-			.orElseThrow(() -> new ServiceException("400-1", "팔로우중이 아닙니다."));
+        followRepository.delete(follow)
+        return UnfollowResDto.fromEntity(follow)
+    }
 
-		followRepository.delete(follow);
-		return UnfollowResDto.fromEntity(follow);
-	}
+    @Transactional(readOnly = true)
+    fun getFollowingUsers(actor: Member?): FollowingResDto {
+        val followings = followRepository!!.findByFollower(actor)
+            .stream()
+            .sorted(Comparator.comparing { obj: Follow -> obj.followedAt }
+                .reversed())
+            .toList()
+        return FollowingResDto.fromEntity(followings)
+    }
 
-	@Transactional(readOnly = true)
-	public FollowingResDto getFollowingUsers(Member actor) {
-		List<Follow> followings = followRepository.findByFollower(actor)
-			.stream()
-			.sorted(Comparator.comparing(Follow::getFollowedAt).reversed())
-			.toList();
-		return FollowingResDto.fromEntity(followings);
-	}
+    @Transactional
+    fun updateMember(member: Member): Member {
+        return memberRepository!!.save(member)
+    }
 
-	@Transactional
-	public Member updateMember(Member member) {
-		return memberRepository.save(member);
-	}
+    @Transactional(readOnly = true)
+    fun isFollowed(followeeId: Long?, followerId: Long?): Boolean {
+        return followRepository!!.existsByFollowerIdAndFolloweeId(followerId, followeeId)
+    }
 
-	@Transactional(readOnly = true)
-	public boolean isFollowed(Long followeeId, Long followerId) {
-		return followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
-	}
+    @Transactional(readOnly = true)
+    fun getCuratorInfo(username: String?): CuratorInfoDto {
+        val member = memberRepository!!.findByUsername(username)
+            .orElseThrow { ServiceException("404-1", "해당 큐레이터를 찾을 수 없습니다.") }
 
-	@Transactional(readOnly = true)
-	public CuratorInfoDto getCuratorInfo(String username) {
-		Member member = memberRepository.findByUsername(username)
-			.orElseThrow(() -> new ServiceException("404-1", "해당 큐레이터를 찾을 수 없습니다."));
+        val curationCount = curationRepository!!.countByMember(member)
+        var isLogin = false
+        var isFollowed = false
+        if (rq!!.isLogin) {
+            isLogin = true
+            val actor = rq.actor
+            isFollowed = followRepository!!.existsByFollowerIdAndFolloweeId(actor.id, member.id)
+        }
 
-		long curationCount = curationRepository.countByMember(member);
-		boolean isLogin = false;
-		boolean isFollowed = false;
-		if (rq.isLogin()) {
-			isLogin = true;
-			Member actor = rq.getActor();
-			isFollowed = followRepository.existsByFollowerIdAndFolloweeId(actor.getId(), member.getId());
-		}
+        return CuratorInfoDto(
+            username, member.profileImage, member.introduce, curationCount, isFollowed,
+            isLogin
+        )
+    }
 
-		return new CuratorInfoDto(username, member.getProfileImage(), member.getIntroduce(), curationCount, isFollowed,
-			isLogin);
-	}
+    @Transactional
+    @Throws(IOException::class)
+    fun updateProfileImage(imageFile: MultipartFile?) {
+        val actor = rq!!.actor
+        val imageFileName = s3Uploader!!.uploadFile(imageFile)
+        val oldProfileImageUrl = actor.profileImage
+        actor.profileImage = s3Uploader.baseUrl + imageFileName
 
-	@Transactional
-	public void updateProfileImage(MultipartFile imageFile) throws IOException {
-		Member actor = rq.getActor();
-		String imageFileName = s3Uploader.uploadFile(imageFile);
-		String oldProfileImageUrl = actor.getProfileImage();
-		actor.setProfileImage(s3Uploader.getBaseUrl() + imageFileName);
-
-		memberRepository.save(actor);
-		eventPublisher.publishEvent(new ProfileImageUpdateEvent(oldProfileImageUrl));
-	}
+        memberRepository!!.save(actor)
+        eventPublisher!!.publishEvent(ProfileImageUpdateEvent(oldProfileImageUrl))
+    }
 }
