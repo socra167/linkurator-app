@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doNothing
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -25,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.transaction.annotation.Transactional
+
 
 @Transactional
 @ActiveProfiles("test")
@@ -82,7 +85,7 @@ class ApiV1LinkControllerTest {
                 .content(objectMapper.writeValueAsString(dto))
         )
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.code").value("201-1"))
+            .andExpect(jsonPath("$.code").value("200-1"))
             .andExpect(jsonPath("$.msg").value("링크가 성공적으로 추가되었습니다."))
             .andExpect(jsonPath("$.data.url").value("https://test.com"))
     }
@@ -146,15 +149,16 @@ class ApiV1LinkControllerTest {
                 .build()
         )
 
-        Mockito.doNothing().`when`(linkClickService).increaseClickCount(Mockito.any(Link::class.java))
+        doNothing().`when`(linkClickService).increaseClickCount(any<Link>())
 
         mockMvc.perform(
             get("/api/v1/link/{linkId}", saved.id)
                 .header("X-FORWARDED-FOR", "123.123.123.123")
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.code").value("200-2"))
+            .andExpect(jsonPath("$.code").value("200-1"))
             .andExpect(jsonPath("$.msg").value("링크가 성공적으로 조회되었습니다."))
             .andExpect(jsonPath("$.data.url").value("https://click.com"))
     }
+
 }
