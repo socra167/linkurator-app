@@ -18,6 +18,4 @@ data class LinkResDTO(
     val image: String,
     val click: Int,
     val linkId: Long
-) {
-
-}
+)
