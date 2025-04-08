@@ -5,10 +5,12 @@ import com.team8.project2.domain.member.entity.Member
 import com.team8.project2.domain.member.repository.MemberRepository
 import com.team8.project2.domain.playlist.dto.PlaylistCreateDto
 import com.team8.project2.domain.playlist.dto.PlaylistDto
+import com.team8.project2.domain.playlist.dto.PlaylistUpdateDto
 import com.team8.project2.domain.playlist.entity.Playlist
 import com.team8.project2.domain.playlist.repository.PlaylistLikeRepository
 import com.team8.project2.domain.playlist.repository.PlaylistRepository
 import com.team8.project2.global.Rq
+import com.team8.project2.global.exception.BadRequestException
 import com.team8.project2.global.exception.NotFoundException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.transaction.Transactional
@@ -199,6 +201,48 @@ class PlaylistService(
                 println("잘못된 Redis 키 형식: $key")
             }
         }
+    }
+
+
+    /**
+     * 기존 플레이리스트를 수정합니다.
+     *
+     * @param id 수정할 플레이리스트 ID
+     * @param request 수정할 데이터 DTO
+     * @return 수정된 플레이리스트 DTO
+     */
+    fun updatePlaylist(id: Long, request: PlaylistUpdateDto): PlaylistDto {
+        val playlist = playlistRepository.findById(id)
+            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+
+        val actor = rq.actor
+
+        request.title?.let { playlist.title = it }
+        request.description?.let { playlist.description = it }
+        request.isPublic?.let { playlist.isPublic = it }
+
+        return PlaylistDto.fromEntity(playlistRepository.save(playlist), actor)
+    }
+
+    /**
+     * 플레이리스트를 삭제합니다.
+     *
+     * @param id 삭제할 플레이리스트 ID
+     */
+    fun deletePlaylist(id: Long) {
+        val playlist = playlistRepository.findById(id)
+            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+
+        val actor = rq.actor
+
+        if (playlist.member.getId() != actor.getId()) {
+            throw BadRequestException("자신이 소유한 플레이리스트만 삭제할 수 있습니다.")
+        }
+
+        if (playlistLikeRepository.existsById_PlaylistId(id)) {
+            playlistLikeRepository.deleteById_PlaylistId(id)
+        }
+        playlistRepository.deleteById(id)
     }
 
 }
