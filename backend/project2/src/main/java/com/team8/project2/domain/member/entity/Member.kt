@@ -65,11 +65,6 @@ class Member() {
 
     //생성자
 
-    constructor(id: Long, memberId: String) : this() {
-        this.id = id
-        this.memberId = memberId
-        this.password = "blank"
-    }
 
     constructor(
         memberId: String,
@@ -90,6 +85,12 @@ class Member() {
     }
 
     // Test 용 생성자
+    constructor(id: Long, memberId: String) : this() {
+        this.id = id
+        this.memberId = memberId
+        this.password = "blank"
+        this.username = "default"
+    }
     constructor(
         memberId: String,
         password: String?,
@@ -117,11 +118,14 @@ class Member() {
     constructor(memberId: String) : this() {
         this.memberId = memberId
         this.password = "blank"
+        this.username = "default"
+        this.username = "default"
     }
 
     constructor(id: Long) : this() {
         this.id = id
         this.password = "blank"
+        this.username = "default"
     }
 
     //getter
