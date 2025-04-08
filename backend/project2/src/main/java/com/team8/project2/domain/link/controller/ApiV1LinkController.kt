@@ -7,6 +7,7 @@ import com.team8.project2.domain.link.service.LinkService
 import com.team8.project2.global.dto.RsData
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
 /**
@@ -23,6 +24,7 @@ class ApiV1LinkController(
      * 새로운 링크를 추가합니다.
      */
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     fun addLink(@RequestBody @Valid linkDTO: LinkReqDTO): RsData<Link> {
         val link = linkService.addLink(linkDTO)
         return RsData.success("링크가 성공적으로 추가되었습니다.", link)
