@@ -8,12 +8,8 @@ import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
-import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
-import software.amazon.awssdk.services.s3.presigner.S3Presigner
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 import java.io.IOException
-import java.time.Duration
 import java.util.*
 
 @Service
@@ -23,8 +19,6 @@ class S3Uploader(
     @Value("\${spring.cloud.aws.s3.bucket}")
     private val bucketName: String
 ) {
-    private val s3Presigner: S3Presigner? = null
-
     @Transactional
     fun deleteFile(imageName: String?) {
         val deleteObjectRequest = DeleteObjectRequest.builder()
@@ -32,7 +26,7 @@ class S3Uploader(
             .key(imageName)
             .build()
 
-        s3Client!!.deleteObject(deleteObjectRequest)
+        s3Client.deleteObject(deleteObjectRequest)
     }
 
     @Transactional
@@ -46,23 +40,9 @@ class S3Uploader(
             .contentType(file.contentType)
             .build()
 
-        s3Client!!.putObject(putObjectRequest, RequestBody.fromInputStream(file.inputStream, file.size))
+        s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.inputStream, file.size))
 
         return fileName
-    }
-
-    private fun getPresignedUrl(fileName: String): String {
-        val presignRequest = GetObjectPresignRequest.builder()
-            .signatureDuration(Duration.ofMinutes(10)) // 유효 시간 설정
-            .getObjectRequest { req: GetObjectRequest.Builder ->
-                req.bucket(
-                    bucketName
-                ).key(fileName)
-            }
-            .build()
-
-        val presignedRequest = s3Presigner!!.presignGetObject(presignRequest)
-        return presignedRequest.url().toString()
     }
 
     val baseUrl: String
