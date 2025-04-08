@@ -1,88 +1,78 @@
-package com.team8.project2.domain.curation.controller;
+package com.team8.project2.domain.curation.controller
 
-import static org.assertj.core.api.Assertions.*;
-
-import java.net.http.HttpRequest;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-
-import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto;
-import com.team8.project2.domain.curation.curation.entity.Curation;
-import com.team8.project2.domain.curation.curation.repository.CurationRepository;
-import com.team8.project2.domain.curation.curation.service.CurationService;
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.global.RedisUtils;
-
-import jakarta.servlet.http.HttpServletRequest;
+import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto
+import com.team8.project2.domain.curation.curation.repository.CurationRepository
+import com.team8.project2.domain.curation.curation.service.CurationService
+import com.team8.project2.domain.member.repository.MemberRepository
+import com.team8.project2.global.RedisUtils
+import jakarta.servlet.http.HttpServletRequest
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.context.ActiveProfiles
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @ActiveProfiles("test")
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class LikeCurationConcurrencyTest {
 
-	@Autowired
-	private CurationService curationService;
+    @Autowired
+    private lateinit var curationService: CurationService
 
-	@Autowired
-	private CurationRepository curationRepository;
+    @Autowired
+    private lateinit var curationRepository: CurationRepository
 
-	@Autowired
-	private MemberRepository memberRepository;
+    @Autowired
+    private lateinit var memberRepository: MemberRepository
 
-	private Long testCurationId;
-	private Long testMemberId;
+    @Autowired
+    private lateinit var request: HttpServletRequest
 
-	@Autowired
-	private HttpServletRequest request;
+    @Autowired
+    private lateinit var redisUtils: RedisUtils
 
-	@Autowired
-	private RedisUtils redisUtils;
+    private var testCurationId: Long = 0
+    private var testMemberId: Long = 0
 
-	@BeforeEach
-	void setUp() {
-		redisUtils.clearAllData();
+    @BeforeEach
+    fun setUp() {
+        redisUtils.clearAllData()
 
-		Curation curation = curationRepository.findById(1L).get();
-		testCurationId = curation.getId();
+        val curation = curationRepository.findById(1L).get()
+        testCurationId = curation.id!!
 
-		Member member = memberRepository.findById(1L).get();
-		testMemberId = member.getId();
-	}
+        val member = memberRepository.findById(1L).get()
+        testMemberId = member.id!!
+    }
 
-	@Test
-	void testConcurrentLikes() throws InterruptedException {
-		int threadCount = 1000;
-		ExecutorService executorService = Executors.newFixedThreadPool(50);
-		CountDownLatch latch = new CountDownLatch(threadCount);
+    @Test
+    fun testConcurrentLikes() {
+        val threadCount = 1000
+        val executorService = Executors.newFixedThreadPool(50)
+        val latch = CountDownLatch(threadCount)
 
-		for (int i = 0; i < threadCount; i++) {
-			executorService.submit(() -> {
-				try {
-					curationService.likeCuration(testCurationId, testMemberId);
-				} finally {
-					latch.countDown();
-				}
-			});
-		}
+        repeat(threadCount) {
+            executorService.submit {
+                try {
+                    curationService.likeCuration(testCurationId, testMemberId)
+                } finally {
+                    latch.countDown()
+                }
+            }
+        }
 
-		latch.await(10, TimeUnit.SECONDS);
-		executorService.shutdown();
+        latch.await(10, TimeUnit.SECONDS)
+        executorService.shutdown()
 
-		CurationDetailResDto dto = curationService.getCuration(testCurationId, request);
-		System.out.println("Final like count: " + dto.getLikeCount());
+        val dto: CurationDetailResDto = curationService.getCuration(testCurationId, request)
+        println("Final like count: ${dto.likeCount}")
 
-		assertThat(dto.getLikeCount()).isEqualTo(0L);
-	}
+        assertThat(dto.likeCount).isEqualTo(0L)
+    }
 }
