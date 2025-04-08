@@ -461,11 +461,7 @@ public class CurationService {
 			throw new ServiceException("400-1", "이미 같은 사유로 신고한 큐레이션입니다.");
 		}
 
-		Report report = Report.builder()
-			.reportType(reportType)
-			.curation(curation)
-			.reporter(actor)
-			.build();
+		Report report = new Report(curation, reportType, actor);
 
 		reportRepository.save(report);
 	}

@@ -100,5 +100,5 @@ public interface CurationRepository extends JpaRepository<Curation, Long> {
 
 	List<Curation> findTop3ByOrderByViewCountDesc();
 
-	List<Curation> findByIdIn(List<Long> reportedcurations);
+	List<Curation> findByIdIn(List<Long> reportedCurationIds);
 }
