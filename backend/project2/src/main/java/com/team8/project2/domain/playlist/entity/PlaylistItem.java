@@ -73,5 +73,14 @@ public class PlaylistItem {
         CURATION
     }
 
+    public PlaylistItem(Long itemId, Long parentItemId, PlaylistItemType itemType, Playlist playlist, Curation curation, Integer displayOrder) {
+        this.itemId = itemId;
+        this.parentItemId = parentItemId;
+        this.itemType = itemType;
+        this.playlist = playlist;
+        this.curation = curation;
+        this.displayOrder = displayOrder;
+    }
+
 
 }

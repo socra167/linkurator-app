@@ -44,5 +44,11 @@ public class PlaylistCreateDto {
         return isPublic != null ? isPublic : true;
     }
 
+    public PlaylistCreateDto(String title, String description, boolean isPublic) {
+        this.title = title;
+        this.description = description;
+        this.isPublic = isPublic;
+    }
+
 }
 

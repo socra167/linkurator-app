@@ -23,7 +23,7 @@ public class PlaylistDto {
     /**
      * 플레이리스트 ID
      */
-    private Long id;
+    public Long id;
 
     /**
      * 플레이리스트 제목

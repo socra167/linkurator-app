@@ -12,8 +12,6 @@ import com.team8.project2.domain.member.entity.RoleEnum
 import com.team8.project2.domain.member.repository.FollowRepository
 import com.team8.project2.domain.member.repository.MemberRepository
 import com.team8.project2.domain.playlist.dto.PlaylistCreateDto
-import com.team8.project2.domain.playlist.dto.PlaylistDto
-import com.team8.project2.domain.playlist.entity.Playlist
 import com.team8.project2.domain.playlist.entity.PlaylistItem
 import com.team8.project2.domain.playlist.repository.PlaylistItemRepository
 import com.team8.project2.domain.playlist.repository.PlaylistRepository
@@ -65,15 +63,16 @@ class BaseInitData(
     }
 
     private fun createMember(email: String, username: String, memberId: String, displayName: String, password: String, profileImage: String, introduce: String, role: RoleEnum): Member {
-        val member = Member.builder()
-            .email(email)
-            .role(role)
-            .memberId(memberId)
-            .username(displayName)
-            .password(password)
-            .profileImage(profileImage)
-            .introduce(introduce)
-            .build()
+        val member = Member(
+            email,
+            role,
+            memberId,
+            displayName,
+            password,
+            profileImage,
+            introduce
+        )
+
         return memberRepository.save(member)
     }
 
@@ -164,21 +163,25 @@ class BaseInitData(
         )
         titles.indices.forEach { i ->
             val member = members[i % members.size]
-            val dto = PlaylistCreateDto.builder()
-                .title(titles[i])
-                .description(descriptions[i])
-                .isPublic(true)
-                .build()
+            val dto = PlaylistCreateDto(
+                titles[i],
+                descriptions[i],
+                true
+            )
+
             val playlistDto = playlistService.createPlaylist(dto, member)
             val playlist = playlistRepository.findById(playlistDto.id).get()
             val curation = curationRepository.findById(1L).get()
-            val item = PlaylistItem.builder()
-                .itemId(1L)
-                .curation(curation)
-                .itemType(PlaylistItem.PlaylistItemType.CURATION)
-                .playlist(playlist)
-                .displayOrder(0)
-                .build()
+            val item = PlaylistItem(
+                1L,                      // itemId
+                null,                   // parentItemId
+                PlaylistItem.PlaylistItemType.CURATION,
+                playlist,
+                curation,
+                0                       // displayOrder
+            )
+
+
             playlistItemRepository.save(item)
         }
     }

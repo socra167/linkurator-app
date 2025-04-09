@@ -91,4 +91,15 @@ public class Member {
     public String getProfileImage() {
         return this.profileImage;
     }
+
+    public Member(String email, RoleEnum role, String memberId, String username, String password, String profileImage, String introduce) {
+        this.email = email;
+        this.role = role;
+        this.memberId = memberId;
+        this.username = username;
+        this.password = password;
+        this.profileImage = profileImage;
+        this.introduce = introduce;
+    }
+
 }
