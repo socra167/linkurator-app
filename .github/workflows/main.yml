@@ -40,7 +40,7 @@ jobs:
 
       - name: 📄 Upload test report if it exists
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: test-report
           path: backend/project2/build/reports/tests/test/
