@@ -34,8 +34,8 @@ public class AuthTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        testMember = memberService.findByMemberId("memberId")
-                .orElseThrow(() -> new IllegalArgumentException("user1 not found"));
+        testMember = memberService.findByMemberId("memberId");
+        //예외 throw 삭제함
     }
 
     @Test

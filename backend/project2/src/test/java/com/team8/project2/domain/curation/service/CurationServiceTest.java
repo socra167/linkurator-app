@@ -504,7 +504,7 @@ class CurationServiceTest {
 		when(setOperations.size(key)).thenReturn((long) memberIds.size());
 
 		when(curationRepository.findById(1L)).thenReturn(Optional.of(curation));
-		when(memberRepository.findByMemberId(anyString())).thenReturn(Optional.of(new Member()));
+		when(memberRepository.findByMemberId(anyString())).thenReturn(new Member());
 
 		curationService.syncLikesToDatabase();
 

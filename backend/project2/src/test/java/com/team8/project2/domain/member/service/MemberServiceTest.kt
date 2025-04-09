@@ -16,10 +16,8 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.kotlin.*
 import org.mockito.junit.jupiter.MockitoExtension
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
 import java.util.*
-import java.util.Map
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @ExtendWith(MockitoExtension::class)
@@ -116,7 +114,7 @@ class MemberServiceTest {
         // given
         val member = Member("user1")
 
-        whenever(memberRepository!!.findByMemberId("user1")).thenReturn(Optional.of(member))
+        whenever(memberRepository!!.findByMemberId("user1")).thenReturn(member)
 
         // when
         memberService!!.deleteMember("user1")
@@ -157,7 +155,7 @@ class MemberServiceTest {
         val followee = Member(2L, "user2")
 
 
-        whenever(memberRepository!!.findByUsername("user2")).thenReturn(Optional.of(followee))
+        whenever(memberRepository!!.findByUsername("user2")).thenReturn(followee)
         whenever(followRepository!!.findByFollowerAndFollowee(follower, followee)).thenReturn(Optional.empty())
         val follow = Follow()
         follow.setFollowerAndFollowee(follower, followee)
@@ -174,7 +172,7 @@ class MemberServiceTest {
         val follower = Member(1L, "user1")
 
         // followee도 동일한 user1로 세팅
-        whenever(memberRepository!!.findByUsername("user1")).thenReturn(Optional.of(follower))
+        whenever(memberRepository!!.findByUsername("user1")).thenReturn(follower)
 
         val ex = Assertions.assertThrows(
             ServiceException::class.java

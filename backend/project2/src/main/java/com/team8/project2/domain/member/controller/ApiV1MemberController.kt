@@ -35,10 +35,9 @@ class ApiV1MemberController(
 
     @PostMapping("/join")
     fun join(@Valid @RequestBody body:  MemberReqDTO): RsData<LoginResBody> {
-        memberService.findByMemberId(body.memberId)
-            .ifPresent { member: Member? ->
-                throw ServiceException("409-1", "사용중인 아이디")
-            }
+        memberService.findByMemberId(body.memberId)?.let {
+            throw ServiceException("409-1", "사용중인 아이디")
+        }
 
         val member = memberService.join(body.toEntity())
 
@@ -61,8 +60,8 @@ class ApiV1MemberController(
 
     @PostMapping("/login")
     fun login(@Valid @RequestBody reqBody: LoginReqBody): RsData<LoginResBody> {
-        val member =
-            memberService.findByMemberId(reqBody.username).orElseThrow { ServiceException("401-1", "잘못된 아이디입니다.") }
+        val member = memberService.findByMemberId(reqBody.username)
+            ?: throw ServiceException("401-1", "잘못된 아이디입니다.")
 
         if (member.getPassword() != reqBody.password) {
             throw ServiceException("401-2", "비밀번호가 일치하지 않습니다.")
@@ -82,26 +81,22 @@ class ApiV1MemberController(
         )
     }
 
-    @get:GetMapping("/me")
-    val myInfo: RsData<MemberResDTO>
-        get() {
+    @GetMapping("/me")
+    fun getMyInfo(): RsData<MemberResDTO> {
+        // ✅ JWT에서 사용자 정보 가져오기
+        val member = rq.actor
 
-            // ✅ JWT에서 사용자 정보 가져오기
-            val member = rq.actor
-
-            if (member == null) {
-                throw ServiceException("401-3", "유효하지 않은 인증 정보입니다.")
-            }
-
-
-            try {
-                val memberResDTO = MemberResDTO.fromEntity(member)
-                return RsData("200-2", "내 정보 조회 성공", memberResDTO)
-            } catch (e: Exception) {
-                throw ServiceException("500-1", "사용자 정보 변환 중 오류 발생")
-            }
-            // return new RsData<>("200-2", "내 정보 조회 성공", MemberResDTO.fromEntity(member));
+        if (member == null) {
+            throw ServiceException("401-3", "유효하지 않은 인증 정보입니다.")
         }
+
+        return try {
+            val memberResDTO = MemberResDTO.fromEntity(member)
+            RsData("200-2", "내 정보 조회 성공", memberResDTO)
+        } catch (e: Exception) {
+            throw ServiceException("500-1", "사용자 정보 변환 중 오류 발생")
+        }
+    }
 
     @PostMapping("/logout")
     fun logout(): RsData<Void> {
@@ -129,22 +124,22 @@ class ApiV1MemberController(
             throw ServiceException("403-1", "권한이 없습니다.")
         }
 
-        val existingMember = memberService.findByMemberId(memberId).get()
+        val existingMember = memberService.findByMemberId(memberId)
 
         if (updateReqDTO!!.email != null) {
-            existingMember.email = updateReqDTO.email
+            existingMember?.email = updateReqDTO.email
         }
         if (updateReqDTO.username != null) {
-            existingMember.setUsername(updateReqDTO.username)
+            existingMember?.setUsername(updateReqDTO.username)
         }
         if (updateReqDTO.profileImage != null) {
-            existingMember.profileImage = updateReqDTO.profileImage
+            existingMember?.profileImage = updateReqDTO.profileImage
         }
         if (updateReqDTO.introduce != null) {
-            existingMember.introduce = updateReqDTO.introduce
+            existingMember?.introduce = updateReqDTO.introduce
         }
 
-        val updatedMember = memberService.updateMember(existingMember)
+        val updatedMember = memberService.updateMember(existingMember!!)
         return RsData("200-5", "회원 정보가 수정되었습니다.", MemberResDTO.fromEntity(updatedMember))
     }
 

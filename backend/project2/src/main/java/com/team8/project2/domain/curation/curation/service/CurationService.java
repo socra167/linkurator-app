@@ -398,7 +398,7 @@ public class CurationService {
 			Set<String> memberIds = redisTemplate.opsForSet().members(key);
 			for (String memberId : memberIds) {
 				Curation curation = curationRepository.findById(curationId).get();
-				Member member = memberRepository.findByMemberId(memberId).get();
+				Member member = memberRepository.findByMemberId(memberId);
 				likeRepository.save(Like.of(curation, member));
 			}
 
@@ -491,8 +491,7 @@ public class CurationService {
 	@Transactional(readOnly = true)
 	public List<CurationResDto> searchCurationByUserName(String username, int page, int size) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-		Member author = memberRepository.findByUsername(username)
-			.orElseThrow(() -> new ServiceException("404-1", "작성자가 존재하지 않습니다."));
+		Member author = memberRepository.findByUsername(username);
 		return curationRepository.findAllByMember(author, pageable).stream()
 			.map(CurationResDto::new)
 			.collect(Collectors.toUnmodifiableList());

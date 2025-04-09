@@ -7,6 +7,7 @@ import com.team8.project2.domain.member.dto.MemberReqDTO
 import com.team8.project2.domain.member.entity.RoleEnum
 import com.team8.project2.domain.member.repository.MemberRepository
 import com.team8.project2.domain.member.service.MemberService
+import com.team8.project2.global.exception.ServiceException
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -86,7 +87,8 @@ class ApiV1MemberControllerTest @Autowired constructor(
 
         val resultActions = joinRequest(memberId, password, email, role, profileImage, introduce)
         //입력 확인
-        val member = memberService!!.findByMemberId("user123").get()
+        val member = memberService.findByMemberId("user123")
+            ?: throw ServiceException("404-1", "해당 회원을 찾을 수 없습니다.")
 
 
         resultActions

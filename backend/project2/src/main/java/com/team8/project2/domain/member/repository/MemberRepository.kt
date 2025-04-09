@@ -8,7 +8,7 @@ import java.util.*
 
 
 interface MemberRepository : JpaRepository<Member, Long> {
-    fun findByMemberId(MemberId: String?): Optional<Member>
-    fun findByUsername(username: String?): Optional<Member>
+    fun findByMemberId(MemberId: String?): Member?
+    fun findByUsername(username: String?): Member?
     override fun findAll(pageable: Pageable): Page<Member>
 }

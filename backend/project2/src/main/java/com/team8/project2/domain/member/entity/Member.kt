@@ -23,14 +23,6 @@ class Member() {
         set(value) {
             _id = value
         }
-    /*@Id // 기본키
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // AUTO_INCREMENT
-    private var id: Long? = null
-
-    //nullable인데 null 예외 처리가 되어있음
-    @get:JvmName("getId") // Java에서 getId()로 보이게
-    val idOrThrow: Long?
-        get() = id ?: throw UninitializedPropertyAccessException("id is not initialized")*/
 
     @CreatedDate
     var createdDate: LocalDateTime? = null

@@ -65,11 +65,11 @@ class MemberService(
         return memberRepository.save(member)
     }
 
-    fun findByMemberId(memberId: String?): Optional<Member> {
+    fun findByMemberId(memberId: String?): Member? {
         return memberRepository.findByMemberId(memberId)
     }
 
-    fun findByUsername(username: String?): Optional<Member> {
+    fun findByUsername(username: String?): Member? {
         return memberRepository.findByUsername(username)
     }
 
@@ -84,7 +84,7 @@ class MemberService(
     @Transactional
     fun deleteMember(memberId: String?) {
         val member = memberRepository.findByMemberId(memberId)
-            .orElseThrow { ServiceException("404-1", "해당 회원을 찾을 수 없습니다.") }
+            ?: throw ServiceException("404-1", "해당 회원을 찾을 수 없습니다.")
         memberRepository.delete(member)
     }
 
@@ -107,7 +107,8 @@ class MemberService(
 
     @Transactional
     fun followUser(follower: Member, username: String?): FollowResDto {
-        val followee = findByUsername(username).orElseThrow { ServiceException("404-1", "존재하지 않는 사용자입니다.") }
+        val followee = findByUsername(username)
+            ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
 
         if (follower.getMemberId() == followee.getMemberId()) {
             throw ServiceException("400-1", "자신을 팔로우할 수 없습니다.")
@@ -126,7 +127,8 @@ class MemberService(
 
     @Transactional
     fun unfollowUser(follower: Member, followeeId: String?): UnfollowResDto {
-        val followee = findByUsername(followeeId).orElseThrow { ServiceException("404-1", "존재하지 않는 사용자입니다.") }
+        val followee = findByUsername(followeeId)
+            ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
 
         if (follower.getMemberId() == followee.getMemberId()) {
             throw ServiceException("400-1", "자신을 팔로우할 수 없습니다.")
@@ -162,7 +164,7 @@ class MemberService(
     @Transactional(readOnly = true)
     fun getCuratorInfo(username: String?): CuratorInfoDto {
         val member = memberRepository.findByUsername(username)
-            .orElseThrow { ServiceException("404-1", "해당 큐레이터를 찾을 수 없습니다.") }
+            ?: throw ServiceException("404-1", "해당 큐레이터를 찾을 수 없습니다.")
 
         val curationCount = curationRepository.countByMember(member)
         var isLogin = false
