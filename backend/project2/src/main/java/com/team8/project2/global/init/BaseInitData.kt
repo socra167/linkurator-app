@@ -126,7 +126,7 @@ class BaseInitData(
             val commenter = members[(it + 1) % members.size]
             commentService.createComment(
                 commenter,
-                curation.id,
+                curation.id!!,
                 CommentDto(null, null, null, comments[it % comments.size], null, null)
             )
         }
@@ -173,17 +173,15 @@ class BaseInitData(
             val playlist = playlistRepository.findById(playlistDto.id).get()
             val curation = curationRepository.findById(1L).get()
             val item = PlaylistItem(
-                1L,                      // itemId
-                null,                   // parentItemId
-                PlaylistItem.PlaylistItemType.CURATION,
-                playlist,
-                curation,
-                0                       // displayOrder
+                itemId = 1L,
+                parentItemId = null,
+                itemType = PlaylistItem.PlaylistItemType.CURATION,
+                playlist = playlist,
+                curation = curation,
+                displayOrder = 0
             )
-
 
             playlistItemRepository.save(item)
         }
     }
-
 }

@@ -1,7 +1,6 @@
 package com.team8.project2.domain.member.controller;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.team8.project2.domain.admin.service.AdminService;
@@ -24,7 +23,6 @@ import com.team8.project2.domain.member.dto.MemberResDTO;
 import com.team8.project2.domain.member.dto.MemberUpdateReqDTO;
 import com.team8.project2.domain.member.dto.UnfollowResDto;
 import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.entity.RoleEnum;
 import com.team8.project2.domain.member.service.MemberService;
 import com.team8.project2.global.Rq;
 import com.team8.project2.global.dto.RsData;
