@@ -43,7 +43,8 @@ class Rq(
 
     val actor: Member
         get() {
-            val authentication = SecurityContextHolder.getContext().authentication
+            val authentication =
+                SecurityContextHolder.getContext().authentication
                     ?: throw ServiceException("401-2", "로그인이 필요합니다.")
 
             if (!authentication.isAuthenticated) {
@@ -67,12 +68,13 @@ class Rq(
                 .orElseThrow { ServiceException("404-1", "사용자를 찾을 수 없습니다.") }
         }
 
-    fun isLogin(): Boolean {
-        val authentication = SecurityContextHolder.getContext().authentication
-        return authentication != null &&
-            authentication !is AnonymousAuthenticationToken &&
-            authentication.isAuthenticated
-    }
+    val isLogin: Boolean
+        get() {
+            val authentication = SecurityContextHolder.getContext().authentication
+            return authentication != null &&
+                authentication !is AnonymousAuthenticationToken &&
+                authentication.isAuthenticated
+        }
 
     fun getHeader(name: String): String? = request.getHeader(name)
 

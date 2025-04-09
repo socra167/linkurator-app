@@ -1,73 +1,64 @@
-package com.team8.project2.global.security;
+package com.team8.project2.global.security
 
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.service.MemberService;
-import com.team8.project2.global.Rq;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import com.team8.project2.domain.member.entity.Member
+import com.team8.project2.domain.member.service.MemberService
+import com.team8.project2.global.Rq
+import jakarta.servlet.FilterChain
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.stereotype.Component
+import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
-@RequiredArgsConstructor
-public class CustomAuthenticationFilter extends OncePerRequestFilter {
+class CustomAuthenticationFilter(
+    private val rq: Rq,
+    private val memberService: MemberService
+) : OncePerRequestFilter() {
 
-    private final Rq rq;
-    private final MemberService memberService;
-
-    private boolean isAuthorizationHeaderPresent() {
-        String authorizationHeader = rq.getHeader("Authorization");
-        return authorizationHeader != null && authorizationHeader.startsWith("Bearer ");
+    private fun isAuthorizationHeaderPresent(): Boolean {
+        val authorizationHeader = rq.getHeader("Authorization")
+        return authorizationHeader != null && authorizationHeader.startsWith("Bearer ")
     }
 
-    private String extractAccessToken() {
-        if (isAuthorizationHeaderPresent()) {
-            String authorizationHeader = rq.getHeader("Authorization");
-            return authorizationHeader.substring("Bearer ".length()).trim();
+    private fun extractAccessToken(): String? {
+        return if (isAuthorizationHeaderPresent()) {
+            rq.getHeader("Authorization")?.removePrefix("Bearer ")?.trim()
+        } else {
+            rq.getValueFromCookie("accessToken")
         }
-        return rq.getValueFromCookie("accessToken");
     }
 
-    private Member authenticateMember(String accessToken) {
-        Optional<Member> opMember = memberService.getMemberByAccessToken(accessToken);
-        return opMember.orElse(null);
+    private fun authenticateMember(accessToken: String?): Member? {
+        return accessToken?.let { memberService.getMemberByAccessToken(it).orElse(null) }
     }
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+    override fun doFilterInternal(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        filterChain: FilterChain
+    ) {
+        val requestURI = request.requestURI
 
-        String requestURI = request.getRequestURI();
+        val skipPaths = listOf(
+            "/api/v1/members/login",
+            "/api/v1/members/join",
+            "/api/v1/members/logout"
+        )
 
-        // 로그인, 회원가입, 로그아웃 요청은 필터를 적용하지 않음
-        if (List.of("/api/v1/members/login", "/api/v1/members/join", "/api/v1/members/logout").contains(requestURI)) {
-            filterChain.doFilter(request, response);
-            return;
+        if (requestURI in skipPaths) {
+            filterChain.doFilter(request, response)
+            return
         }
 
-        String accessToken = extractAccessToken();
-        if (accessToken == null) {
-            filterChain.doFilter(request, response);
-            return;
+        val accessToken = extractAccessToken()
+        val authenticatedMember = authenticateMember(accessToken)
+
+        if (authenticatedMember != null) {
+            rq.setLogin(authenticatedMember)
+            SecurityContextHolder.getContext().authentication = rq.getAuthentication(authenticatedMember)
         }
 
-        Member authenticatedMember = authenticateMember(accessToken);
-        if (authenticatedMember == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        rq.setLogin(authenticatedMember);
-        SecurityContextHolder.getContext().setAuthentication(rq.getAuthentication(authenticatedMember));
-
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(request, response)
     }
 }

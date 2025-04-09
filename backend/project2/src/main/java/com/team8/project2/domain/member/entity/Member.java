@@ -120,4 +120,8 @@ public class Member {
         return this.memberId;
     }
 
+    // TODO : ✅ Kotlin에서 접근 가능하도록 명시적 getter 추가
+    public String getPassword() {
+        return this.password;
+    }
 }
