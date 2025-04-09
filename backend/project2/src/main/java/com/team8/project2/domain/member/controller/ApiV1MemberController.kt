@@ -35,7 +35,7 @@ class ApiV1MemberController(
 
     @PostMapping("/join")
     fun join(@Valid @RequestBody body:  MemberReqDTO): RsData<LoginResBody> {
-        memberService.findByMemberId(body.memberId)?.let {
+        memberService.findByMemberId(body.memberId!!)?.let {
             throw ServiceException("409-1", "사용중인 아이디")
         }
 
@@ -60,7 +60,7 @@ class ApiV1MemberController(
 
     @PostMapping("/login")
     fun login(@Valid @RequestBody reqBody: LoginReqBody): RsData<LoginResBody> {
-        val member = memberService.findByMemberId(reqBody.username)
+        val member = memberService.findByMemberId(reqBody.username!!)
             ?: throw ServiceException("401-1", "잘못된 아이디입니다.")
 
         if (member.getPassword() != reqBody.password) {

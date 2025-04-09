@@ -65,7 +65,7 @@ class MemberService(
         return memberRepository.save(member)
     }
 
-    fun findByMemberId(memberId: String?): Member? {
+    fun findByMemberId(memberId: String): Member? {
         return memberRepository.findByMemberId(memberId)
     }
 
