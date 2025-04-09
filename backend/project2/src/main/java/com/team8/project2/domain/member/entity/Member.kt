@@ -41,7 +41,6 @@ class Member() {
     @Column(length = 100, unique = true)
     private var memberId: String? = null
 
-
     @Column(nullable = false)
     private var password: String? = null
 
