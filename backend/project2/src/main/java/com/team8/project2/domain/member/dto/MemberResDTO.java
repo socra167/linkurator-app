@@ -3,14 +3,11 @@ package com.team8.project2.domain.member.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.team8.project2.domain.member.entity.Member;
 import com.team8.project2.domain.member.entity.RoleEnum;
-import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Data
-@Builder
 public class MemberResDTO {
     @JsonProperty("id")
     private Long id;
@@ -39,20 +36,40 @@ public class MemberResDTO {
     @JsonProperty("modifiedDatetime")
     private LocalDateTime modifiedDate;
 
-    @JsonProperty("apiKey")
-    private String apiKey;
+    public MemberResDTO(
+            long id,
+            String memberId,
+            String username,
+            String email,
+            RoleEnum role,
+            String profileImage,
+            String introduce,
+            LocalDateTime createdDate,
+            LocalDateTime modifiedDate
+    ) {
+        this.id = id;
+        this.memberId = memberId;
+        this.username = username;
+        this.email = email;
+        this.role = role;
+        this.profileImage = profileImage;
+        this.introduce = introduce;
+        this.createdDate = createdDate;
+        this.modifiedDate = modifiedDate;
+    }
+
 
     public static MemberResDTO fromEntity(Member member) {
-        return MemberResDTO.builder()
-                .id(member.getId())
-                .memberId(member.getMemberId())
-                .username(member.getUsername())
-                .email(member.getEmail())
-                .role(member.getRole())
-                .profileImage(member.getProfileImage())
-                .introduce(member.getIntroduce())
-                .createdDate(member.getCreatedDate())
-                .modifiedDate(member.getModifiedDate())
-                .build();
+        return new MemberResDTO(
+                member.getId(),
+                member.getMemberId(),
+                member.getUsername(),
+                member.getEmail(),
+                member.getRole(),
+                member.getProfileImage(),
+                member.getIntroduce(),
+                member.getCreatedDate(),
+                member.getModifiedDate()
+        );
     }
 }
