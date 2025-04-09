@@ -1,22 +1,5 @@
 package com.team8.project2.domain.curation.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team8.project2.domain.curation.curation.dto.CurationReqDTO;
 import com.team8.project2.domain.curation.curation.entity.Curation;
@@ -29,6 +12,23 @@ import com.team8.project2.domain.member.entity.RoleEnum;
 import com.team8.project2.domain.member.repository.MemberRepository;
 import com.team8.project2.domain.member.service.AuthTokenService;
 import com.team8.project2.global.RedisUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 @ActiveProfiles("test")
@@ -124,14 +124,15 @@ public class ApiV1CurationControllerTest {
 	@DisplayName("실패 - 작성자가 아니면 큐레이션 수정에 실패한다")
 	void updateCurationByOtherUser_ShouldFail() throws Exception {
 		// 다른 사용자 생성
-		Member anotherMember = Member.builder()
-			.memberId("otherperson")
-			.username("otherperson")
-			.password("otherperson")
-			.email("other@example.com")
-			.role(RoleEnum.MEMBER)
-			.introduce("otherperson")
-			.build();
+		Member anotherMember = new Member(
+				"otherperson",     // memberId
+				"otherperson",     // username
+				"otherperson",     // password
+				RoleEnum.MEMBER,   // roleEnum
+				null,              // profileImage
+				"other@example.com", // email
+				"otherperson"      // introduce
+		);
 		memberRepository.save(anotherMember);
 
 		Curation savedCuration = curationRepository.findById(1L).orElseThrow();
@@ -394,14 +395,15 @@ public class ApiV1CurationControllerTest {
 	}
 
 	private Member createMember(String author) {
-		Member member = Member.builder()
-			.email(author + "@gmail.com")
-			.role(RoleEnum.MEMBER)
-			.memberId(author)
-			.username(author)
-			.password("password")
-			.profileImage("http://localhost:8080/images/team8-logo.png")
-			.build();
+		Member member = new Member(
+				author,                            // memberId
+				author,                            // username
+				"password",                        // password
+				RoleEnum.MEMBER,                  // roleEnum
+				"http://localhost:8080/images/team8-logo.png", // profileImage
+				author + "@gmail.com",             // email
+				null                               // introduce
+		);
 
 		return memberRepository.save(member);
 	}

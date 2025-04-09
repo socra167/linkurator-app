@@ -63,7 +63,7 @@ public class PlaylistDto {
      * @return 변환된 PlaylistDto 객체
      */
     public static PlaylistDto fromEntity(Playlist playlist, Member actor) {
-        boolean isOwner = (actor != null && playlist.getMember().getId().equals(actor.getId()));
+        boolean isOwner = (actor != null && playlist.getMember().getId()==actor.getId());
 
         return PlaylistDto.builder()
                 .id(playlist.getId())

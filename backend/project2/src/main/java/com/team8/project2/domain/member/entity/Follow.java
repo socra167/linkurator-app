@@ -1,21 +1,11 @@
 package com.team8.project2.domain.member.entity;
 
-import java.time.LocalDateTime;
-
+import jakarta.persistence.*;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -48,6 +38,7 @@ public class Follow {
 		private Long followeeId;
 	}
 
+
 	public void setFollowerAndFollowee(Member follower, Member followee) {
 		FollowId followId = new FollowId();
 		followId.setFollowerId(follower.getId());
@@ -55,6 +46,10 @@ public class Follow {
 		this.id = followId;
 		this.follower = follower;
 		this.followee = followee;
+	}
+
+	public LocalDateTime getFollowedAt() {
+		return followedAt;
 	}
 
 	public String getFolloweeName() {

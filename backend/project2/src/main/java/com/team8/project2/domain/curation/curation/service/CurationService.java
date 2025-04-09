@@ -52,6 +52,22 @@ import com.team8.project2.global.exception.ServiceException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 큐레이션 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
@@ -161,7 +177,7 @@ public class CurationService {
 		Curation curation = curationRepository.findById(curationId)
 			.orElseThrow(() -> new ServiceException("404-1", "해당 큐레이션을 찾을 수 없습니다."));
 
-		if (!curation.getMember().getId().equals(member.getId())) {
+		if (!(curation.getMember().getId()==member.getId())) {
 			throw new ServiceException("403", "권한이 없습니다.");
 		}
 
@@ -213,7 +229,7 @@ public class CurationService {
 		System.out.println("어드민이야?" + member.isAdmin());
 		System.out.println("어드민이야?" + curation.getMember().getId());
 		System.out.println("어드민이야?" + member.getMemberId());
-		if (!curation.getMember().getId().equals(member.getId()) && !member.isAdmin()) {
+		if (!(curation.getMember().getId()==(member.getId())) && !member.isAdmin()) {
 			throw new ServiceException("403-1", "권한이 없습니다."); // 권한 없음
 		}
 		reportRepository.deleteByCurationId(curationId);
@@ -392,7 +408,6 @@ public class CurationService {
 	}
 
 	@Scheduled(fixedRate = 600000) // 10분마다 실행
-	@Transactional
 	public void syncLikesToDatabase() {
 		// Redis에서 모든 큐레이션의 좋아요 개수를 가져와서 DB에 업데이트
 		Set<String> keys = redisTemplate.keys("curation_like:*");
@@ -460,7 +475,11 @@ public class CurationService {
 			throw new ServiceException("400-1", "이미 같은 사유로 신고한 큐레이션입니다.");
 		}
 
-		Report report = new Report(curation, reportType, actor);
+		Report report = Report.builder()
+			.reportType(reportType)
+			.curation(curation)
+			.reporter(actor)
+			.build();
 
 		reportRepository.save(report);
 	}
