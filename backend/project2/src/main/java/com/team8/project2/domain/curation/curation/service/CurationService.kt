@@ -538,33 +538,32 @@ class CurationService(
         return curationRepository.findAllByMember(member)
     }
 
-    @get:Transactional(readOnly = true)
-    val trendingCuration: TrendingCurationResDto
-        get() {
-            val topCurations = redisTemplate?.opsForZSet()
-                ?.reverseRange(DAY_VIEW_COUNT_KEY, 0, 2)
-                ?.mapNotNull { curationId ->
-                    curationRepository.findById(curationId.toLong())?.orElseGet {
-                        redisTemplate.opsForZSet().remove(DAY_VIEW_COUNT_KEY, curationId)
-                        null
-                    }
+    @Transactional(readOnly = true)
+    fun getTrendingCuration(): TrendingCurationResDto {
+        val topCurations = redisTemplate?.opsForZSet()
+            ?.reverseRange(DAY_VIEW_COUNT_KEY, 0, 2)
+            ?.mapNotNull { curationId ->
+                curationRepository.findById(curationId.toLong())?.orElseGet {
+                    redisTemplate.opsForZSet().remove(DAY_VIEW_COUNT_KEY, curationId)
+                    null
                 }
-                ?.onEach { curation ->
-                    curation.viewCount = redisTemplate.opsForZSet()
-                        .score(DAY_VIEW_COUNT_KEY, curation.id.toString())?.toLong() ?: 0L
-                }
-                ?.sortedByDescending { it.viewCount }
-
-            return when {
-                topCurations == null || topCurations.isEmpty() -> {
-                    TrendingCurationResDto.of(
-                        curationRepository.findTop3ByOrderByViewCountDesc().sortedByDescending { it.viewCount },
-                    )
-                }
-
-                else -> TrendingCurationResDto.of(topCurations)
             }
+            ?.onEach { curation ->
+                curation.viewCount = redisTemplate.opsForZSet()
+                    .score(DAY_VIEW_COUNT_KEY, curation.id.toString())?.toLong() ?: 0L
+            }
+            ?.sortedByDescending { it.viewCount }
+
+        return when {
+            topCurations.isNullOrEmpty() -> {
+                TrendingCurationResDto.of(
+                    curationRepository.findTop3ByOrderByViewCountDesc().sortedByDescending { it.viewCount },
+                )
+            }
+            else -> TrendingCurationResDto.of(topCurations)
         }
+    }
+
 
 
 
