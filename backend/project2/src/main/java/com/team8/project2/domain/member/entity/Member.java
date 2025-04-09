@@ -49,7 +49,7 @@ public class Member {
 
 
     @Column(length = 100, unique = true)
-    private String memberId;
+    public String memberId; // Kotlin 전환으로 임시 public 설정
     @Column(length = 100, unique = true, nullable = true)
     private String username;
     @Column(nullable = false)

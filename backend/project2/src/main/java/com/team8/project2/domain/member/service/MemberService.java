@@ -6,18 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.team8.project2.domain.curation.curation.repository.CurationRepository;
-import com.team8.project2.domain.image.service.S3Uploader;
-import com.team8.project2.domain.member.dto.CuratorInfoDto;
-import com.team8.project2.domain.member.dto.MemberReqDTO;
-
-import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.team8.project2.domain.curation.curation.repository.CurationRepository;
+import com.team8.project2.domain.image.service.S3Uploader;
+import com.team8.project2.domain.member.dto.CuratorInfoDto;
+import com.team8.project2.domain.member.dto.FollowResDto;
 import com.team8.project2.domain.member.dto.FollowingResDto;
 import com.team8.project2.domain.member.dto.UnfollowResDto;
 import com.team8.project2.domain.member.entity.Follow;
@@ -26,11 +23,11 @@ import com.team8.project2.domain.member.entity.RoleEnum;
 import com.team8.project2.domain.member.event.ProfileImageUpdateEvent;
 import com.team8.project2.domain.member.repository.FollowRepository;
 import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.domain.member.dto.FollowResDto;
 import com.team8.project2.global.Rq;
 import com.team8.project2.global.exception.ServiceException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service

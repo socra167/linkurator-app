@@ -18,4 +18,6 @@ data class LinkReqDTO(
     val title: String? = null,
 
     val description: String? = null
-)
+) {
+    constructor(url: String) : this(url, null, null) // Java 통합을 위해 임시로 생성
+}

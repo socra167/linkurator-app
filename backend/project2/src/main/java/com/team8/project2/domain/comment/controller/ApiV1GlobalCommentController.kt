@@ -28,7 +28,7 @@ class ApiV1GlobalCommentController(
      */
     @GetMapping("/mycomments")
     fun getCommentsByCurationId(): RsData<List<CommentDto>> {
-        val author = rq.getActor()
+        val author = rq.actor
         val member = memberService.findById(author.id)
             .orElseThrow { ServiceException("404-1", "해당 회원을 찾을 수 없습니다.") }
 
@@ -43,7 +43,7 @@ class ApiV1GlobalCommentController(
      */
     @DeleteMapping("/{id}")
     fun deleteComment(@PathVariable("id") commentId: Long): RsData<Unit> {
-        val author = rq.getActor()
+        val author = rq.actor
         commentService.deleteComment(commentId)
         return RsData.success("댓글이 삭제되었습니다.")
     }

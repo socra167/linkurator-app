@@ -33,7 +33,7 @@ class ApiV1CommentController(
 		@PathVariable curationId: Long,
 		@RequestBody commentDto: CommentDto
 	): RsData<CommentDto> {
-		val actor: Member = rq.getActor()
+		val actor: Member = rq.actor
 		val createdComment = commentService.createComment(actor, curationId, commentDto)
 		return RsData.success("댓글이 작성되었습니다.", createdComment)
 	}
