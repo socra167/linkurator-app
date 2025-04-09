@@ -14,5 +14,5 @@ interface LinkRepository : JpaRepository<Link, Long> {
      * @param url 조회할 링크 URL
      * @return 해당 URL을 가진 링크 객체 (없을 경우 빈 Optional 반환)
      */
-    fun findByUrl(url: String): Optional<Link>
+    fun findByUrl(url: String): Link?
 }
