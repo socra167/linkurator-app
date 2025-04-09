@@ -1,13 +1,9 @@
 package com.team8.project2.domain.link.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team8.project2.domain.link.dto.LinkReqDTO;
-import com.team8.project2.domain.link.entity.Link;
-import com.team8.project2.domain.link.repository.LinkRepository;
-import com.team8.project2.domain.link.service.LinkClickService;
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.domain.member.service.AuthTokenService;
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,10 +19,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team8.project2.domain.link.dto.LinkReqDTO;
+import com.team8.project2.domain.link.entity.Link;
+import com.team8.project2.domain.link.repository.LinkRepository;
+import com.team8.project2.domain.link.service.LinkClickService;
+import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.member.repository.MemberRepository;
+import com.team8.project2.domain.member.service.AuthTokenService;
 
 @Transactional
 @ActiveProfiles("test")
@@ -63,7 +63,7 @@ class ApiV1LinkControllerTest {
     @DisplayName("링크 등록이 성공한다")
     void addLink() throws Exception {
         LinkReqDTO dto = new LinkReqDTO();
-        dto.setUrl("https://test.com");
+        dto.setUrl("https://test123.com");
 
         mockMvc.perform(post("/api/v1/link")
                         .header("Authorization", "Bearer " + accessToken)
@@ -72,7 +72,7 @@ class ApiV1LinkControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value("201-1"))
                 .andExpect(jsonPath("$.msg").value("링크가 성공적으로 추가되었습니다."))
-                .andExpect(jsonPath("$.data.url").value("https://test.com"));
+                .andExpect(jsonPath("$.data.url").value("https://test123.com"));
     }
 
     @Test
