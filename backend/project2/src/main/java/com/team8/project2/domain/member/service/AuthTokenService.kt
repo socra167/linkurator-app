@@ -1,65 +1,61 @@
-package com.team8.project2.domain.member.service;
+package com.team8.project2.domain.member.service
 
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.standard.util.Ut;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.Map;
+import com.team8.project2.domain.member.entity.Member
+import com.team8.project2.standard.util.Ut
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
+import lombok.RequiredArgsConstructor
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 @RequiredArgsConstructor
-public class AuthTokenService {
+class AuthTokenService {
+    @Value("\${custom.jwt.secret-key}")
+    private val keyString: String? = null
 
-    private static final Logger log = LoggerFactory.getLogger(AuthTokenService.class);
-    @Value("${custom.jwt.secret-key}")
-    private String keyString;
-
-    @Value("${custom.jwt.expire-seconds}")
-    private int expireSeconds;
+    @Value("\${custom.jwt.expire-seconds}")
+    private val expireSeconds = 0
 
     @Transactional
-    public String genAccessToken(Member member) {
-        SecretKey secretKey = Keys.hmacShaKeyFor(keyString.getBytes());
-        String a = Ut.Jwt.createToken(
-                keyString,
-                expireSeconds,
-                Map.of(
-                        "id", member.getId(),
-                        "memberId", member.getMemberId()
-                )
-        );
-        Jws<Claims> claimsJws = Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseClaimsJws(a);
+    fun genAccessToken(member: Member): String {
+        val secretKey = Keys.hmacShaKeyFor(keyString!!.toByteArray())
+        val a = Ut.Jwt.createToken(
+            keyString,
+            expireSeconds,
+            java.util.Map.of<String, Any>(
+                "id", member.id,
+                "memberId", member.getMemberId()
+            )
+        )
+        val claimsJws = Jwts.parser()
+            .verifyWith(secretKey)
+            .build()
+            .parseClaimsJws(a)
 
-        Date expiration = claimsJws.getBody().getExpiration();
-        log.info("[body expiration]"+expiration);
+        val expiration = claimsJws.body.expiration
+        log.info("[body expiration]$expiration")
 
-        return a;
+        return a
     }
 
-    public Map<String, Object> getPayload(String token) {
-        if (!Ut.Jwt.isValidToken(keyString, token)) return null;
+    fun getPayload(token: String?): Map<String, Any?>? {
+        if (!Ut.Jwt.isValidToken(keyString, token)) return null
 
-        Map<String, Object> payload = Ut.Jwt.getPayload(keyString, token);
-        Number idNo = (Number) payload.get("id");
-        long id = idNo.longValue();
-        String memberId = (String) payload.get("memberId");
-        return Map.of(
-                "id", id,
-                "memberId", memberId
-        );
+        val payload = Ut.Jwt.getPayload(keyString, token)
+        val idNo = payload["id"] as Number?
+        val id = idNo!!.toLong()
+        val memberId = payload["memberId"] as String?
+        return java.util.Map.of<String, Any?>(
+            "id", id,
+            "memberId", memberId
+        )
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(AuthTokenService::class.java)
     }
 }

@@ -78,7 +78,7 @@ class MemberService(
     }
 
     fun getAuthToken(member: Member?): String {
-        return authTokenService.genAccessToken(member)
+        return authTokenService.genAccessToken(member!!)
     }
 
     @Transactional
@@ -102,7 +102,7 @@ class MemberService(
     }
 
     fun genAccessToken(member: Member?): String {
-        return authTokenService.genAccessToken(member)
+        return authTokenService.genAccessToken(member!!)
     }
 
     @Transactional
@@ -128,6 +128,7 @@ class MemberService(
     @Transactional
     fun unfollowUser(follower: Member, followeeId: String?): UnfollowResDto {
         val followee = findByUsername(followeeId)
+
             ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
 
         if (follower.getMemberId() == followee.getMemberId()) {
