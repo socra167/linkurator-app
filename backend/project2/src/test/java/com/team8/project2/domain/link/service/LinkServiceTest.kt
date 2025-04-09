@@ -110,7 +110,7 @@ class LinkServiceTest {
     @DisplayName("링크가 존재하지 않으면 생성해서 반환한다")
     fun getLinkOrCreate() {
         val url = "https://example.com"
-        whenever(linkRepository.findByUrl(url)).thenReturn(Optional.empty())
+        whenever(linkRepository.findByUrl(url)).thenReturn(null)
         whenever(linkRepository.save(any())).thenReturn(link)
 
         val found = linkService.getLink(url)
@@ -123,7 +123,7 @@ class LinkServiceTest {
     @DisplayName("링크가 존재하면 기존 링크를 반환한다")
     fun getExistingLink() {
         val url = "https://example.com"
-        whenever(linkRepository.findByUrl(url)).thenReturn(Optional.of(link))
+        whenever(linkRepository.findByUrl(url)).thenReturn(link)
 
         val found = linkService.getLink(url)
 
