@@ -8,12 +8,20 @@ class RedisUtils(
     private val redisTemplate: RedisTemplate<String, Any>
 ) {
 
-    // flushAll() 메서드를 사용하여 Redis DB의 모든 데이터를 삭제합니다.
+    // 새로 만든 prefix 기반 삭제
+    fun clearKeysByPattern(pattern: String = "*") {
+        val keys = redisTemplate.keys(pattern)
+        if (!keys.isNullOrEmpty()) {
+            redisTemplate.delete(keys)
+            println("Deleted Redis keys matching pattern: $pattern")
+        } else {
+            println("No Redis keys found matching pattern: $pattern")
+        }
+    }
+
+    // 이전 방식 호환용: 전체 삭제 메서드 유지
     fun clearAllData() {
-        redisTemplate.connectionFactory?.connection?.let {
-            it.flushAll()
-            println("Redis DB flushed.")
-        } ?: println("Redis connection is null. Cannot flush.")
+        clearKeysByPattern("*")
     }
 
 }
