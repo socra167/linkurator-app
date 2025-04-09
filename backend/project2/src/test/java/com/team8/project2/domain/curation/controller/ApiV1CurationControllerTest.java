@@ -70,8 +70,7 @@ public class ApiV1CurationControllerTest {
 		curationReqDTO.setContent("Test Content");
 
 		// LinkReqDTO 생성
-		LinkReqDTO linkReqDTO = new LinkReqDTO();
-		linkReqDTO.setUrl("https://example.com");
+		LinkReqDTO linkReqDTO = new LinkReqDTO("https://test.com", null, null);
 
 		// TagReqDTO
 		TagReqDto tagReqDto = new TagReqDto("test");
