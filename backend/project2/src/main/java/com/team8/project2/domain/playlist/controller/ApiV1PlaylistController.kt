@@ -229,7 +229,7 @@ class ApiV1PlaylistController(
      * @return 복제된 플레이리스트 정보
      */
     @PostMapping("/{id}")
-    fun addPublicPlaylist(@PathVariable playlistId: Long): RsData<PlaylistDto> {
+    fun addPublicPlaylist(@PathVariable("id") playlistId: Long): RsData<PlaylistDto> {
         val playlistDto = playlistService.addPublicPlaylist(playlistId)
         return success("플레이리스트가 복제되었습니다.", playlistDto)
     }
