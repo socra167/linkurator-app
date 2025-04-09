@@ -122,9 +122,7 @@ class CurationServiceTest {
 				.url("https://test.com")
 				.build();
 
-		tag = Tag.builder()
-				.name("test")
-				.build();
+		tag = new Tag("test");
 
 	}
 
