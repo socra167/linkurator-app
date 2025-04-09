@@ -27,7 +27,6 @@ import com.team8.project2.domain.member.service.MemberService;
 import com.team8.project2.global.Rq;
 import com.team8.project2.global.exception.ServiceException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.aspectj.util.Reflection;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -35,8 +34,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.*;
-import org.springframework.data.redis.core.*;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SetOperations;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -44,7 +49,6 @@ import java.time.Duration;
 import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -117,10 +121,17 @@ class CurationServiceTest {
 				.member(member)
 				.build();
 
-		link = Link.builder()
-				.id(1L)
-				.url("https://test.com")
-				.build();
+		link = new Link(
+				1L,
+				"https://test.com",
+				0,                 // click
+				null,              // createdAt
+				new ArrayList<>(), // curationLinks
+				null,              // title
+				null,              // description
+				null               // metaImageUrl
+		);
+
 
 		tag = new Tag("test");
 
