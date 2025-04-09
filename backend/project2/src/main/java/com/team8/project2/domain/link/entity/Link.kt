@@ -96,6 +96,7 @@ class Link(
     class Builder {
         private val link = Link()
 
+        fun id(id: Long) = apply { link.id = id }
         fun url(url: String) = apply { link.url = url }
         fun title(title: String) = apply { link.title = title }
         fun description(description: String) = apply { link.description = description }
