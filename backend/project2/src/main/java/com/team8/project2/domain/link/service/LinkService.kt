@@ -141,10 +141,8 @@ class LinkService(
     fun getLink(url: String?): Link {
         val actualUrl = url ?: throw ServiceException("400", "URL은 필수입니다.")
 
-        val opLink = linkRepository.findByUrl(actualUrl)
-        if (opLink.isPresent) {
-            return opLink.get()
-        }
+        linkRepository.findByUrl(actualUrl)?.let { return it }
+
 
         val link = Link.builder()
             .url(actualUrl)
