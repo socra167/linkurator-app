@@ -11,6 +11,7 @@ import com.team8.project2.domain.curation.curation.event.CurationUpdateEvent;
 import com.team8.project2.domain.curation.curation.repository.CurationLinkRepository;
 import com.team8.project2.domain.curation.curation.repository.CurationRepository;
 import com.team8.project2.domain.curation.curation.repository.CurationTagRepository;
+
 import com.team8.project2.domain.curation.curation.service.CurationService;
 import com.team8.project2.domain.curation.curation.service.CurationViewService;
 import com.team8.project2.domain.curation.like.entity.Like;
@@ -19,6 +20,8 @@ import com.team8.project2.domain.curation.report.entity.ReportType;
 import com.team8.project2.domain.curation.report.repository.ReportRepository;
 import com.team8.project2.domain.curation.tag.entity.Tag;
 import com.team8.project2.domain.curation.tag.service.TagService;
+import com.team8.project2.domain.image.repository.CurationImageRepository;
+import com.team8.project2.domain.image.service.CurationImageService;
 import com.team8.project2.domain.link.entity.Link;
 import com.team8.project2.domain.link.service.LinkService;
 import com.team8.project2.domain.member.entity.Member;
@@ -27,7 +30,6 @@ import com.team8.project2.domain.member.service.MemberService;
 import com.team8.project2.global.Rq;
 import com.team8.project2.global.exception.ServiceException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.aspectj.util.Reflection;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -44,7 +46,6 @@ import java.time.Duration;
 import java.util.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -89,8 +90,17 @@ class CurationServiceTest {
 	@Mock
 	private CurationViewService  curationViewService;
 
+	@Mock
+	private CurationImageService curationImageService;
+
+	@Mock
+	private CurationImageRepository curationImageRepository;
+
+	@Mock
+	private Rq rq;
+
 	@InjectMocks
-	private  CurationService curationService;
+	private CurationService curationService;
 
 	private Curation curation;
 	private Link link;
@@ -106,16 +116,12 @@ class CurationServiceTest {
 				.build();
 
 
-		curation = Curation.builder()
-				.id(1L)
-				.title("Test Title")
-				.content("Test Content")
-				.viewCount(0L)
-				.tags(new ArrayList<>())
-				.curationLinks(new ArrayList<>())
-				.comments(new ArrayList<>())
-				.member(member)
-				.build();
+		curation = new Curation(
+				"Test Title",
+				"Test Content",
+				member
+		);
+		ReflectionTestUtils.setField(curation, "id", 1L);
 
 		link = Link.builder()
 				.id(1L)
@@ -162,11 +168,12 @@ class CurationServiceTest {
 		List<String> tags = Arrays.asList("updated-tag1", "updated-tag2", "updated-tag3");
 
 		// Mocking Curation 객체
-		Curation curation = new Curation();
-		curation.setId(1L);
-		curation.setTitle("Original Title");
-		curation.setContent("Original Content");
-		curation.setMember(member);
+		Curation curation = new Curation(
+				"Original Title",
+				"Original Content",
+				member
+		);
+		ReflectionTestUtils.setField(curation, "id", 1L);
 
 		// Mocking 링크 및 태그
 		Link link = new Link();  // Link 객체를 생성하는 코드 필요 (예: getLink 메서드에서 반환할 객체 설정)
@@ -265,13 +272,15 @@ class CurationServiceTest {
 		when(redisTemplate.opsForSet()).thenReturn(setOperations);
 
 		// Mocking repository to return a Curation
+
 		when(curationRepository.findById(anyLong())).thenReturn(Optional.of(curation));
+
 
 		when(memberService.isFollowed(any(), any())).thenReturn(true);
 
 		Rq rq = mock(Rq.class);
 		when(rq.isLogin()).thenReturn(true);
-		when(rq.getActor()).thenReturn(mock(Member.class));
+		when(rq.getActor()).thenReturn(member);
 		ReflectionTestUtils.setField(curationService, "rq", rq);
 
 		CurationDetailResDto retrievedCuration = curationService.getCuration(1L, request);
@@ -298,9 +307,14 @@ class CurationServiceTest {
 		SetOperations<String, Object> setOperations = mock(SetOperations.class);
 		when(redisTemplate.opsForSet()).thenReturn(setOperations);
 
+		// 큐레이션 조회 로직이 제대로 동작하도록 설정
+		when(curationRepository.findById(anyLong())).thenReturn(Optional.of(curation));
+
+		when(memberService.isFollowed(any(), any())).thenReturn(true);
+
 		Rq rq = mock(Rq.class);
 		when(rq.isLogin()).thenReturn(true);
-		when(rq.getActor()).thenReturn(mock(Member.class));
+		when(rq.getActor()).thenReturn(member);
 		ReflectionTestUtils.setField(curationService, "rq", rq);
 
 		doNothing().when(curationViewService).increaseViewCount(curation);
@@ -310,16 +324,11 @@ class CurationServiceTest {
 				.thenReturn(true)  // 첫 번째 조회에서는 키가 없으므로 true 반환
 				.thenReturn(false); // 두 번째 이후의 조회에서는 키가 이미 있으므로 false 반환
 
-		// 큐레이션 조회 로직이 제대로 동작하도록 설정
-		when(curationRepository.findById(1L)).thenReturn(Optional.of(curation));
-
-		// 조회수 초기 상태 저장
-		Long initialViewCount = curation.getViewCount();
 
 		// When: 큐레이션을 여러 번 조회한다
-		curationService.getCuration(1L, request);  // 첫 번째 조회
-		curationService.getCuration(1L, request);  // 두 번째 조회
-		curationService.getCuration(1L, request);  // 세 번째 조회
+		curationService.getCuration(1L, request);
+		curationService.getCuration(1L, request);
+		curationService.getCuration(1L, request);
 
 		// Then: 조회수는 한 번만 증가해야 한다
 		verify(curationViewService, times(1)).increaseViewCount(curation);
@@ -353,10 +362,10 @@ class CurationServiceTest {
 		when(redisTemplate.opsForSet()).thenReturn(setOperations);
 
 		when(curationRepository.searchByFilters(ArgumentMatchers.anyList(), anyInt(), anyString(), anyString(), any(), any()))
-			.thenReturn(new PageImpl<>(List.of(curation), PageRequest.of(0, 20), 1));
+				.thenReturn(new PageImpl<>(List.of(curation), PageRequest.of(0, 20), 1));
 
-		List<CurationResDto> foundCurations = curationService.searchCurations(List.of("tag"), "title", "content", null,
-			SearchOrder.LATEST,1,20).getCurations();
+		List<CurationResDto> foundCurations = curationService.searchCurations(List.of("tag"), "title", "content", "",
+				SearchOrder.LATEST,1,20).getCurations();
 
 		// Verify the result
 		assert foundCurations != null;
@@ -456,8 +465,8 @@ class CurationServiceTest {
 
 		// 예외 발생 검증
 		assertThatThrownBy(() -> curationService.likeCuration(1L, 1L))
-			.isInstanceOf(ServiceException.class)
-			.hasMessageContaining("해당 큐레이션을 찾을 수 없습니다.");
+				.isInstanceOf(ServiceException.class)
+				.hasMessageContaining("해당 큐레이션을 찾을 수 없습니다.");
 
 		// Verify interactions (likeRepository는 호출되지 않아야 함)
 		verify(curationRepository, times(1)).findById(anyLong());
@@ -477,8 +486,8 @@ class CurationServiceTest {
 
 		// 예외 발생 검증
 		assertThatThrownBy(() -> curationService.likeCuration(1L, 1L))
-			.isInstanceOf(ServiceException.class)
-			.hasMessageContaining("해당 멤버를 찾을 수 없습니다.");
+				.isInstanceOf(ServiceException.class)
+				.hasMessageContaining("해당 멤버를 찾을 수 없습니다.");
 
 		// Verify interactions (likeRepository는 호출되지 않아야 함)
 		verify(curationRepository, times(1)).findById(anyLong());
@@ -495,7 +504,6 @@ class CurationServiceTest {
 		Set<String> memberIds = Set.of("100", "101");
 
 		Curation curation = new Curation();
-		curation.setId(1L);
 
 		SetOperations<String, Object> setOperations = mock(SetOperations.class);
 
@@ -551,7 +559,6 @@ class CurationServiceTest {
 	void testReportCuration() {
 		Member actor = new Member();
 		Curation curation = new Curation();
-		curation.setId(1L);
 
 		Rq rq = mock(Rq.class);
 		when(rq.getActor()).thenReturn(mock(Member.class));
@@ -571,36 +578,29 @@ class CurationServiceTest {
 	void testGetTrendingCuration_whenRedisHasData() {
 		// Given
 
-		Curation c1 = Curation.builder()
-				.id(1L)
-				.title("Test Title1")
-				.content("Test Content1")
-				.viewCount(0L)
-				.tags(new ArrayList<>())
-				.curationLinks(new ArrayList<>())
-				.comments(new ArrayList<>())
-				.member(member)
-				.build();
-		Curation c2 = Curation.builder()
-				.id(2L)
-				.title("Test Title2")
-				.content("Test Content2")
-				.viewCount(0L)
-				.tags(new ArrayList<>())
-				.curationLinks(new ArrayList<>())
-				.comments(new ArrayList<>())
-				.member(member)
-				.build();
-		Curation c3 = Curation.builder()
-				.id(3L)
-				.title("Test Title")
-				.content("Test Content")
-				.viewCount(0L)
-				.tags(new ArrayList<>())
-				.curationLinks(new ArrayList<>())
-				.comments(new ArrayList<>())
-				.member(member)
-				.build();
+		Curation c1 = new Curation(
+				"Test Title1",
+				"Test Content1",
+				member
+		);
+		c1.setViewCount(30);
+		ReflectionTestUtils.setField(c1, "id", 1L);
+
+		Curation c2 = new Curation(
+				"Test Title2",
+				"Test Content2",
+				member
+		);
+		c2.setViewCount(40);
+		ReflectionTestUtils.setField(c2, "id", 2L);
+		Curation c3 = new Curation(
+				"Test Title3",
+				"Test Content3",
+				member
+		);
+		c3.setViewCount(50);
+		ReflectionTestUtils.setField(c3, "id", 3L);
+
 
 		ZSetOperations<String, Object> zSetOperations = mock(ZSetOperations.class);
 		when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
@@ -632,36 +632,31 @@ class CurationServiceTest {
 		when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 		when(zSetOperations.reverseRange("day_view_count:", 0, 2)).thenReturn(Collections.emptySet());
 
-		Curation c1 = Curation.builder()
-				.id(1L)
-				.title("Test Title1")
-				.content("Test Content1")
-				.viewCount(100L)
-				.tags(new ArrayList<>())
-				.curationLinks(new ArrayList<>())
-				.comments(new ArrayList<>())
-				.member(member)
-				.build();
-		Curation c2 = Curation.builder()
-				.id(2L)
-				.title("Test Title2")
-				.content("Test Content2")
-				.viewCount(80L)
-				.tags(new ArrayList<>())
-				.curationLinks(new ArrayList<>())
-				.comments(new ArrayList<>())
-				.member(member)
-				.build();
-		Curation c3 = Curation.builder()
-				.id(3L)
-				.title("Test Title")
-				.content("Test Content")
-				.viewCount(60L)
-				.tags(new ArrayList<>())
-				.curationLinks(new ArrayList<>())
-				.comments(new ArrayList<>())
-				.member(member)
-				.build();
+		Curation c1 = new Curation(
+				"Test Title1",
+				"Test Content1",
+				member
+		);
+		c1.setViewCount(30);
+		ReflectionTestUtils.setField(c1, "id", 1L);
+
+		Curation c2 = new Curation(
+				"Test Title2",
+				"Test Content2",
+				member
+		);
+		c2.setViewCount(100);
+		ReflectionTestUtils.setField(c2, "id", 2L);
+
+
+		Curation c3 = new Curation(
+				"Test Title1",
+				"Test Content1",
+				member
+		);
+		c3.setViewCount(50);
+		ReflectionTestUtils.setField(c3, "id", 3L);
+
 
 		when(curationRepository.findTop3ByOrderByViewCountDesc()).thenReturn(List.of(c1, c2, c3));
 
@@ -673,10 +668,4 @@ class CurationServiceTest {
 		assertEquals(3, result.getCurations().size());
 		assertEquals(100, result.getCurations().get(0).getViewCount());
 	}
-
-
-
-
-
-
 }
