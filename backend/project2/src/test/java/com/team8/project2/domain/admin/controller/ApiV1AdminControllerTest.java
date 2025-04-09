@@ -1,7 +1,5 @@
 package com.team8.project2.domain.admin.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team8.project2.domain.admin.dto.StatsResDto;
 import com.team8.project2.domain.admin.service.AdminService;
 import com.team8.project2.domain.curation.curation.entity.Curation;
 import com.team8.project2.domain.curation.curation.repository.CurationRepository;
@@ -11,24 +9,17 @@ import com.team8.project2.domain.member.service.AuthTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.util.List;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 @ActiveProfiles("test")
@@ -80,7 +71,7 @@ class ApiV1AdminControllerTest {
         mockMvc.perform(delete("/api/v1/admin/members/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200-1"))
-                .andExpect(jsonPath("$.msg").value("Success"));
+                .andExpect(jsonPath("$.msg").value("멤버가 삭제되었습니다."));
     }
 
     // ✅ 신고된 큐레이션 조회 API 테스트

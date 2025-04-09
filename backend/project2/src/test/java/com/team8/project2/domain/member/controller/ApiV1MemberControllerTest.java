@@ -5,6 +5,7 @@ import com.team8.project2.domain.curation.curation.service.CurationService;
 import com.team8.project2.domain.image.service.S3Uploader;
 import com.team8.project2.domain.member.dto.MemberReqDTO;
 import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.member.entity.RoleEnum;
 import com.team8.project2.domain.member.repository.MemberRepository;
 import com.team8.project2.domain.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
@@ -129,14 +130,16 @@ public class ApiV1MemberControllerTest {
     @DisplayName("회원 가입3 - 비밀번호 길이 제한 위반")
     void join3() throws Exception {
         // 필수 입력값 중 password를 4자로 설정하여 길이 제한 검증
-        memberReqDTO = new MemberReqDTO();
-        memberReqDTO.setMemberId( "member" + UUID.randomUUID());
-        memberReqDTO.setUsername("user" + UUID.randomUUID());
-        memberReqDTO.setPassword("1234");
-        memberReqDTO.setRole("MEMBER");
-        memberReqDTO.setProfileImage("www.url");
-        memberReqDTO.setEmail("member1@gmail.com");
-        memberReqDTO.setIntroduce("안녕");
+        MemberReqDTO memberReqDTO = new MemberReqDTO(
+                "member" + UUID.randomUUID(),
+                "1234", // 비밀번호 4자 → 에러 유도
+                "member1@gmail.com",
+                "user" + UUID.randomUUID(),
+                "www.url",
+                "안녕",
+                RoleEnum.MEMBER
+        );
+
 
         mvc.perform(MockMvcRequestBuilders.post("/api/v1/members/join")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -149,14 +152,15 @@ public class ApiV1MemberControllerTest {
     @DisplayName("회원 가입4 - 필수 입력값 누락 (비밀번호 없음)")
     void joinWithoutPassword() throws Exception {
         // 비밀번호 누락 테스트
-        memberReqDTO = new MemberReqDTO();
-        memberReqDTO.setMemberId( "member" + UUID.randomUUID());
-        memberReqDTO.setUsername("user" + UUID.randomUUID());
-        memberReqDTO.setPassword(null);
-        memberReqDTO.setRole("MEMBER");
-        memberReqDTO.setProfileImage("www.url");
-        memberReqDTO.setEmail("member1@gmail.com");
-        memberReqDTO.setIntroduce("안녕");
+        MemberReqDTO memberReqDTO = new MemberReqDTO(
+                "member" + UUID.randomUUID(),
+                null,
+                "member1@gmail.com",
+                "user" + UUID.randomUUID(),
+                "www.url",
+                "안녕",
+                RoleEnum.MEMBER
+        );
 
         mvc.perform(MockMvcRequestBuilders.post("/api/v1/members/join")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -169,14 +173,15 @@ public class ApiV1MemberControllerTest {
     @DisplayName("회원 가입5 - 필수 입력값 누락 (사용자명 없음)")
     void joinWithoutMemberId() throws Exception {
         // 사용자명 누락 테스트
-        memberReqDTO = new MemberReqDTO();
-        memberReqDTO.setMemberId(null);
-        memberReqDTO.setPassword("123456");
-        memberReqDTO.setUsername(null);
-        memberReqDTO.setRole("MEMBER");
-        memberReqDTO.setProfileImage("www.url");
-        memberReqDTO.setEmail("member1@gmail.com");
-        memberReqDTO.setIntroduce("안녕"); // 비밀번호 정상값으로 설정
+        MemberReqDTO memberReqDTO = new MemberReqDTO(
+                null,
+                "123456", // 비밀번호 4자 → 에러 유도
+                "member1@gmail.com",
+                null,
+                "www.url",
+                "안녕",
+                RoleEnum.MEMBER
+        );
 
         mvc.perform(MockMvcRequestBuilders.post("/api/v1/members/join")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -227,14 +232,16 @@ public class ApiV1MemberControllerTest {
     @Test
     @DisplayName("JWT 인증으로 내 정보 조회")
     void getMyInfoTest() throws Exception {
-        memberReqDTO = new MemberReqDTO();
-        memberReqDTO.setMemberId( "member" + UUID.randomUUID());
-        memberReqDTO.setUsername("user" + UUID.randomUUID());
-        memberReqDTO.setPassword("1234");
-        memberReqDTO.setRole("MEMBER");
-        memberReqDTO.setProfileImage("www.url");
-        memberReqDTO.setEmail("member1@gmail.com");
-        memberReqDTO.setIntroduce("안녕");
+        MemberReqDTO memberReqDTO = new MemberReqDTO(
+                "member" + UUID.randomUUID(),
+                "1234", // 비밀번호 4자 → 에러 유도
+                "member1@gmail.com",
+                "user" + UUID.randomUUID(),
+                "www.url",
+                "안녕",
+                RoleEnum.MEMBER
+        );
+
         Member member = memberService.join(memberReqDTO.toEntity());
         String accessToken = memberService.genAccessToken(member);
 
@@ -249,14 +256,15 @@ public class ApiV1MemberControllerTest {
     @DisplayName("로그아웃 시 JWT 삭제")
     void logoutTest() throws Exception {
         // MemberReqDTO 설정 (링크 포함)
-        memberReqDTO = new MemberReqDTO();
-        memberReqDTO.setMemberId( "member" + UUID.randomUUID());
-        memberReqDTO.setUsername("user" + UUID.randomUUID());
-        memberReqDTO.setPassword("1234");
-        memberReqDTO.setRole("MEMBER");
-        memberReqDTO.setProfileImage("www.url");
-        memberReqDTO.setEmail("member1@gmail.com");
-        memberReqDTO.setIntroduce("안녕");
+        MemberReqDTO memberReqDTO = new MemberReqDTO(
+                "member" + UUID.randomUUID(),
+                "1234", // 비밀번호 4자 → 에러 유도
+                "member1@gmail.com",
+                "user" + UUID.randomUUID(),
+                "www.url",
+                "안녕",
+                RoleEnum.MEMBER
+        );
 
 
         Member member = memberService.join(memberReqDTO.toEntity());
@@ -273,17 +281,18 @@ public class ApiV1MemberControllerTest {
     @DisplayName("회원 정보 업데이트 - 권한 있는 사용자가 본인 정보 수정 성공")
     void updateMember_success() throws Exception {
         //setup
-        MemberReqDTO memberReqDTO2 = new MemberReqDTO();
-        memberReqDTO2.setMemberId("member" + UUID.randomUUID());
-        memberReqDTO2.setUsername("user" + UUID.randomUUID());
-        memberReqDTO2.setPassword("1234");
-        memberReqDTO2.setRole("MEMBER");
-        memberReqDTO2.setProfileImage("www.url");
-        memberReqDTO2.setEmail("member1@gmail.com");
-        memberReqDTO2.setIntroduce("안녕");
+        MemberReqDTO memberReqDTO = new MemberReqDTO(
+                "member" + UUID.randomUUID(),
+                "1234", // 비밀번호 4자 → 에러 유도
+                "member1@gmail.com",
+                "user" + UUID.randomUUID(),
+                "www.url",
+                "안녕",
+                RoleEnum.MEMBER
+        );
 
         // Given
-        Member member = memberService.join(memberReqDTO2.toEntity());
+        Member member = memberService.join(memberReqDTO.toEntity());
         String accessToken = memberService.genAccessToken(member);
 
         // 수정할 정보

@@ -70,7 +70,7 @@ class Member() {
         memberId: String,
         username: String?,
         password: String?,
-        roleEnum: RoleEnum?,
+        role: RoleEnum?,
         profileImage: String?,
         email: String?,
         introduce: String?
@@ -78,7 +78,7 @@ class Member() {
         this.memberId = memberId
         this.username = username
         this.password = password
-        this.role = roleEnum ?: RoleEnum.MEMBER
+        this.role = role ?: RoleEnum.MEMBER
         this.profileImage = profileImage
         this.email = email
         this.introduce = introduce

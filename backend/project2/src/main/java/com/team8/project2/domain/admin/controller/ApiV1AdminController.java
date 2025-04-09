@@ -43,7 +43,7 @@ public class ApiV1AdminController {
 		Member member = memberService.findById(memberId)
 			.orElseThrow(() -> new ServiceException("404-1", "해당 회원을 찾을 수 없습니다."));
 		adminService.deleteMember(member);
-		return RsData.success("멤버가 삭제되었습니다.");
+		return RsData.success("멤버가 삭제되었습니다.","good~");
 	}
 
 	// ✅ 일정 개수 이상 신고된 큐레이션 조회
