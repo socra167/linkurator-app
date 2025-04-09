@@ -1,9 +1,10 @@
 plugins {
-    kotlin("jvm") version "1.9.25"
-    kotlin("plugin.spring") version "1.9.25"
-    kotlin("plugin.jpa") version "1.9.22"
-    id("org.springframework.boot") version "3.4.3"
-    id("io.spring.dependency-management") version "1.1.7"
+	kotlin("jvm") version "1.9.25"
+	kotlin("plugin.spring") version "1.9.25"
+	kotlin("plugin.jpa") version "1.9.22"
+
+	id("org.springframework.boot") version "3.4.3"
+	id("io.spring.dependency-management") version "1.1.7"
 }
 
 group = "com.team8"
@@ -48,11 +49,13 @@ dependencies {
     // Database (MySQL)
     implementation("mysql:mysql-connector-java:8.0.33")
 
-    // Test
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.springframework.security:spring-security-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+  	// Test
+	  testImplementation("org.springframework.boot:spring-boot-starter-test")
+  	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	  testImplementation("org.springframework.security:spring-security-test")
+  	testImplementation("org.springframework.boot:spring-boot-starter-data-redis")
+	  testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
     // 외부 링크의 메타 데이터 추출 라이브러리 Jsoup
     implementation("org.jsoup:jsoup:1.15.4")

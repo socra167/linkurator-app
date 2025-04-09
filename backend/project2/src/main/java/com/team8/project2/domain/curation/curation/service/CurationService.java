@@ -135,9 +135,9 @@ public class CurationService {
 		}
 
 		for (String imageName : imageNames) {
-			Optional<CurationImage> opImage = curationImageRepository.findByImageName(imageName);
-			if (opImage.isPresent()) {
-				CurationImage curationImage = opImage.get();
+			CurationImage image = curationImageRepository.findByImageName(imageName);
+			if (image != null) {
+				CurationImage curationImage = image;
 				curationImage.setCurationIdIfNull(curation.getId());
 				curationImageRepository.save(curationImage);
 			}
