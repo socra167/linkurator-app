@@ -1,15 +1,5 @@
 package com.team8.project2.global;
 
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.service.MemberService;
-import com.team8.project2.global.exception.ServiceException;
-import com.team8.project2.global.security.SecurityUser;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,6 +7,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
+
+import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.member.service.MemberService;
+import com.team8.project2.global.exception.ServiceException;
+import com.team8.project2.global.security.SecurityUser;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
