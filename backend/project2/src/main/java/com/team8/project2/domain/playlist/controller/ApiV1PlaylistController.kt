@@ -97,7 +97,7 @@ class ApiV1PlaylistController(
     ): RsData<PlaylistDto> {
         val link = linkService.addLink(linkReqDTO)
         val updatedPlaylist =
-            playlistService.addPlaylistItem(id, link.id, PlaylistItem.PlaylistItemType.LINK)
+            playlistService.addPlaylistItem(id, link.id!!, PlaylistItem.PlaylistItemType.LINK)
         return success("플레이리스트에 링크가 추가되었습니다.", updatedPlaylist)
     }
 

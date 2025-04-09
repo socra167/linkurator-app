@@ -542,7 +542,7 @@ class PlaylistService(
 
         if (itemToUpdate.itemType == PlaylistItem.PlaylistItemType.LINK) {
             val updatedLink = linkService.updateLinkDetails(
-                itemToUpdate.link!!.id,
+                requireNotNull(itemToUpdate.link?.id) { "링크 ID가 존재하지 않습니다." },
                 updateDto.title,
                 updateDto.url,
                 updateDto.description

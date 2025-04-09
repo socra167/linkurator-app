@@ -70,4 +70,24 @@ class PlaylistItem(
         LINK,
         CURATION
     }
+
+    // 임시 생성자 추가
+    constructor(
+        itemId: Long,
+        itemType: PlaylistItemType,
+        playlist: Playlist,
+        curation: Curation?,
+        parentItemId: Long?,
+        displayOrder: Int
+    ) : this(
+        id = null,
+        itemId = itemId,
+        parentItemId = parentItemId,
+        itemType = itemType,
+        playlist = playlist,
+        curation = curation,
+        displayOrder = displayOrder,
+        link = null
+    )
+
 }
