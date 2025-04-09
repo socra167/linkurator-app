@@ -9,15 +9,16 @@ import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
 @Configuration
-class RedisConfig {
+class RedisConfig(
     @Value("\${spring.data.redis.host}")
-    var redisHost: String? = null
+    private val redisHost: String,
 
     @Value("\${spring.data.redis.port}")
-    var redisPort = 0
+    private val redisPort: Int,
 
     @Value("\${spring.data.redis.timeout}")
-    var redisTimeout: String? = null
+    private val redisTimeout: String
+) {
 
     @Bean
     fun redisConnectionFactory(): RedisConnectionFactory {
@@ -25,12 +26,11 @@ class RedisConfig {
     }
 
     @Bean
-    fun redisTemplate(): RedisTemplate<String, Any> {
-        val template = RedisTemplate<String, Any>()
-        template.connectionFactory = redisConnectionFactory()
-        template.keySerializer = StringRedisSerializer()
-        template.valueSerializer = StringRedisSerializer()
-        return template
+    fun redisTemplate(redisConnectionFactory: RedisConnectionFactory): RedisTemplate<String, Any> {
+        return RedisTemplate<String, Any>().apply {
+            setConnectionFactory(redisConnectionFactory)
+            keySerializer = StringRedisSerializer()
+            valueSerializer = StringRedisSerializer()
+        }
     }
 }
-

@@ -104,4 +104,20 @@ public class Member {
     public String getProfileImage() {
         return this.profileImage;
     }
+
+    public Member(String email, RoleEnum role, String memberId, String username, String password, String profileImage, String introduce) {
+        this.email = email;
+        this.role = role;
+        this.memberId = memberId;
+        this.username = username;
+        this.password = password;
+        this.profileImage = profileImage;
+        this.introduce = introduce;
+    }
+  
+    // TODO : ✅ Kotlin에서 접근 가능하도록 명시적 getter 추가
+    public String getMemberId() {
+        return this.memberId;
+    }
+
 }
