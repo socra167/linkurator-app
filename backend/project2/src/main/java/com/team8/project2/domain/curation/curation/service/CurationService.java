@@ -1,26 +1,5 @@
 package com.team8.project2.domain.curation.curation.service;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto;
 import com.team8.project2.domain.curation.curation.dto.CurationResDto;
 import com.team8.project2.domain.curation.curation.dto.CurationSearchResDto;
@@ -49,7 +28,6 @@ import com.team8.project2.domain.member.repository.MemberRepository;
 import com.team8.project2.domain.member.service.MemberService;
 import com.team8.project2.global.Rq;
 import com.team8.project2.global.exception.ServiceException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -475,11 +453,12 @@ public class CurationService {
 			throw new ServiceException("400-1", "이미 같은 사유로 신고한 큐레이션입니다.");
 		}
 
-		Report report = Report.builder()
-			.reportType(reportType)
-			.curation(curation)
-			.reporter(actor)
-			.build();
+		Report report = new Report(
+				null,        // id
+				curation,
+				actor,       // reporter
+				reportType
+		);
 
 		reportRepository.save(report);
 	}

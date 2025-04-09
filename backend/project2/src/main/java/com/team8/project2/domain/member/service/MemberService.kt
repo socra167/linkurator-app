@@ -78,7 +78,7 @@ class MemberService(
     }
 
     fun getAuthToken(member: Member?): String {
-        return authTokenService!!.genAccessToken(member)
+        return authTokenService.genAccessToken(member)
     }
 
     @Transactional
@@ -102,7 +102,7 @@ class MemberService(
     }
 
     fun genAccessToken(member: Member?): String {
-        return authTokenService!!.genAccessToken(member)
+        return authTokenService.genAccessToken(member)
     }
 
     @Transactional
@@ -116,7 +116,7 @@ class MemberService(
         var follow = Follow()
         follow.setFollowerAndFollowee(follower, followee)
 
-        followRepository!!.findByFollowerAndFollowee(follower, followee).ifPresent { _f: Follow? ->
+        followRepository.findByFollowerAndFollowee(follower, followee).ifPresent { _f: Follow? ->
             throw ServiceException("400-1", "이미 팔로우중인 사용자입니다.")
         }
 
@@ -183,7 +183,7 @@ class MemberService(
     @Throws(IOException::class)
     fun updateProfileImage(imageFile: MultipartFile?) {
         val actor = rq.actor
-        val imageFileName = s3Uploader.uploadFile(imageFile)
+        val imageFileName = s3Uploader.uploadFile(imageFile!!)
         val oldProfileImageUrl = actor.profileImage
         actor.profileImage = s3Uploader.baseUrl + imageFileName
 
