@@ -90,6 +90,7 @@ class Link(
     }
 
     companion object {
+        @JvmStatic
         fun builder(): Builder = Builder()
     }
 
