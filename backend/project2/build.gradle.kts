@@ -75,6 +75,15 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     implementation(kotlin("stdlib-jdk8"))
+
+    testImplementation("io.mockk:mockk:1.13.7") // 최신 버전 사용 권장
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-redis")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 }
 
 tasks.test {
