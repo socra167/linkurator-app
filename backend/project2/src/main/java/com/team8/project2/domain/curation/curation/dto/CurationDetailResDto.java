@@ -9,8 +9,8 @@ import com.team8.project2.domain.comment.dto.ReplyCommentDto;
 import com.team8.project2.domain.comment.entity.Comment;
 import com.team8.project2.domain.curation.curation.entity.Curation;
 import com.team8.project2.domain.curation.tag.entity.Tag;
-import com.team8.project2.domain.link.entity.Link;
 
+import com.team8.project2.domain.link.entity.Link;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -122,7 +122,7 @@ public class CurationDetailResDto {
 			this.replies = comment.getReplyComments().stream()
 					.map(reply -> ReplyCommentDto.Companion.fromEntity(reply))
 					.sorted(Comparator.comparing(ReplyCommentDto::getCreatedAt))
-				.toList();
+					.toList();
 		}
 	}
 
@@ -135,31 +135,31 @@ public class CurationDetailResDto {
 	 * @return 변환된 상세 큐레이션 DTO
 	 */
 	public static CurationDetailResDto fromEntity(Curation curation, boolean isLiked, boolean isFollowed,
-		boolean isLogin) {
+												  boolean isLogin) {
 		return CurationDetailResDto.builder()
-			.id(curation.getId())
-			.title(curation.getTitle())
-			.content(curation.getContent())
-			.authorId(curation.getMemberId())
-			.authorName(curation.getMemberName())
-			.authorImgUrl(curation.getMemberImgUrl())
-			.urls(curation.getCurationLinks().stream()
-				.map(cl -> new LinkResDto(cl.getLink()))
-				.collect(Collectors.toList()))
-			.tags(curation.getTags().stream()
-				.map(tag -> new TagResDto(tag.getTag()))
-				.collect(Collectors.toList()))
-			.comments(curation.getComments().stream()
-				.map(comment -> new CommentResDto(comment))
-				.sorted(Comparator.comparing(CommentResDto::getCreatedAt).reversed())
-				.collect(Collectors.toList()))
-			.createdAt(curation.getCreatedAt())
-			.modifiedAt(curation.getModifiedAt())
-			.likeCount(curation.getLikeCount())
-			.viewCount(curation.getViewCount())
-			.isLiked(isLiked)
-			.isFollowed(isFollowed)
-			.isLogin(isLogin)
-			.build();
+				.id(curation.getId())
+				.title(curation.getTitle())
+				.content(curation.getContent())
+				.authorId(curation.getMember().getId())
+				.authorName(curation.getMember().getUsername())
+				.authorImgUrl(curation.getMember().getProfileImage())
+				.urls(curation.getCurationLinks().stream()
+						.map(cl -> new LinkResDto(cl.getLink()))
+						.collect(Collectors.toList()))
+				.tags(curation.getTags().stream()
+						.map(tag -> new TagResDto(tag.getTag()))
+						.collect(Collectors.toList()))
+				.comments(curation.getComments().stream()
+						.map(comment -> new CommentResDto(comment))
+						.sorted(Comparator.comparing(CommentResDto::getCreatedAt).reversed())
+						.collect(Collectors.toList()))
+				.createdAt(curation.getCreatedAt())
+				.modifiedAt(curation.getModifiedAt())
+				.likeCount(curation.getLikeCount())
+				.viewCount(curation.getViewCount())
+				.isLiked(isLiked)
+				.isFollowed(isFollowed)
+				.isLogin(isLogin)
+				.build();
 	}
 }
