@@ -146,6 +146,7 @@ class Member() {
         this.introduce = introduce
     }
 
+
     //getter
     fun getMemberId(): String {
         return memberId ?: throw UninitializedPropertyAccessException("memberId is not initialized")
