@@ -1,6 +1,6 @@
 package com.team8.project2.domain.curation.curation.service
 
-import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto
+import CurationDetailResDto
 import com.team8.project2.domain.curation.curation.dto.CurationResDto
 import com.team8.project2.domain.curation.curation.dto.CurationSearchResDto
 import com.team8.project2.domain.curation.curation.dto.TrendingCurationResDto
@@ -193,29 +193,28 @@ class CurationService(
             curation.content = content
         }
 
-        // 큐레이션 - 링크 연결 업데이트
-        val curationLinks = urls
-            .map { url ->
-                val curationLink = CurationLink()
-                curationLink.setCurationAndLink(curation, linkService.getLink(url))
+        // 큐레이션 - 링크 연결 업데이트 (urls가 null이 아니고, 비어있지 않을 경우만)
+        if (!urls.isNullOrEmpty()) {
+            val curationLinks = urls.filterNotNull().map { url ->
+                CurationLink().setCurationAndLink(curation, linkService.getLink(url))
             }
-        curationLinkRepository.saveAll(curationLinks)
-        curation.curationLinks.apply {
-            clear()
-            addAll(curationLinks)
+            curationLinkRepository.saveAll(curationLinks)
+            curation.curationLinks.apply {
+                clear()
+                addAll(curationLinks)
+            }
         }
 
-
-        // 큐레이션 - 태그 연결 업데이트
-        val curationTags = tags
-            .map { tag ->
-                val curationTag = CurationTag()
-                curationTag.setCurationAndTag(curation, tag?.let { tagService.getTag(it) })
+        // 큐레이션 - 태그 연결 업데이트 (tags가 null이 아니고, 비어있지 않을 경우만)
+        if (!tags.isNullOrEmpty()) {
+            val curationTags = tags.filterNotNull().map { tag ->
+                CurationTag().setCurationAndTag(curation, tagService.getTag(tag))
             }
-        curationTagRepository.saveAll(curationTags)
-        curation.tags.apply {
-            clear()
-            addAll(curationTags)
+            curationTagRepository.saveAll(curationTags)
+            curation.tags.apply {
+                clear()
+                addAll(curationTags)
+            }
         }
 
         val result = curationRepository.save(curation)
@@ -356,7 +355,7 @@ class CurationService(
             println("조회수 증가 안 함 (이미 조회된 IP)")
         }
 
-        return CurationDetailResDto.fromEntity(curation, isLiked, isFollowed, isLogin)
+        return CurationDetailResDto.from(curation, isLiked, isFollowed, isLogin)
     }
 
     /**
@@ -401,7 +400,7 @@ class CurationService(
             curation
         }
 
-        return CurationSearchResDto.of(
+        return CurationSearchResDto.from(
             curations,
             curationPage.totalPages,
             curationPage.totalElements,
@@ -505,7 +504,7 @@ class CurationService(
         val pageable: Pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
         val followingCurations = curationRepository.findFollowingCurations(member.id, pageable)
         return followingCurations.stream()
-            .map { curation: Curation? -> CurationResDto(curation) }
+            .map { curation: Curation -> CurationResDto.from(curation) }
             .collect(Collectors.toList())
     }
 
@@ -556,11 +555,11 @@ class CurationService(
 
         return when {
             topCurations.isNullOrEmpty() -> {
-                TrendingCurationResDto.of(
+                TrendingCurationResDto.from(
                     curationRepository.findTop3ByOrderByViewCountDesc().sortedByDescending { it.viewCount },
                 )
             }
-            else -> TrendingCurationResDto.of(topCurations)
+            else -> TrendingCurationResDto.from(topCurations)
         }
     }
 
@@ -578,7 +577,7 @@ class CurationService(
                 )
             }
         return curationRepository.findAllByMember(author, pageable).stream()
-            .map<CurationResDto> { curation: Curation -> CurationResDto(curation) }
+            .map<CurationResDto> { curation: Curation -> CurationResDto.from(curation) }
             .collect(Collectors.toUnmodifiableList<CurationResDto>())
     }
 
