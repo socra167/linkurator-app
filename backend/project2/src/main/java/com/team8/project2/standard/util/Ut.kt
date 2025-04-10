@@ -16,6 +16,7 @@ object Ut {
     object Json {
         private val objectMapper = ObjectMapper()
 
+        @JvmStatic
         fun toString(obj: Any): String {
             try {
                 return objectMapper.writeValueAsString(obj)
@@ -26,6 +27,7 @@ object Ut {
     }
 
     object Jwt {
+        @JvmStatic
         fun createToken(keyString: String, expireSeconds: Int, claims: Map<String, Any>): String {
             val secretKey = Keys.hmacShaKeyFor(keyString.toByteArray())
 
@@ -43,6 +45,7 @@ object Ut {
                 .compact()
         }
 
+        @JvmStatic
         fun isValidToken(keyString: String, token: String): Boolean {
             val currentTime = System.currentTimeMillis()
             println("[현재 서버 시간] ${Date(currentTime)}")
@@ -67,6 +70,7 @@ object Ut {
             return false
         }
 
+        @JvmStatic
         @Suppress("UNCHECKED_CAST")
         fun getPayload(keyString: String, jwtStr: String): Map<String, Any> {
             val secretKey = Keys.hmacShaKeyFor(keyString.toByteArray())
