@@ -25,7 +25,7 @@ data class ReportedCurationsDetailResDto(
                 }
 
             return ReportedCurationsDetailResDto(
-                curationId = curation.id ?: throw IllegalArgumentException("curation.id must not be null"),
+                curationId = curation.id ?: error("curation.id must not be null"),
                 curationTitle = curation.title,
                 authorName = curation.memberName,
                 reportTypeCounts = reportTypeCounts
