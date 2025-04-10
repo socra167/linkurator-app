@@ -13,6 +13,8 @@ import com.team8.project2.global.Rq
 import com.team8.project2.global.exception.BadRequestException
 import com.team8.project2.global.exception.NotFoundException
 import jakarta.servlet.http.HttpServletRequest
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.script.DefaultRedisScript
 import org.springframework.scheduling.annotation.Scheduled
@@ -34,7 +36,8 @@ class PlaylistService(
     private val memberRepository: MemberRepository,
     private val playlistLikeRepository: PlaylistLikeRepository,
     private val rq: Rq,
-    private val linkService: LinkService
+    private val linkService: LinkService,
+    private val logger: Logger = LoggerFactory.getLogger(this::class.java)
 
 ) {
     companion object {
@@ -195,11 +198,11 @@ class PlaylistService(
                     playlist.viewCount = redisViewCount.toLong()
                     playlistRepository.save(playlist)
                 } else {
-                    println("Playlist not found in DB for ID: $id")
+                    logger.debug("Playlist not found in DB for ID: $id")
                 }
 
             } catch (e: NumberFormatException) {
-                println("잘못된 Redis 키 형식: $key")
+                logger.debug("잘못된 Redis 키 형식: $key")
             }
         }
     }
@@ -572,7 +575,6 @@ class PlaylistService(
 
         if (!cachedRecommendationsStr.isNullOrEmpty()) {
             val cachedRecommendations = cachedRecommendationsStr.split(",").mapNotNull { it.toLongOrNull() }
-            println("Redis 캐시 HIT Playlist ID $playlistId | 추천 리스트: $cachedRecommendations")
             return getPlaylistsByIds(cachedRecommendations)
         }
 
@@ -608,9 +610,6 @@ class PlaylistService(
             recommendedPlaylistIds.joinToString(","),
             Duration.ofMinutes(30)
         )
-
-        println("Redis 캐시 저장 완료 Playlist ID $playlistId | 추천 리스트: $recommendedPlaylistIds")
-
 
         return getSortedPlaylists(recommendedPlaylistIds.mapNotNull { it }, sortType ?: "combined")
 
@@ -667,7 +666,7 @@ class PlaylistService(
         redisResults?.forEach { id ->
             id.toString().toLongOrNull()?.let {
                 recommendedPlaylistIds.add(it)
-            } ?: System.err.println("addRecommendations() 오류: 파싱 불가한 값 = $id")
+            } ?: logger.debug("addRecommendations() 오류: 파싱 불가한 값 = $id")
         }
     }
 
