@@ -43,9 +43,9 @@ class AuthTokenService {
     }
 
     fun getPayload(token: String?): Map<String, Any?>? {
-        if (!Ut.Jwt.isValidToken(keyString, token)) return null
+        if (!Ut.Jwt.isValidToken(keyString.toString(), token!!)) return null
 
-        val payload = Ut.Jwt.getPayload(keyString, token)
+        val payload = Ut.Jwt.getPayload(keyString.toString(), token)
         val idNo = payload["id"] as Number?
         val id = idNo!!.toLong()
         val memberId = payload["memberId"] as String?

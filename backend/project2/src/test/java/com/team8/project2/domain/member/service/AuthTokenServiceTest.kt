@@ -60,7 +60,7 @@ class AuthTokenServiceTest {
         val accessToken = authTokenService!!.genAccessToken(testMember!!)
 
         // 토큰이 유효한지 확인
-        val isValid = Ut.Jwt.isValidToken(keyString, accessToken)
+        val isValid = Ut.Jwt.isValidToken(keyString.toString(), accessToken)
         Assertions.assertThat(isValid).isTrue()
     }
 
@@ -69,13 +69,13 @@ class AuthTokenServiceTest {
     @Throws(InterruptedException::class)
     fun expiredTokenCheck() {
         // 테스트용 만료 시간 1초로 설정 후 토큰 생성
-        val shortLivedToken = Ut.Jwt.createToken(keyString, 1, Map.of<String, Any>("id", testMember!!.id))
+        val shortLivedToken = Ut.Jwt.createToken(keyString.toString(), 1, Map.of<String, Any>("id", testMember!!.id))
 
         // 2초 대기하여 토큰 만료
         Thread.sleep(2000)
 
         // 만료된 토큰인지 확인
-        val isValid = Ut.Jwt.isValidToken(keyString, shortLivedToken)
+        val isValid = Ut.Jwt.isValidToken(keyString.toString(), shortLivedToken)
         Assertions.assertThat(isValid).isFalse()
     }
 
@@ -85,7 +85,7 @@ class AuthTokenServiceTest {
         val invalidToken = "this.is.a.fake.token"
 
         // 잘못된 토큰은 유효하지 않아야 함
-        val isValid = Ut.Jwt.isValidToken(keyString, invalidToken)
+        val isValid = Ut.Jwt.isValidToken(keyString.toString(), invalidToken)
         Assertions.assertThat(isValid).isFalse()
     }
 }

@@ -204,12 +204,12 @@ internal class ApiV1PlaylistControllerTest {
         val playlistId = 1L
         val memberId = 100L
 
-        val mockMember = Member.builder()
-            .id(100L)
-            .username("testuser")
-            .password("testpass")
-            .role(RoleEnum.MEMBER)
-            .build()
+        val mockMember = Member(
+            id = 100L,
+            username = "testuser",
+            password = "testpass",
+            role = RoleEnum.MEMBER
+        )
 
         whenever(rq.actor).thenReturn(mockMember)
 
@@ -655,12 +655,12 @@ internal class ApiV1PlaylistControllerTest {
         val playlistId = 1L
         val memberId = 100L
 
-        val mockMember = Member.builder()
-            .id(100L)
-            .username("testuser")
-            .password("testpass")
-            .role(RoleEnum.MEMBER)
-            .build()
+        val mockMember = Member(
+            id = 100L,
+            username = "testuser",
+            password = "testpass",
+            role = RoleEnum.MEMBER
+        )
 
         whenever(rq.isLogin).thenReturn(true)
         whenever(rq.actor).thenReturn(mockMember)
@@ -719,12 +719,12 @@ internal class ApiV1PlaylistControllerTest {
         // Given
         val memberId = 100L
 
-        val mockMember = Member.builder()
-            .id(100L)
-            .username("testuser")
-            .password("testpass")
-            .role(RoleEnum.MEMBER)
-            .build()
+        val mockMember = Member(
+            id = 100L,
+            username = "testuser",
+            password = "testpass",
+            role = RoleEnum.MEMBER
+        )
 
         whenever(rq.actor).thenReturn(mockMember)
 

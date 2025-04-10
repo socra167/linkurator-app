@@ -64,12 +64,12 @@ class BaseInitData(
 
     private fun createMember(email: String, username: String, memberId: String, displayName: String, password: String, profileImage: String, introduce: String, role: RoleEnum): Member {
         val member = Member(
-            email,
-            role,
             memberId,
             displayName,
             password,
+            role,
             profileImage,
+            email,
             introduce
         )
 

@@ -64,7 +64,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
                                         
                                         """
                             .trimIndent()
-                            .formatted(memberId, memberId, password, email, role, profileImage, introduce)
+                            .formatted(memberId, password, memberId, email, role, profileImage, introduce)
                             .stripIndent()
                     )
                     .contentType(

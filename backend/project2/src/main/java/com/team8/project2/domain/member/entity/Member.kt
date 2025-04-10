@@ -15,14 +15,8 @@ import java.time.LocalDateTime
 class Member() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="id")
-    private var _id: Long? = null // TODO: 추후에 코틀린 전환 과정에서 해결
-
-    var id: Long
-        get() = _id ?: 0
-        set(value) {
-            _id = value
-        }
+    @Column(name = "id")
+    var id: Long = 0L
 
     @CreatedDate
     var createdDate: LocalDateTime? = null
@@ -117,6 +111,39 @@ class Member() {
         this.id = id
         this.password = "blank"
         this.username = "default"
+    }
+
+    constructor(
+        id: Long,
+        username: String,
+        password: String,
+        role: RoleEnum
+    ) : this() {
+        this.id = id
+        this.username = username
+        this.password = password
+        this.role = role
+        this.memberId = "default" // 또는 UUID 생성 등
+    }
+
+    constructor(
+        id: Long,
+        memberId: String,
+        username: String?,
+        password: String?,
+        role: RoleEnum?,
+        email: String?,
+        profileImage: String?,
+        introduce: String?
+    ) : this() {
+        this.id = id
+        this.memberId = memberId
+        this.username = username
+        this.password = password
+        this.role = role ?: RoleEnum.MEMBER
+        this.email = email
+        this.profileImage = profileImage
+        this.introduce = introduce
     }
 
     //getter

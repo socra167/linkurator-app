@@ -84,16 +84,16 @@ class PlaylistServiceTest {
 
     @BeforeEach
     fun setUp() {
-        sampleMember = Member.builder()
-            .id(1L)
-            .memberId("test123")
-            .username("테스트 유저")
-            .password("testPassword123!")
-            .role(RoleEnum.MEMBER)
-            .email("test@example.com")
-            .profileImage(null)
-            .introduce("자기소개 테스트")
-            .build()
+        sampleMember = Member(
+            id = 1L,
+            memberId = "test123",
+            username = "테스트 유저",
+            password = "testPassword123!",
+            role = RoleEnum.MEMBER,
+            email = "test@example.com",
+            profileImage = null,
+            introduce = "자기소개 테스트"
+        )
 
         samplePlaylist = Playlist(
             id = 1L,
@@ -689,17 +689,16 @@ class PlaylistServiceTest {
 
         whenever(redisTemplate.opsForValue()).thenReturn(valueOperations)
 
-        val sampleMember = Member.builder()
-            .id(1L)
-            .memberId("test123")
-            .username("테스트 유저")
-            .password("1234")
-            .role(RoleEnum.MEMBER)
-            .email("test@email.com")
-            .profileImage(null)
-            .introduce("테스123.")
-            .build()
-
+        val sampleMember = Member(
+            id = 1L,
+            memberId = "test123",
+            username = "테스트 유저",
+            password = "1234",
+            role = RoleEnum.MEMBER,
+            email = "test@email.com",
+            profileImage = null,
+            introduce = "테스123."
+        )
         val samplePlaylist = Playlist(
             id = playlistId,
             title = "테스트 플레이리스트",
@@ -769,27 +768,27 @@ class PlaylistServiceTest {
     @DisplayName("공개 플레이리스트를 내 플레이리스트로 복사한다.")
     fun addPublicPlaylistToMyPlaylist() {
         // given
-        val member = Member.builder()
-            .id(1L)
-            .memberId("member123")
-            .username("testUser")
-            .password("1234")
-            .role(RoleEnum.MEMBER)
-            .email("test@email.com")
-            .profileImage(null)
-            .introduce("test")
-            .build()
+        val member = Member(
+            id = 1L,
+            memberId = "test123",
+            username = "테스트 유저",
+            password = "1234",
+            role = RoleEnum.MEMBER,
+            email = "test@email.com",
+            profileImage = null,
+            introduce = "테스123."
+        )
 
-        val originalOwner = Member.builder()
-            .id(2L)
-            .memberId("owner123")
-            .username("originalOwner")
-            .password("ownerPw")
-            .role(RoleEnum.MEMBER)
-            .email("owner@email.com")
-            .profileImage(null)
-            .introduce("원본 유저")
-            .build()
+        val originalOwner = Member(
+            id = 2L,
+            memberId = "owner123",
+            username = "originalOwner",
+            password = "ownerPw",
+            role = RoleEnum.MEMBER,
+            email = "owner@email.com",
+            profileImage = null,
+            introduce = "원본 유저"
+        )
 
         val originalPlaylist = Playlist(
             id = 100L,
@@ -847,16 +846,16 @@ class PlaylistServiceTest {
         val playlistItemId = 10L
         val linkId = 100L
 
-        val member = Member.builder()
-            .id(1L)
-            .memberId("member123")
-            .username("testUser")
-            .password("1234")
-            .email("test@email.com")
-            .role(RoleEnum.MEMBER)
-            .profileImage(null)
-            .introduce("test")
-            .build()
+        val member = Member(
+            id = 1L,
+            memberId = "member123",
+            username = "testUser",
+            password = "1234",
+            role = RoleEnum.MEMBER,
+            email = "test@email.com",
+            profileImage = null,
+            introduce = "test"
+        )
 
 
         val link = Link.builder()
