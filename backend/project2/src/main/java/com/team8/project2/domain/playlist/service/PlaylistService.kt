@@ -118,10 +118,6 @@ class PlaylistService(
             ?.toLong() ?: 0L
         playlist.viewCount = currentViewCount
 
-        if (playlist.items == null) {
-            playlist.items = mutableListOf()
-        }
-
         val ip = getClientIp(request)
         val redisKey = "playlist_view_${id}_$ip"
         val isNewView = redisTemplate.opsForValue()
@@ -484,7 +480,7 @@ class PlaylistService(
         val playlist = playlistRepository.findById(playlistId)
             .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
-        val totalOrderCount = orderUpdates.sumOf { 1 + (it.children?.size ?: 0) }
+        val totalOrderCount = orderUpdates.sumOf { 1 + it.children.size }
 
         if (playlist.items.size != totalOrderCount) {
             throw BadRequestException(
