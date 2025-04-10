@@ -17,13 +17,16 @@ data class RsData<T>(
     constructor(code: String, msg: String) : this(code, msg, null)
 
     companion object {
+        @JvmStatic
         fun <T> success(
             msg: String = "Success",
             data: T,
         ): RsData<T> = RsData("200-1", msg, data)
 
+        @JvmStatic
         fun success(msg: String = "Success"): RsData<Unit> = RsData("200-1", msg, Unit)
 
+        @JvmStatic
         fun <T> fail(
             code: String = "400-1",
             msg: String = "요청이 올바르지 않습니다.",
