@@ -7,12 +7,14 @@ import com.team8.project2.domain.playlist.dto.*
 import com.team8.project2.domain.playlist.entity.Playlist
 import com.team8.project2.domain.playlist.entity.PlaylistItem
 import com.team8.project2.domain.playlist.entity.PlaylistLike
+import com.team8.project2.domain.playlist.repository.PlaylistItemRepository
 import com.team8.project2.domain.playlist.repository.PlaylistLikeRepository
 import com.team8.project2.domain.playlist.repository.PlaylistRepository
 import com.team8.project2.global.Rq
 import com.team8.project2.global.exception.BadRequestException
 import com.team8.project2.global.exception.NotFoundException
 import jakarta.servlet.http.HttpServletRequest
+import lombok.RequiredArgsConstructor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.RedisTemplate
@@ -29,10 +31,12 @@ import java.time.Duration
  * 플레이리스트 생성, 조회, 수정, 삭제 등의 로직을 처리합니다.
  */
 @Service
+@RequiredArgsConstructor
 @Transactional
 class PlaylistService(
     private val logger: Logger = LoggerFactory.getLogger(this::class.java),
     private val playlistRepository: PlaylistRepository,
+    private val playlistItemRepository: PlaylistItemRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
     private val memberRepository: MemberRepository,
     private val playlistLikeRepository: PlaylistLikeRepository,
@@ -760,18 +764,18 @@ class PlaylistService(
 
         val savedPlaylist = playlistRepository.save(copiedPlaylist)
 
-        publicPlaylist.items.forEach { item ->
-            val copiedItem =
-                PlaylistItem(
-                    itemId = item.itemId,
-                    itemType = item.itemType,
-                    displayOrder = item.displayOrder,
-                    playlist = savedPlaylist,
-                )
-            savedPlaylist.items.add(copiedItem)
+        val copiedItems = publicPlaylist.items.map { item ->
+            PlaylistItem(
+                itemId = item.itemId,
+                itemType = item.itemType,
+                displayOrder = item.displayOrder,
+                playlist = savedPlaylist,
+            )
         }
+        playlistItemRepository.saveAll(copiedItems)
+        savedPlaylist.items.addAll(copiedItems)
 
-        return toDto(savedPlaylist)
+        return toDto(savedPlaylist, actor)
     }
 
     /**
