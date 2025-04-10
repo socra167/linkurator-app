@@ -64,10 +64,7 @@ public class ApiV1CurationControllerTest {
 		member = memberRepository.findById(1L).get();
 		memberAccessKey = authTokenService.genAccessToken(member);
 
-		// CurationReqDTO 설정 (링크 포함)
-		curationReqDTO = new CurationReqDTO();
-		curationReqDTO.setTitle("Test Title");
-		curationReqDTO.setContent("Test Content");
+
 
 		// LinkReqDTO 생성
 		LinkReqDTO linkReqDTO = new LinkReqDTO("https://test.com", null, null);
@@ -75,10 +72,10 @@ public class ApiV1CurationControllerTest {
 		// TagReqDTO
 		TagReqDto tagReqDto = new TagReqDto("test");
 
-		// 링크 리스트에 추가
-		curationReqDTO.setLinkReqDtos(Collections.singletonList(linkReqDTO));
-		// 태그 리스트에 추가
-		curationReqDTO.setTagReqDtos(Collections.singletonList(tagReqDto));
+		// CurationReqDTO 설정 (링크 포함)
+		curationReqDTO = new CurationReqDTO("Test Title", "Test Content",
+			Collections.singletonList(linkReqDTO), Collections.singletonList(tagReqDto));
+
 
 		// Redis 데이터 초기화
 		redisUtils.clearAllData();
@@ -169,7 +166,7 @@ public class ApiV1CurationControllerTest {
 			.andExpect(jsonPath("$.data.urls[1].url").value("https://www.github.com/"))
 			.andExpect(jsonPath("$.data.tags[0].name").value("개발"))
 			.andExpect(jsonPath("$.data.tags[1].name").value("프로그래밍"))
-			.andExpect(jsonPath("$.data.comments[0].content").value("더 많은 예시가 있으면 좋겠어요."));
+			.andExpect(jsonPath("$.data.comments[0].content").value("정말 유용한 정보네요! 감사합니다."));
 	}
 
 	@Test

@@ -1,6 +1,5 @@
 package com.team8.project2.domain.curation.service;
 
-import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto;
 import com.team8.project2.domain.curation.curation.dto.CurationResDto;
 import com.team8.project2.domain.curation.curation.dto.TrendingCurationResDto;
 import com.team8.project2.domain.curation.curation.entity.Curation;
@@ -283,7 +282,7 @@ class CurationServiceTest {
 		when(rq.getActor()).thenReturn(member);
 		ReflectionTestUtils.setField(curationService, "rq", rq);
 
-		CurationDetailResDto retrievedCuration = curationService.getCuration(1L, request);
+		var retrievedCuration = curationService.getCuration(1L, request);
 
 		// Verify the result
 		assert retrievedCuration != null;
