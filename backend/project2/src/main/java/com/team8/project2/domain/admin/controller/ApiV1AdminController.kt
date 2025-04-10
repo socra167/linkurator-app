@@ -11,7 +11,6 @@ import com.team8.project2.global.Rq
 import com.team8.project2.global.dto.RsData
 import com.team8.project2.global.exception.ServiceException
 import org.springframework.web.bind.annotation.*
-import java.util.function.Consumer
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -25,7 +24,9 @@ class ApiV1AdminController(
 
 ) {
 
-    // ✅ 큐레이션 삭제
+    /**
+     * ✅ 큐레이션을 삭제합니다.
+     */
     @DeleteMapping("/curations/{curationId}")
     fun deleteCuration(@PathVariable curationId: Long): RsData<String?> {
         val member = rq.actor
@@ -34,7 +35,9 @@ class ApiV1AdminController(
         return RsData("204-1", "글이 성공적으로 삭제되었습니다.", null)
     }
 
-    // ✅ 멤버 삭제
+    /**
+     * ✅ 멤버를 삭제합니다.
+     */
     @DeleteMapping("/members/{memberId}")
     fun deleteMember(@PathVariable memberId: Long): RsData<Unit> {
         val member = memberService.findById(memberId)
@@ -48,7 +51,9 @@ class ApiV1AdminController(
         return RsData.success("멤버가 삭제되었습니다.")
     }
 
-    // ✅ 일정 개수 이상 신고된 큐레이션 조회
+    /**
+     * ✅ 일정 개수 이상 신고된 큐레이션 ID 목록을 조회합니다.
+     */
     @GetMapping("/reported-curations")
     fun getReportedCurations(
         @RequestParam(defaultValue = "5") minReports: Int,
@@ -58,7 +63,9 @@ class ApiV1AdminController(
         return RsData.success("신고된 큐레이션 목록 조회 성공", adminService.getReportedCurations(minReports, page, size))
     }
 
-    // ✅ 일정 개수 이상 신고된 큐레이션 상세 조회
+    /**
+     * ✅ 일정 개수 이상 신고된 큐레이션의 상세 정보를 조회합니다.
+     */
     @GetMapping("/reported-curations-detail")
     fun getReportedCurationsDetail(
         @RequestParam(defaultValue = "5") minReports: Int,
@@ -66,11 +73,14 @@ class ApiV1AdminController(
         @RequestParam(defaultValue = "20") size: Int
     ): RsData<List<ReportedCurationsDetailResDto>> {
         val reportedcurations = adminService.getReportedCurations(minReports, page, size)
-        reportedcurations.forEach(Consumer { println(it) })
-        return RsData.success("신고된 큐레이션 목록 조회 성공", reportService.getReportedCurationsDetailResDtos(reportedcurations))
+        return RsData.success("신고된 큐레이션 목록 조회 성공",
+            reportService.getReportedCurationsDetailResDtos(reportedcurations)
+        )
     }
 
-    // ✅ 큐레이션 & 플레이리스트 통계 조회
+    /**
+     * ✅ 큐레이션 및 플레이리스트의 트래픽 통계를 조회합니다.
+     */
     @GetMapping("/stats")
     fun getStats(): RsData<StatsResDto> {
         return RsData.success(
