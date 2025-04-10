@@ -275,7 +275,7 @@ class PlaylistService(
 
         val actor = rq.actor
 
-        if (playlist.member.getId() != actor.getId()) {
+        if (playlist.member.getMemberId() != actor.getMemberId()) {
             throw BadRequestException("자신이 소유한 플레이리스트만 삭제할 수 있습니다.")
         }
 
@@ -437,7 +437,7 @@ class PlaylistService(
             val currentMemberIdSet = memberIds.mapNotNull { it.toLongOrNull() }.toSet()
 
             for (dbLike in currentLikesInDB) {
-                if (!currentMemberIdSet.contains(dbLike.member.getId())) {
+                if (!currentMemberIdSet.contains(dbLike.member.id)) {
                     playlistLikeRepository.delete(dbLike)
                 }
             }

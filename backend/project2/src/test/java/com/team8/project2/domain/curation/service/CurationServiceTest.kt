@@ -114,11 +114,11 @@ internal class CurationServiceTest {
 
     @BeforeEach
     fun setup() {
-        member = Member.builder()
-            .id(1L)
-            .username("testUser")
-            .email("test@example.com")
-            .build()
+        member = Member(
+            id = 1L,
+            username = "testUser",
+            email = "test@example.com"
+        )
 
         curation = Curation(
             title = "Test Title",
@@ -551,7 +551,7 @@ internal class CurationServiceTest {
 
         whenever(curationRepository.findById(1L)).thenReturn(Optional.of(curation))
         whenever(memberRepository.findByMemberId(any<String>()))
-            .thenReturn(Optional.of(Member()))
+            .thenReturn(Member())
 
         curationService.syncLikesToDatabase()
 

@@ -54,7 +54,7 @@ data class CommentDto(
 		fun fromEntity(comment: Comment): CommentDto {
 			return CommentDto(
 				id = comment.id,
-				authorName = comment.author.username,
+				authorName = comment.author.getUsername(),
 				authorProfileImageUrl = comment.author.profileImage,
 				content = comment.content,
 				createdAt = comment.createdAt,

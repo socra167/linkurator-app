@@ -123,14 +123,15 @@ class ApiV1CurationControllerTest {
     @Throws(Exception::class)
     fun updateCurationByOtherUser_ShouldFail() {
         // 다른 사용자 생성
-        val anotherMember = Member.builder()
-            .memberId("otherperson")
-            .username("otherperson")
-            .password("otherperson")
-            .email("other@example.com")
-            .role(RoleEnum.MEMBER)
-            .introduce("otherperson")
-            .build()
+        val anotherMember = Member(
+            memberId = "otherperson",
+            username = "otherperson",
+            password = "otherperson",
+            role = RoleEnum.MEMBER,
+            profileImage = null,
+            email = "other@example.com",
+            introduce = "otherperson"
+        )
         memberRepository.save(anotherMember)
 
         val savedCuration = curationRepository.findById(1L).orElseThrow()
@@ -399,7 +400,7 @@ class ApiV1CurationControllerTest {
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/v1/curation/like/{id}", savedCuration.id)
                 .header("Authorization", "Bearer $memberAccessKey")
-                .param("memberId", member.memberId.toString())
+                .param("memberId", member.getMemberId())
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-1"))
@@ -427,14 +428,15 @@ class ApiV1CurationControllerTest {
     }
 
     private fun createMember(author: String): Member {
-        val member = Member.builder()
-            .email("$author@gmail.com")
-            .role(RoleEnum.MEMBER)
-            .memberId(author)
-            .username(author)
-            .password("password")
-            .profileImage("http://localhost:8080/images/team8-logo.png")
-            .build()
+        val member =  Member(
+            memberId = author,
+            username = author,
+            password = "password",
+            role = RoleEnum.MEMBER,
+            profileImage = "http://localhost:8080/images/team8-logo.png",
+            email = "$author@gmail.com",
+            introduce = null
+        )
 
         return memberRepository.save(member)
     }
@@ -539,7 +541,7 @@ class ApiV1CurationControllerTest {
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/v1/curation/like/{id}", curationId)
                 .header("Authorization", "Bearer $memberAccessKey")
-                .param("memberId", member.memberId.toString())
+                .param("memberId", member.getMemberId())
         )
             .andExpect(MockMvcResultMatchers.status().isOk())
             .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-1"))

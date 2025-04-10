@@ -34,9 +34,9 @@ class Rq(
         val userDetails: UserDetails =
             SecurityUser(
                 member.id,
-                member.memberId,
+                member.getMemberId(),
                 "",
-                member.getAuthorities(),
+                member.authorities,
             )
         return UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
     }

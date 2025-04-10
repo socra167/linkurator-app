@@ -73,7 +73,7 @@ class CurationService(
      */
     @Transactional
     fun countByMember(member: Member): Long {
-        return curationRepository.countByMemberId(member.memberId)
+        return curationRepository.countByMemberId(member.getMemberId())
     }
 
     /**
@@ -231,7 +231,7 @@ class CurationService(
         // 삭제 권한이 있는지 확인 (작성자와 요청자가 같은지 확인)
         println("어드민이야?" + member.isAdmin)
         println("어드민이야?" + curation.member!!.id)
-        println("어드민이야?" + member.memberId)
+        println("어드민이야?" + member.getMemberId())
         if (curation.member!!.id != member.id && !member.isAdmin) {
             throw ServiceException("403-1", "권한이 없습니다.") // 권한 없음
         }
@@ -446,8 +446,8 @@ class CurationService(
             val memberIds = redisTemplate.opsForSet().members(key)
             for (memberId in memberIds!!) {
                 val curation = curationRepository.findById(curationId).get()
-                val member = memberRepository.findByMemberId(memberId).get()
-                likeRepository.save(Like.of(curation, member))
+                val member = memberRepository.findByMemberId(memberId)
+                likeRepository.save(Like.of(curation, member!!))
             }
 
             // Redis에서 좋아요 개수 구하기
@@ -552,12 +552,11 @@ class CurationService(
     fun searchCurationByUserName(username: String?, page: Int, size: Int): List<CurationResDto> {
         val pageable: Pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
         val author = memberRepository.findByUsername(username)
-            .orElseThrow {
-                ServiceException(
-                    "404-1",
-                    "작성자가 존재하지 않습니다."
-                )
-            }
+            ?: throw ServiceException(
+                "404-1",
+                "작성자가 존재하지 않습니다."
+            )
+
         return curationRepository.findAllByMember(author, pageable).stream()
             .map<CurationResDto> { curation: Curation -> CurationResDto.from(curation) }
             .collect(Collectors.toUnmodifiableList<CurationResDto>())

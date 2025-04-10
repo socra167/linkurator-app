@@ -83,33 +83,30 @@ class PlaylistServiceTest {
 
     @BeforeEach
     fun setUp() {
-        sampleMember =
-            Member
-                .builder()
-                .id(1L)
-                .memberId("test123")
-                .username("테스트 유저")
-                .password("testPassword123!")
-                .role(RoleEnum.MEMBER)
-                .email("test@example.com")
-                .profileImage(null)
-                .introduce("자기소개 테스트")
-                .build()
+        sampleMember = Member(
+            id = 1L,
+            memberId = "test123",
+            username = "테스트 유저",
+            password = "testPassword123!",
+            role = RoleEnum.MEMBER,
+            email = "test@example.com",
+            profileImage = null,
+            introduce = "자기소개 테스트"
+        )
 
-        samplePlaylist =
-            Playlist(
-                id = 1L,
-                title = "테스트 플레이리스트",
-                description = "테스트 설명",
-                isPublic = true,
-                viewCount = 0L,
-                likeCount = 0L,
-                items = mutableListOf(),
-                tags = mutableSetOf(),
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-                member = sampleMember,
-            )
+        samplePlaylist = Playlist(
+            id = 1L,
+            title = "테스트 플레이리스트",
+            description = "테스트 설명",
+            isPublic = true,
+            viewCount = 0L,
+            likeCount = 0L,
+            items = mutableListOf(),
+            tags = mutableSetOf(),
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now(),
+            member = sampleMember
+        )
 
         whenever(rq.actor).thenReturn(sampleMember)
 
@@ -125,32 +122,32 @@ class PlaylistServiceTest {
             rq = rq,
             linkService = linkService,
         )
+
     }
 
     @Test
     @DisplayName("플레이리스트를 정상적으로 생성해야 한다.")
     fun shouldCreatePlaylistSuccessfully() {
         // Given
-        val request =
-            PlaylistCreateDto(
-                title = "새 플레이리스트",
-                description = "새로운 설명",
-            )
+        val request = PlaylistCreateDto(
+            title = "새 플레이리스트",
+            description = "새로운 설명"
+        )
 
-        val newPlaylist =
-            Playlist(
-                id = 2L,
-                title = request.title,
-                description = request.description,
-                tags = mutableSetOf(),
-                member = sampleMember,
-                items = mutableListOf(),
-                isPublic = true,
-                viewCount = 0L,
-                likeCount = 0L,
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-            )
+        val newPlaylist = Playlist(
+            id = 2L,
+            title = request.title,
+            description = request.description,
+            tags = mutableSetOf(),
+            member = sampleMember,
+            items = mutableListOf(),
+            isPublic = true,
+            viewCount = 0L,
+            likeCount = 0L,
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now()
+        )
+
 
         whenever(playlistRepository.save(any())).thenReturn(newPlaylist)
 
@@ -209,11 +206,10 @@ class PlaylistServiceTest {
     @DisplayName("플레이리스트를 정상적으로 수정해야 한다.")
     fun shouldUpdatePlaylistSuccessfully() {
         // Given
-        val request =
-            PlaylistUpdateDto(
-                title = "수정된 플레이리스트",
-                description = "수정된 설명",
-            )
+        val request = PlaylistUpdateDto(
+            title = "수정된 플레이리스트",
+            description = "수정된 설명"
+        )
 
         whenever(playlistRepository.findById(1L)).thenReturn(Optional.of(samplePlaylist))
         whenever(playlistRepository.save(any())).thenReturn(samplePlaylist)
@@ -288,23 +284,21 @@ class PlaylistServiceTest {
         // Given
         val itemDbIdToDelete = 1L
 
-        val item1 =
-            PlaylistItem(
-                id = 1L,
-                itemId = 100L,
-                itemType = PlaylistItem.PlaylistItemType.LINK,
-                displayOrder = 0,
-                playlist = samplePlaylist,
-            )
+        val item1 = PlaylistItem(
+            id = 1L,
+            itemId = 100L,
+            itemType = PlaylistItem.PlaylistItemType.LINK,
+            displayOrder = 0,
+            playlist = samplePlaylist
+        )
 
-        val item2 =
-            PlaylistItem(
-                id = 2L,
-                itemId = 101L,
-                itemType = PlaylistItem.PlaylistItemType.CURATION,
-                displayOrder = 1,
-                playlist = samplePlaylist,
-            )
+        val item2 = PlaylistItem(
+            id = 2L,
+            itemId = 101L,
+            itemType = PlaylistItem.PlaylistItemType.CURATION,
+            displayOrder = 1,
+            playlist = samplePlaylist
+        )
 
         samplePlaylist.items = mutableListOf(item1, item2)
         whenever(playlistRepository.findById(samplePlaylist.id)).thenReturn(Optional.of(samplePlaylist))
@@ -337,45 +331,41 @@ class PlaylistServiceTest {
     @DisplayName("플레이리스트 아이템 순서를 변경할 수 있다.")
     fun updatePlaylistItemOrder() {
         // Given
-        val item1 =
-            PlaylistItem(
-                id = 1L,
-                itemId = 100L,
-                displayOrder = 0,
-                itemType = PlaylistItem.PlaylistItemType.LINK,
-                playlist = samplePlaylist,
-                curation = null,
-                link = null,
-            )
-        val item2 =
-            PlaylistItem(
-                id = 2L,
-                itemId = 101L,
-                displayOrder = 1,
-                itemType = PlaylistItem.PlaylistItemType.CURATION,
-                playlist = samplePlaylist,
-                curation = null,
-                link = null,
-            )
+        val item1 = PlaylistItem(
+            id = 1L,
+            itemId = 100L,
+            displayOrder = 0,
+            itemType = PlaylistItem.PlaylistItemType.LINK,
+            playlist = samplePlaylist,
+            curation = null,
+            link = null
+        )
+        val item2 = PlaylistItem(
+            id = 2L,
+            itemId = 101L,
+            displayOrder = 1,
+            itemType = PlaylistItem.PlaylistItemType.CURATION,
+            playlist = samplePlaylist,
+            curation = null,
+            link = null
+        )
 
-        val item3 =
-            PlaylistItem(
-                id = 3L,
-                itemId = 102L,
-                displayOrder = 2,
-                itemType = PlaylistItem.PlaylistItemType.LINK,
-                playlist = samplePlaylist,
-                curation = null,
-                link = null,
-            )
+        val item3 = PlaylistItem(
+            id = 3L,
+            itemId = 102L,
+            displayOrder = 2,
+            itemType = PlaylistItem.PlaylistItemType.LINK,
+            playlist = samplePlaylist,
+            curation = null,
+            link = null
+        )
         samplePlaylist.items = mutableListOf(item1, item2, item3)
 
-        val newOrder =
-            listOf(
-                PlaylistItemOrderUpdateDto(id = 3L, children = emptyList()),
-                PlaylistItemOrderUpdateDto(id = 1L, children = emptyList()),
-                PlaylistItemOrderUpdateDto(id = 2L, children = emptyList()),
-            )
+        val newOrder = listOf(
+            PlaylistItemOrderUpdateDto(id = 3L, children = emptyList()),
+            PlaylistItemOrderUpdateDto(id = 1L, children = emptyList()),
+            PlaylistItemOrderUpdateDto(id = 2L, children = emptyList())
+        )
 
         whenever(playlistRepository.findById(1L)).thenReturn(Optional.of(samplePlaylist))
         whenever(playlistRepository.save(any())).thenReturn(samplePlaylist)
@@ -396,43 +386,40 @@ class PlaylistServiceTest {
     @DisplayName("실패 - 플레이리스트 아이템 순서 변경 시 아이템 개수가 일치해야 한다.")
     fun updatePlaylistItemOrder_itemCount() {
         // Given
-        val item1 =
-            PlaylistItem(
-                id = 1L,
-                itemId = 100L,
-                displayOrder = 0,
-                itemType = PlaylistItem.PlaylistItemType.LINK,
-                playlist = samplePlaylist,
-                link = null,
-            )
+        val item1 = PlaylistItem(
+            id = 1L,
+            itemId = 100L,
+            displayOrder = 0,
+            itemType = PlaylistItem.PlaylistItemType.LINK,
+            playlist = samplePlaylist,
+            link = null
+        )
 
-        val item2 =
-            PlaylistItem(
-                id = 2L,
-                itemId = 101L,
-                displayOrder = 1,
-                itemType = PlaylistItem.PlaylistItemType.CURATION,
-                playlist = samplePlaylist,
-                link = null,
-            )
+        val item2 = PlaylistItem(
+            id = 2L,
+            itemId = 101L,
+            displayOrder = 1,
+            itemType = PlaylistItem.PlaylistItemType.CURATION,
+            playlist = samplePlaylist,
+            link = null
+        )
 
-        val item3 =
-            PlaylistItem(
-                id = 3L,
-                itemId = 102L,
-                displayOrder = 2,
-                itemType = PlaylistItem.PlaylistItemType.LINK,
-                playlist = samplePlaylist,
-                link = null,
-            )
+        val item3 = PlaylistItem(
+            id = 3L,
+            itemId = 102L,
+            displayOrder = 2,
+            itemType = PlaylistItem.PlaylistItemType.LINK,
+            playlist = samplePlaylist,
+            link = null
+        )
 
         samplePlaylist.items = mutableListOf(item1, item2, item3)
 
-        val newOrder =
-            listOf(
-                PlaylistItemOrderUpdateDto(id = 1L, children = emptyList()),
-                PlaylistItemOrderUpdateDto(id = 2L, children = emptyList()),
-            )
+        val newOrder = listOf(
+            PlaylistItemOrderUpdateDto(id = 1L, children = emptyList()),
+            PlaylistItemOrderUpdateDto(id = 2L, children = emptyList())
+
+        )
 
         whenever(playlistRepository.findById(1L)).thenReturn(Optional.of(samplePlaylist))
 
@@ -521,26 +508,24 @@ class PlaylistServiceTest {
         whenever(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist))
 
         // 추천 대상 플레이리스트 모킹 (likeCount 부여)
-        val p2 =
-            Playlist(
-                id = 2L,
-                title = "추천 플레이리스트1",
-                description = "설명1",
-                tags = mutableSetOf(),
-                likeCount = 10L,
-                member = sampleMember,
-                createdAt = LocalDateTime.now(),
-            )
-        val p3 =
-            Playlist(
-                id = 3L,
-                title = "추천 플레이리스트2",
-                description = "설명2",
-                tags = mutableSetOf(),
-                likeCount = 5L,
-                member = sampleMember,
-                createdAt = LocalDateTime.now(),
-            )
+        val p2 = Playlist(
+            id = 2L,
+            title = "추천 플레이리스트1",
+            description = "설명1",
+            tags = mutableSetOf(),
+            likeCount = 10L,
+            member = sampleMember,
+            createdAt = LocalDateTime.now()
+        )
+        val p3 = Playlist(
+            id = 3L,
+            title = "추천 플레이리스트2",
+            description = "설명2",
+            tags = mutableSetOf(),
+            likeCount = 5L,
+            member = sampleMember,
+            createdAt = LocalDateTime.now()
+        )
 
         val mockPlaylists = listOf(p2, p3)
         whenever(playlistRepository.findAllById(any())).thenReturn(mockPlaylists)
@@ -584,26 +569,24 @@ class PlaylistServiceTest {
 
         whenever(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist))
 
-        val p2 =
-            Playlist(
-                id = 2L,
-                title = "추천1",
-                description = "설명1",
-                tags = mutableSetOf(),
-                viewCount = 200L,
-                member = sampleMember,
-                createdAt = LocalDateTime.now(),
-            )
-        val p3 =
-            Playlist(
-                id = 3L,
-                title = "추천2",
-                description = "설명2",
-                tags = mutableSetOf(),
-                viewCount = 100L,
-                member = sampleMember,
-                createdAt = LocalDateTime.now(),
-            )
+        val p2 = Playlist(
+            id = 2L,
+            title = "추천1",
+            description = "설명1",
+            tags = mutableSetOf(),
+            viewCount = 200L,
+            member = sampleMember,
+            createdAt = LocalDateTime.now(),
+        )
+        val p3 = Playlist(
+            id = 3L,
+            title = "추천2",
+            description = "설명2",
+            tags = mutableSetOf(),
+            viewCount = 100L,
+            member = sampleMember,
+            createdAt = LocalDateTime.now(),
+        )
 
         val mockPlaylists = listOf(p2, p3)
         whenever(playlistRepository.findAllById(any())).thenReturn(mockPlaylists)
@@ -647,30 +630,28 @@ class PlaylistServiceTest {
 
         whenever(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist))
 
-        val p2 =
-            Playlist(
-                id = 2L,
-                title = "추천1",
-                description = "설명1",
-                tags = mutableSetOf(),
-                viewCount = 150L,
-                likeCount = 20L,
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-                member = sampleMember,
-            )
-        val p3 =
-            Playlist(
-                id = 3L,
-                title = "추천2",
-                description = "설명2",
-                tags = mutableSetOf(),
-                viewCount = 100L,
-                likeCount = 30L,
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-                member = sampleMember,
-            )
+        val p2 = Playlist(
+            id = 2L,
+            title = "추천1",
+            description = "설명1",
+            tags = mutableSetOf(),
+            viewCount = 150L,
+            likeCount = 20L,
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now(),
+            member = sampleMember
+        )
+        val p3 = Playlist(
+            id = 3L,
+            title = "추천2",
+            description = "설명2",
+            tags = mutableSetOf(),
+            viewCount = 100L,
+            likeCount = 30L,
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now(),
+            member = sampleMember
+        )
 
         val playlists = listOf(p2, p3)
 
@@ -707,28 +688,24 @@ class PlaylistServiceTest {
 
         whenever(redisTemplate.opsForValue()).thenReturn(valueOperations)
 
-        val sampleMember =
-            Member
-                .builder()
-                .id(1L)
-                .memberId("test123")
-                .username("테스트 유저")
-                .password("1234")
-                .role(RoleEnum.MEMBER)
-                .email("test@email.com")
-                .profileImage(null)
-                .introduce("테스123.")
-                .build()
-
-        val samplePlaylist =
-            Playlist(
-                id = playlistId,
-                title = "테스트 플레이리스트",
-                description = "테스트 설명",
-                tags = mutableSetOf(),
-                member = sampleMember,
-                createdAt = LocalDateTime.now(),
-            )
+        val sampleMember = Member(
+            id = 1L,
+            memberId = "test123",
+            username = "테스트 유저",
+            password = "1234",
+            role = RoleEnum.MEMBER,
+            email = "test@email.com",
+            profileImage = null,
+            introduce = "테스123."
+        )
+        val samplePlaylist = Playlist(
+            id = playlistId,
+            title = "테스트 플레이리스트",
+            description = "테스트 설명",
+            tags = mutableSetOf(),
+            member = sampleMember,
+            createdAt = LocalDateTime.now()
+        )
 
         whenever(valueOperations.get("playlist:recommend:$playlistId")).thenReturn(null)
 
@@ -746,33 +723,32 @@ class PlaylistServiceTest {
             .thenReturn(popularPlaylists)
 
         val recommendedPlaylistIds = listOf(2L, 3L, 4L)
-        val mockPlaylists =
-            listOf(
-                Playlist(
-                    id = 2L,
-                    title = "추천1",
-                    description = "설명1",
-                    tags = mutableSetOf(),
-                    member = sampleMember,
-                    createdAt = LocalDateTime.now(),
-                ),
-                Playlist(
-                    id = 3L,
-                    title = "추천2",
-                    description = "설명2",
-                    tags = mutableSetOf(),
-                    member = sampleMember,
-                    createdAt = LocalDateTime.now(),
-                ),
-                Playlist(
-                    id = 4L,
-                    title = "추천3",
-                    description = "설명3",
-                    tags = mutableSetOf(),
-                    member = sampleMember,
-                    createdAt = LocalDateTime.now(),
-                ),
+        val mockPlaylists = listOf(
+            Playlist(
+                id = 2L,
+                title = "추천1",
+                description = "설명1",
+                tags = mutableSetOf(),
+                member = sampleMember,
+                createdAt = LocalDateTime.now()
+            ),
+            Playlist(
+                id = 3L,
+                title = "추천2",
+                description = "설명2",
+                tags = mutableSetOf(),
+                member = sampleMember,
+                createdAt = LocalDateTime.now()
+            ),
+            Playlist(
+                id = 4L,
+                title = "추천3",
+                description = "설명3",
+                tags = mutableSetOf(),
+                member = sampleMember,
+                createdAt = LocalDateTime.now()
             )
+        )
 
         whenever(playlistRepository.findAllById(any())).thenReturn(mockPlaylists)
         whenever(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist))
@@ -791,46 +767,41 @@ class PlaylistServiceTest {
     @DisplayName("공개 플레이리스트를 내 플레이리스트로 복사한다.")
     fun addPublicPlaylistToMyPlaylist() {
         // given
-        val member =
-            Member
-                .builder()
-                .id(1L)
-                .memberId("member123")
-                .username("testUser")
-                .password("1234")
-                .role(RoleEnum.MEMBER)
-                .email("test@email.com")
-                .profileImage(null)
-                .introduce("test")
-                .build()
+        val member = Member(
+            id = 1L,
+            memberId = "test123",
+            username = "테스트 유저",
+            password = "1234",
+            role = RoleEnum.MEMBER,
+            email = "test@email.com",
+            profileImage = null,
+            introduce = "테스123."
+        )
 
-        val originalOwner =
-            Member
-                .builder()
-                .id(2L)
-                .memberId("owner123")
-                .username("originalOwner")
-                .password("ownerPw")
-                .role(RoleEnum.MEMBER)
-                .email("owner@email.com")
-                .profileImage(null)
-                .introduce("원본 유저")
-                .build()
+        val originalOwner = Member(
+            id = 2L,
+            memberId = "owner123",
+            username = "originalOwner",
+            password = "ownerPw",
+            role = RoleEnum.MEMBER,
+            email = "owner@email.com",
+            profileImage = null,
+            introduce = "원본 유저"
+        )
 
-        val originalPlaylist =
-            Playlist(
-                id = 100L,
-                title = "공개 플레이리스트",
-                description = "공개 설명",
-                isPublic = true,
-                viewCount = 0L,
-                likeCount = 0L,
-                tags = mutableSetOf(),
-                items = mutableListOf(),
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-                member = originalOwner,
-            )
+        val originalPlaylist = Playlist(
+            id = 100L,
+            title = "공개 플레이리스트",
+            description = "공개 설명",
+            isPublic = true,
+            viewCount = 0L,
+            likeCount = 0L,
+            tags = mutableSetOf(),
+            items = mutableListOf(),
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now(),
+            member = originalOwner
+        )
 
         whenever(rq.actor).thenReturn(member)
         whenever(playlistRepository.findById(originalPlaylist.id))
@@ -863,62 +834,56 @@ class PlaylistServiceTest {
         val playlistItemId = 10L
         val linkId = 100L
 
-        val member =
-            Member
-                .builder()
-                .id(1L)
-                .memberId("member123")
-                .username("testUser")
-                .password("1234")
-                .email("test@email.com")
-                .role(RoleEnum.MEMBER)
-                .profileImage(null)
-                .introduce("test")
-                .build()
+        val member = Member(
+            id = 1L,
+            memberId = "member123",
+            username = "testUser",
+            password = "1234",
+            role = RoleEnum.MEMBER,
+            email = "test@email.com",
+            profileImage = null,
+            introduce = "test"
+        )
 
-        val link =
-            Link
-                .builder()
-                .id(linkId)
-                .url("https://old-url.com")
-                .title("기존 제목")
-                .description("기존 설명")
-                .build()
 
-        val playlist =
-            Playlist(
-                id = playlistId,
-                title = "수정 가능한 플리",
-                description = "설명",
-                isPublic = true,
-                viewCount = 0L,
-                likeCount = 0L,
-                tags = mutableSetOf(),
-                items = mutableListOf(),
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-                member = member,
-            )
+        val link = Link.builder()
+            .id(linkId)
+            .url("https://old-url.com")
+            .title("기존 제목")
+            .description("기존 설명")
+            .build()
 
-        val playlistItem =
-            PlaylistItem(
-                id = playlistItemId,
-                itemId = linkId,
-                itemType = PlaylistItem.PlaylistItemType.LINK,
-                displayOrder = 0,
-                playlist = playlist,
-                link = link,
-                curation = null,
-            )
+        val playlist = Playlist(
+            id = playlistId,
+            title = "수정 가능한 플리",
+            description = "설명",
+            isPublic = true,
+            viewCount = 0L,
+            likeCount = 0L,
+            tags = mutableSetOf(),
+            items = mutableListOf(),
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now(),
+            member = member
+        )
+
+        val playlistItem = PlaylistItem(
+            id = playlistItemId,
+            itemId = linkId,
+            itemType = PlaylistItem.PlaylistItemType.LINK,
+            displayOrder = 0,
+            playlist = playlist,
+            link = link,
+            curation = null
+        )
 
         playlist.items.add(playlistItem)
 
-        val updateDto =
-            PlaylistItemUpdateDto(
-                title = "수정된 링크 제목",
-                description = "수정된 링크 설명",
-                url = "https://new-url.com",
-            )
+        val updateDto = PlaylistItemUpdateDto(
+            title = "수정된 링크 제목",
+            description = "수정된 링크 설명",
+            url = "https://new-url.com"
+        )
 
         whenever(rq.actor).thenReturn(member)
         whenever(playlistRepository.findById(playlistId)).thenReturn(Optional.of(playlist))
@@ -1000,35 +965,34 @@ class PlaylistServiceTest {
         val memberId = 1L
         val redisKey = "member_liked_playlists:$memberId"
 
-        val playlist1 =
-            Playlist(
-                id = 10L,
-                title = "좋아요한 첫 번째 플레이리스트",
-                description = "설명1",
-                isPublic = true,
-                viewCount = 0L,
-                likeCount = 0L,
-                items = mutableListOf(),
-                tags = mutableSetOf(),
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-                member = sampleMember,
-            )
+        val playlist1 = Playlist(
+            id = 10L,
+            title = "좋아요한 첫 번째 플레이리스트",
+            description = "설명1",
+            isPublic = true,
+            viewCount = 0L,
+            likeCount = 0L,
+            items = mutableListOf(),
+            tags = mutableSetOf(),
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now(),
+            member = sampleMember
+        )
 
-        val playlist2 =
-            Playlist(
-                id = 20L,
-                title = "좋아요한 두 번째 플레이리스트",
-                description = "설명2",
-                isPublic = true,
-                viewCount = 0L,
-                likeCount = 0L,
-                items = mutableListOf(),
-                tags = mutableSetOf(),
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-                member = sampleMember,
-            )
+        val playlist2 = Playlist(
+            id = 20L,
+            title = "좋아요한 두 번째 플레이리스트",
+            description = "설명2",
+            isPublic = true,
+            viewCount = 0L,
+            likeCount = 0L,
+            items = mutableListOf(),
+            tags = mutableSetOf(),
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now(),
+            member = sampleMember
+        )
+
 
         val likedIds = setOf("10", "20")
 
@@ -1054,35 +1018,34 @@ class PlaylistServiceTest {
     fun getAllPublicPlaylists() {
         // given
         val actor = sampleMember
-        val playlist1 =
-            Playlist(
-                id = 10L,
-                title = "좋아요한 첫 번째 플레이리스트",
-                description = "설명1",
-                isPublic = true,
-                viewCount = 0L,
-                likeCount = 0L,
-                items = mutableListOf(),
-                tags = mutableSetOf(),
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-                member = sampleMember,
-            )
+        val playlist1 = Playlist(
+            id = 10L,
+            title = "좋아요한 첫 번째 플레이리스트",
+            description = "설명1",
+            isPublic = true,
+            viewCount = 0L,
+            likeCount = 0L,
+            items = mutableListOf(),
+            tags = mutableSetOf(),
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now(),
+            member = sampleMember
+        )
 
-        val playlist2 =
-            Playlist(
-                id = 20L,
-                title = "좋아요한 두 번째 플레이리스트",
-                description = "설명2",
-                isPublic = true,
-                viewCount = 0L,
-                likeCount = 0L,
-                items = mutableListOf(),
-                tags = mutableSetOf(),
-                createdAt = LocalDateTime.now(),
-                modifiedAt = LocalDateTime.now(),
-                member = sampleMember,
-            )
+        val playlist2 = Playlist(
+            id = 20L,
+            title = "좋아요한 두 번째 플레이리스트",
+            description = "설명2",
+            isPublic = true,
+            viewCount = 0L,
+            likeCount = 0L,
+            items = mutableListOf(),
+            tags = mutableSetOf(),
+            createdAt = LocalDateTime.now(),
+            modifiedAt = LocalDateTime.now(),
+            member = sampleMember
+        )
+
 
         whenever(rq.isLogin).thenReturn(true)
         whenever(rq.actor).thenReturn(actor)
