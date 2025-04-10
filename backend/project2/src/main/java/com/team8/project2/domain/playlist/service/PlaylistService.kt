@@ -31,22 +31,47 @@ import java.time.Duration
 @Service
 @Transactional
 class PlaylistService(
+    private val logger: Logger = LoggerFactory.getLogger(this::class.java),
     private val playlistRepository: PlaylistRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
     private val memberRepository: MemberRepository,
     private val playlistLikeRepository: PlaylistLikeRepository,
     private val rq: Rq,
     private val linkService: LinkService,
-    private val logger: Logger = LoggerFactory.getLogger(this::class.java)
-
 ) {
     companion object {
         private const val VIEW_COUNT_KEY = "playlist:view_count:"
         private const val LIKE_COUNT_KEY = "playlist:like_count:"
         private const val RECOMMEND_KEY = "playlist:recommend:"
-
     }
 
+    /**
+     * Playlist 엔티티를 DTO로 변환합니다.
+     * 현재 로그인된 사용자로 isOwner 포함
+     *
+     * @param playlist 변환할 Playlist 엔티티
+     * @return 변환된 PlaylistDto
+     */
+    private fun toDto(playlist: Playlist): PlaylistDto {
+        val actor = if (rq.isLogin) rq.actor else null
+        return PlaylistDto.fromEntity(playlist, actor)
+    }
+
+    private fun toDto(playlist: Playlist, actor: Member?): PlaylistDto {
+        return PlaylistDto.fromEntity(playlist, actor)
+    }
+
+    /**
+     * Playlist 엔티티 리스트를 DTO 리스트로 변환합니다.
+     * 현재 로그인된 사용자로 isOwner 포함
+     *
+     * @param playlists 변환할 Playlist 리스트
+     * @return 변환된 PlaylistDto 리스트
+     */
+    private fun toDtoList(playlists: List<Playlist>): List<PlaylistDto> {
+        val actor = if (rq.isLogin) rq.actor else null
+        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+    }
 
     /**
      * 현재 로그인한 사용자의 플레이리스트 목록을 조회합니다.
@@ -54,10 +79,8 @@ class PlaylistService(
      * @return 해당 사용자의 플레이리스트 DTO 리스트. 없으면 빈 리스트 반환.
      */
     fun getAllPlaylists(): List<PlaylistDto> {
-        val actor = rq.actor
-        val playlists = playlistRepository.findByMember(actor)
-
-        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+        val playlists = playlistRepository.findByMember(rq.actor)
+        return toDtoList(playlists)
     }
 
     /**
@@ -67,9 +90,7 @@ class PlaylistService(
      */
     fun getAllPublicPlaylists(): List<PlaylistDto> {
         val playlists = playlistRepository.findAllByIsPublicTrue()
-        val actor = if (rq.isLogin) rq.actor else null
-
-        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+        return toDtoList(playlists)
     }
 
     /**
@@ -78,11 +99,7 @@ class PlaylistService(
      * @param request 플레이리스트 생성 요청 데이터
      * @return 생성된 플레이리스트 DTO
      */
-    fun createPlaylist(request: PlaylistCreateDto): PlaylistDto {
-        val actor = rq.actor
-
-        return createPlaylist(request, actor)
-    }
+    fun createPlaylist(request: PlaylistCreateDto): PlaylistDto = createPlaylist(request, rq.actor)
 
     /**
      * 특정 사용자의 플레이리스트를 생성합니다.
@@ -91,14 +108,19 @@ class PlaylistService(
      * @param member 플레이리스트를 생성할 사용자
      * @return 생성된 플레이리스트 DTO
      */
-    fun createPlaylist(request: PlaylistCreateDto, member: Member): PlaylistDto {
-        val playlist = Playlist(
-            title = request.title,
-            description = request.description,
-            isPublic = request.isPublic ?: true,
-            member = member
-        )
-        return PlaylistDto.fromEntity(playlistRepository.save(playlist), member)
+    fun createPlaylist(
+        request: PlaylistCreateDto,
+        member: Member,
+    ): PlaylistDto {
+        val playlist =
+            Playlist(
+                title = request.title,
+                description = request.description,
+                isPublic = request.isPublic,
+                member = member,
+            )
+
+        return toDto(playlistRepository.save(playlist))
     }
 
     /**
@@ -109,27 +131,35 @@ class PlaylistService(
      * @param request 클라이언트 요청 (IP 확인용)
      * @return 조회된 플레이리스트 DTO
      */
-    fun getPlaylist(id: Long, request: HttpServletRequest): PlaylistDto {
-        val playlist = playlistRepository.findById(id)
-            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+    fun getPlaylist(
+        id: Long,
+        request: HttpServletRequest,
+    ): PlaylistDto {
+        val playlist =
+            playlistRepository
+                .findById(id)
+                .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
-        val currentViewCount = redisTemplate.opsForZSet()
-            .score(VIEW_COUNT_KEY, id.toString())
-            ?.toLong() ?: 0L
+        val currentViewCount =
+            redisTemplate
+                .opsForZSet()
+                .score(VIEW_COUNT_KEY, id.toString())
+                ?.toLong() ?: 0L
         playlist.viewCount = currentViewCount
 
         val ip = getClientIp(request)
         val redisKey = "playlist_view_${id}_$ip"
-        val isNewView = redisTemplate.opsForValue()
-            .setIfAbsent(redisKey, "true", Duration.ofDays(1))
+        val isNewView =
+            redisTemplate
+                .opsForValue()
+                .setIfAbsent(redisKey, "true", Duration.ofDays(1))
 
         if (isNewView == true) {
             redisTemplate.opsForZSet().incrementScore(VIEW_COUNT_KEY, id.toString(), 1.0)
             playlist.viewCount = currentViewCount + 1
         }
 
-        val actor = if (rq.isLogin) rq.actor else null
-        return PlaylistDto.fromEntity(playlist, actor)
+        return toDto(playlist)
     }
 
     /**
@@ -140,16 +170,17 @@ class PlaylistService(
      * @return 추출된 IP 주소 문자열
      */
     private fun getClientIp(request: HttpServletRequest): String? {
-        val headers = listOf(
-            "X-Forwarded-For",
-            "Proxy-Client-IP",
-            "WL-Proxy-Client-IP",
-            "HTTP_CLIENT_IP",
-            "HTTP_X_FORWARDED_FOR",
-            "X-Real-IP",
-            "X-RealIP",
-            "REMOTE_ADDR"
-        )
+        val headers =
+            listOf(
+                "X-Forwarded-For",
+                "Proxy-Client-IP",
+                "WL-Proxy-Client-IP",
+                "HTTP_CLIENT_IP",
+                "HTTP_X_FORWARDED_FOR",
+                "X-Real-IP",
+                "X-RealIP",
+                "REMOTE_ADDR",
+            )
 
         for (header in headers) {
             val ip = request.getHeader(header)
@@ -186,8 +217,10 @@ class PlaylistService(
                 if (idStr.isEmpty()) return@forEach
 
                 val id = idStr.toLong()
-                val redisViewCount = redisTemplate.opsForZSet()
-                    .score(VIEW_COUNT_KEY, id.toString()) ?: 0.0
+                val redisViewCount =
+                    redisTemplate
+                        .opsForZSet()
+                        .score(VIEW_COUNT_KEY, id.toString()) ?: 0.0
 
                 val playlist = playlistRepository.findById(id).orElse(null)
                 if (playlist != null) {
@@ -196,13 +229,11 @@ class PlaylistService(
                 } else {
                     logger.debug("Playlist not found in DB for ID: $id")
                 }
-
             } catch (e: NumberFormatException) {
                 logger.debug("잘못된 Redis 키 형식: $key")
             }
         }
     }
-
 
     /**
      * 기존 플레이리스트를 수정합니다.
@@ -211,17 +242,20 @@ class PlaylistService(
      * @param request 수정할 데이터 DTO
      * @return 수정된 플레이리스트 DTO
      */
-    fun updatePlaylist(id: Long, request: PlaylistUpdateDto): PlaylistDto {
-        val playlist = playlistRepository.findById(id)
-            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
-
-        val actor = rq.actor
+    fun updatePlaylist(
+        id: Long,
+        request: PlaylistUpdateDto,
+    ): PlaylistDto {
+        val playlist =
+            playlistRepository
+                .findById(id)
+                .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
         request.title?.let { playlist.title = it }
         request.description?.let { playlist.description = it }
         request.isPublic?.let { playlist.isPublic = it }
 
-        return PlaylistDto.fromEntity(playlistRepository.save(playlist), actor)
+        return toDto(playlistRepository.save(playlist))
     }
 
     /**
@@ -230,8 +264,10 @@ class PlaylistService(
      * @param id 삭제할 플레이리스트 ID
      */
     fun deletePlaylist(id: Long) {
-        val playlist = playlistRepository.findById(id)
-            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+        val playlist =
+            playlistRepository
+                .findById(id)
+                .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
         val actor = rq.actor
 
@@ -245,7 +281,6 @@ class PlaylistService(
         playlistRepository.deleteById(id)
     }
 
-
     /**
      * 플레이리스트 좋아요를 토글 처리합니다.
      * Redis로 좋아요 토글, 좋아요 수 업데이트 후 DB에 반영합니다.
@@ -254,24 +289,29 @@ class PlaylistService(
      * @param memberId 좋아요 한 사용자 ID
      */
     @Transactional
-    fun likePlaylist(playlistId: Long, memberId: Long) {
+    fun likePlaylist(
+        playlistId: Long,
+        memberId: Long,
+    ) {
         val redisKey = "playlist_like:$playlistId"
         val memberLikedKey = "member_liked_playlists:$memberId"
         val memberStr = memberId.toString()
 
-        val luaScript = """
+        val luaScript =
+            """
             if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 1 then
                 redis.call('SREM', KEYS[1], ARGV[1]); return 0;
             else 
                 redis.call('SADD', KEYS[1], ARGV[1]); return 1;
             end
-        """.trimIndent()
+            """.trimIndent()
 
-        val result: Long? = redisTemplate.execute(
-            DefaultRedisScript(luaScript, Long::class.java),
-            listOf(redisKey),
-            memberStr
-        )
+        val result: Long? =
+            redisTemplate.execute(
+                DefaultRedisScript(luaScript, Long::class.java),
+                listOf(redisKey),
+                memberStr,
+            )
 
         if (result != null && result == 1L) {
             redisTemplate.opsForSet().add(memberLikedKey, playlistId.toString())
@@ -281,8 +321,10 @@ class PlaylistService(
 
         val likeCount = redisTemplate.opsForSet().size(redisKey) ?: 0L
 
-        val playlist = playlistRepository.findById(playlistId)
-            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+        val playlist =
+            playlistRepository
+                .findById(playlistId)
+                .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
         playlist.likeCount = likeCount
         playlistRepository.save(playlist)
@@ -295,11 +337,13 @@ class PlaylistService(
      * @param memberId 사용자 ID
      * @return 좋아요 여부
      */
-    fun hasLikedPlaylist(playlistId: Long, memberId: Long): Boolean {
+    fun hasLikedPlaylist(
+        playlistId: Long,
+        memberId: Long,
+    ): Boolean {
         val redisKey = "playlist_like:$playlistId"
         return redisTemplate.opsForSet().isMember(redisKey, memberId.toString()) == true
     }
-
 
     /**
      * 특정 플레이리스트의 전체 좋아요 수를 조회합니다.
@@ -323,13 +367,10 @@ class PlaylistService(
     @Transactional(readOnly = true)
     fun getLikedPlaylists(memberId: Long): List<PlaylistDto> {
         val likedEntities = playlistLikeRepository.findByIdMemberId(memberId)
-        val actor = rq.actor
-
         val likedPlaylists = likedEntities.map { it.playlist }
 
-        return likedPlaylists.map { PlaylistDto.fromEntity(it, actor) }
+        return toDtoList(likedPlaylists)
     }
-
 
     /**
      * Redis에 저장된 사용자의 좋아요 플레이리스트 목록을 조회합니다.
@@ -342,17 +383,13 @@ class PlaylistService(
         val memberLikedKey = "member_liked_playlists:$memberId"
         val playlistIdObjs = redisTemplate.opsForSet().members(memberLikedKey)
 
-        if (playlistIdObjs == null || playlistIdObjs.isEmpty()) {
-            return emptyList()
-        }
+        if (playlistIdObjs.isNullOrEmpty()) return emptyList()
 
         val playlistIds = playlistIdObjs.map { it.toString().toLong() }
         val playlists = playlistRepository.findAllById(playlistIds)
-        val actor = rq.actor
 
-        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+        return toDtoList(playlists)
     }
-
 
     /**
      * Redis에 저장된 플레이리스트 좋아요 수를 DB에 동기화합니다.
@@ -376,10 +413,11 @@ class PlaylistService(
                 val memberId = memberStr.toLongOrNull() ?: continue
                 val member = memberRepository.findById(memberId).orElse(null) ?: continue
 
-                val likeId = PlaylistLike.PlaylistLikeId().apply {
-                    this.playlistId = playlistId
-                    this.memberId = memberId
-                }
+                val likeId =
+                    PlaylistLike.PlaylistLikeId().apply {
+                        this.playlistId = playlistId
+                        this.memberId = memberId
+                    }
 
                 if (!playlistLikeRepository.existsById(likeId)) {
                     val like = PlaylistLike.createLike(playlist, member)
@@ -413,11 +451,12 @@ class PlaylistService(
     fun addPlaylistItem(
         playlistId: Long,
         itemId: Long,
-        itemType: PlaylistItem.PlaylistItemType
-    )
-            : PlaylistDto {
-        val playlist = playlistRepository.findById(playlistId)
-            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+        itemType: PlaylistItem.PlaylistItemType,
+    ): PlaylistDto {
+        val playlist =
+            playlistRepository
+                .findById(playlistId)
+                .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
         val newDisplayOrder = playlist.items.size
         val actor = rq.actor
@@ -426,19 +465,19 @@ class PlaylistService(
             throw BadRequestException("자신의 플레이리스트에만 아이템을 추가할 수 있습니다.")
         }
 
-        val newItem = PlaylistItem(
-            itemId = itemId,
-            itemType = itemType,
-            playlist = playlist,
-            displayOrder = newDisplayOrder
-        )
+        val newItem =
+            PlaylistItem(
+                itemId = itemId,
+                itemType = itemType,
+                playlist = playlist,
+                displayOrder = newDisplayOrder,
+            )
 
         playlist.items.add(newItem)
         playlistRepository.save(playlist)
 
-        return PlaylistDto.fromEntity(playlist, actor)
+        return toDto(playlist)
     }
-
 
     /**
      * 플레이리스트 아이템을 삭제합니다.
@@ -447,9 +486,14 @@ class PlaylistService(
      * @param itemId 삭제할 아이템의 ID
      */
     @Transactional
-    fun deletePlaylistItem(playlistId: Long?, itemId: Long) {
-        val playlist = playlistRepository.findById(playlistId)
-            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+    fun deletePlaylistItem(
+        playlistId: Long?,
+        itemId: Long,
+    ) {
+        val playlist =
+            playlistRepository
+                .findById(playlistId)
+                .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
         val removed = playlist.items.removeIf { it.id == itemId }
         if (!removed) {
@@ -464,7 +508,6 @@ class PlaylistService(
         playlistRepository.save(playlist)
     }
 
-
     /**
      * 플레이리스트 아이템의 순서를 변경합니다.
      *
@@ -475,16 +518,18 @@ class PlaylistService(
     @Transactional
     fun updatePlaylistItemOrder(
         playlistId: Long,
-        orderUpdates: List<PlaylistItemOrderUpdateDto>
+        orderUpdates: List<PlaylistItemOrderUpdateDto>,
     ): PlaylistDto {
-        val playlist = playlistRepository.findById(playlistId)
-            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+        val playlist =
+            playlistRepository
+                .findById(playlistId)
+                .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
         val totalOrderCount = orderUpdates.sumOf { 1 + it.children.size }
 
         if (playlist.items.size != totalOrderCount) {
             throw BadRequestException(
-                "플레이리스트 아이템 개수가 일치하지 않습니다. Expected: ${playlist.items.size}, but received: $totalOrderCount"
+                "플레이리스트 아이템 개수가 일치하지 않습니다. Expected: ${playlist.items.size}, but received: $totalOrderCount",
             )
         }
 
@@ -492,16 +537,18 @@ class PlaylistService(
 
         var mainIndex = 0
         for (dto in orderUpdates) {
-            val mainItem = itemMap[dto.id]
-                ?: throw BadRequestException("존재하지 않는 플레이리스트 아이템 ID: ${dto.id}")
+            val mainItem =
+                itemMap[dto.id]
+                    ?: throw BadRequestException("존재하지 않는 플레이리스트 아이템 ID: ${dto.id}")
             val mainOrder = mainIndex * 100
 
             mainItem.displayOrder = mainOrder
             mainItem.parentItemId = null
 
-            dto.children?.forEachIndexed { childIndex, childId ->
-                val childItem = itemMap[childId]
-                    ?: throw BadRequestException("존재하지 않는 그룹 내부 아이템 ID: $childId")
+            dto.children.forEachIndexed { childIndex, childId ->
+                val childItem =
+                    itemMap[childId]
+                        ?: throw BadRequestException("존재하지 않는 그룹 내부 아이템 ID: $childId")
 
                 childItem.displayOrder = mainOrder + childIndex + 1
                 childItem.parentItemId = mainItem.id
@@ -509,10 +556,8 @@ class PlaylistService(
             mainIndex++
         }
 
-        val actor = rq.actor
-
         playlistRepository.save(playlist)
-        return PlaylistDto.fromEntity(playlist, actor)
+        return toDto(playlist)
     }
 
     /**
@@ -528,32 +573,33 @@ class PlaylistService(
     fun updatePlaylistItem(
         playlistId: Long,
         playlistItemId: Long,
-        updateDto: PlaylistItemUpdateDto
+        updateDto: PlaylistItemUpdateDto,
     ): PlaylistDto {
-        val playlist = playlistRepository.findById(playlistId)
-            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+        val playlist =
+            playlistRepository
+                .findById(playlistId)
+                .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
-        val actor = rq.actor
-
-        val itemToUpdate = playlist.items
-            .firstOrNull { it.id == playlistItemId }
-            ?: throw NotFoundException("해당 플레이리스트 아이템을 찾을 수 없습니다.")
+        val itemToUpdate =
+            playlist.items
+                .firstOrNull { it.id == playlistItemId }
+                ?: throw NotFoundException("해당 플레이리스트 아이템을 찾을 수 없습니다.")
 
         if (itemToUpdate.itemType == PlaylistItem.PlaylistItemType.LINK) {
-            val updatedLink = linkService.updateLinkDetails(
-                requireNotNull(itemToUpdate.link?.id) { "링크 ID가 존재하지 않습니다." },
-                updateDto.title,
-                updateDto.url,
-                updateDto.description
-            )
+            val updatedLink =
+                linkService.updateLinkDetails(
+                    requireNotNull(itemToUpdate.link?.id) { "링크 ID가 존재하지 않습니다." },
+                    updateDto.title,
+                    updateDto.url,
+                    updateDto.description,
+                )
             itemToUpdate.link = updatedLink
         } else {
             throw BadRequestException("현재 아이템은 수정할 수 없습니다.")
         }
 
-        return PlaylistDto.fromEntity(playlist, actor)
+        return toDto(playlist)
     }
-
 
     /**
      * 플레이리스트를 추천합니다.
@@ -565,7 +611,10 @@ class PlaylistService(
      * @param sortType 정렬 기준 (likes, views, combined)
      * @return 추천된 플레이리스트 DTO 리스트
      */
-    fun recommendPlaylist(playlistId: Long, sortType: String?): List<PlaylistDto> {
+    fun recommendPlaylist(
+        playlistId: Long,
+        sortType: String?,
+    ): List<PlaylistDto> {
         val cacheKey = "$RECOMMEND_KEY$playlistId"
         val cachedRecommendationsStr = redisTemplate.opsForValue().get(cacheKey) as? String
 
@@ -596,7 +645,6 @@ class PlaylistService(
             .mapNotNull { it.id }
             .forEach { recommendedPlaylistIds.add(it) }
 
-
         recommendedPlaylistIds.removeAll(userPlaylistIds)
 
         if (recommendedPlaylistIds.isEmpty()) return emptyList()
@@ -604,11 +652,10 @@ class PlaylistService(
         redisTemplate.opsForValue().set(
             "$RECOMMEND_KEY$playlistId",
             recommendedPlaylistIds.joinToString(","),
-            Duration.ofMinutes(30)
+            Duration.ofMinutes(30),
         )
 
         return getSortedPlaylists(recommendedPlaylistIds.mapNotNull { it }, sortType ?: "combined")
-
     }
 
     /**
@@ -619,9 +666,7 @@ class PlaylistService(
      */
     private fun getPlaylistsByIds(playlistIds: List<Long>): List<PlaylistDto> {
         val playlists = playlistRepository.findAllById(playlistIds)
-        val actor = if (rq.isLogin) rq.actor else null
-
-        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+        return toDtoList(playlists)
     }
 
     /**
@@ -637,10 +682,11 @@ class PlaylistService(
         val allPlaylists = playlistRepository.findAll()
         val currentTags = currentPlaylist.tagNames
 
-        val similarPlaylists = allPlaylists.filter { other ->
-            other.id != currentPlaylist.id &&
+        val similarPlaylists =
+            allPlaylists.filter { other ->
+                other.id != currentPlaylist.id &&
                     other.tagNames.intersect(currentTags).size >= 3
-        }
+            }
 
         return if (similarPlaylists.isEmpty()) {
             allPlaylists.shuffled().take(3)
@@ -657,7 +703,7 @@ class PlaylistService(
      */
     private fun addRecommendations(
         recommendedPlaylistIds: MutableSet<Long>,
-        redisResults: Set<Any>?
+        redisResults: Set<Any>?,
     ) {
         redisResults?.forEach { id ->
             id.toString().toLongOrNull()?.let {
@@ -665,7 +711,6 @@ class PlaylistService(
             } ?: logger.debug("addRecommendations() 오류: 파싱 불가한 값 = $id")
         }
     }
-
 
     /**
      * 정렬 기준에 따라 플레이리스트를 정렬하여 반환합니다.
@@ -675,7 +720,10 @@ class PlaylistService(
      * @param sortType 정렬 기준 (likes, views, combined)
      * @return 정렬된 PlaylistDto 리스트
      */
-    private fun getSortedPlaylists(playlistIds: List<Long>, sortType: String): List<PlaylistDto> {
+    private fun getSortedPlaylists(
+        playlistIds: List<Long>,
+        sortType: String,
+    ): List<PlaylistDto> {
         val playlists = playlistRepository.findAllById(playlistIds).toMutableList()
         val actor = rq.actor
 
@@ -685,7 +733,7 @@ class PlaylistService(
             "combined" -> playlists.sortByDescending { it.likeCount + it.viewCount }
             else -> {}
         }
-        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+        return playlists.map { toDto(it, actor) }
     }
 
     /**
@@ -695,31 +743,35 @@ class PlaylistService(
      * @return 복사된 내 플레이리스트 DTO
      */
     fun addPublicPlaylist(playlistId: Long): PlaylistDto {
-        val publicPlaylist = playlistRepository.findById(playlistId)
-            .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
+        val publicPlaylist =
+            playlistRepository
+                .findById(playlistId)
+                .orElseThrow { NotFoundException("해당 플레이리스트를 찾을 수 없습니다.") }
 
         val actor = rq.actor
 
-        val copiedPlaylist = Playlist(
-            title = publicPlaylist.title,
-            description = publicPlaylist.description,
-            isPublic = false,
-            member = actor
-        )
+        val copiedPlaylist =
+            Playlist(
+                title = publicPlaylist.title,
+                description = publicPlaylist.description,
+                isPublic = false,
+                member = actor,
+            )
 
         val savedPlaylist = playlistRepository.save(copiedPlaylist)
 
         publicPlaylist.items.forEach { item ->
-            val copiedItem = PlaylistItem(
-                itemId = item.itemId,
-                itemType = item.itemType,
-                displayOrder = item.displayOrder,
-                playlist = savedPlaylist
-            )
+            val copiedItem =
+                PlaylistItem(
+                    itemId = item.itemId,
+                    itemType = item.itemType,
+                    displayOrder = item.displayOrder,
+                    playlist = savedPlaylist,
+                )
             savedPlaylist.items.add(copiedItem)
         }
 
-        return PlaylistDto.fromEntity(savedPlaylist, actor)
+        return toDto(savedPlaylist)
     }
 
     /**
@@ -730,10 +782,11 @@ class PlaylistService(
      * @param curationId 포함된 큐레이션 ID
      * @return 해당 조건을 만족하는 플레이리스트 DTO 리스트
      */
-    fun getPlaylistsByMemberAndCuration(member: Member, curationId: Long): List<PlaylistDto> {
+    fun getPlaylistsByMemberAndCuration(
+        member: Member,
+        curationId: Long,
+    ): List<PlaylistDto> {
         val playlists = playlistRepository.findByMemberAndCuration(member, curationId)
-        val actor = rq.actor
-
-        return playlists.map { PlaylistDto.fromEntity(it, actor) }
+        return toDtoList(playlists)
     }
 }
