@@ -9,31 +9,13 @@ import jakarta.validation.constraints.NotNull
  * 사용자가 입력한 큐레이션 데이터를 검증하고 전달합니다.
  */
 data class CurationReqDTO(
-    @field:NotNull
+    @NotNull
     val title: String,
 
-    @field:NotNull
+    @NotNull
     val content: String,
 
     val linkReqDtos: List<LinkReqDTO>? = null,
 
     val tagReqDtos: List<TagReqDto>? = null
-
-
-) {
-    companion object {
-        fun from(
-            title: String,
-            content: String,
-            linkReqDtos: List<LinkReqDTO>? = null,
-            tagReqDtos: List<TagReqDto>? = null
-        ): CurationReqDTO {
-            return CurationReqDTO(
-                title = title,
-                content = content,
-                linkReqDtos = linkReqDtos,
-                tagReqDtos = tagReqDtos
-            )
-        }
-    }
-}
+)
