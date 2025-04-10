@@ -1,5 +1,6 @@
 package com.team8.project2.domain.curation.curation.controller
 
+import CurationDetailResDto
 import com.team8.project2.domain.curation.curation.entity.Curation
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
@@ -44,12 +45,12 @@ class ApiV1CurationController(
         val createdCuration: Curation = curationService.createCuration(
             curationReq.title,
             curationReq.content,
-            curationReq.linkReqDtos.map { it.url },
-            curationReq.tagReqDtos.map { it.name },
+            curationReq.linkReqDtos!!.map { it.url },
+            curationReq.tagReqDtos!!.map { it.name },
             member
         )
 
-        return RsData("201-1", "글이 성공적으로 생성되었습니다.", CurationResDto(createdCuration))
+        return RsData("201-1", "글이 성공적으로 생성되었습니다.", CurationResDto.from(createdCuration))
     }
 
     /**
@@ -70,12 +71,12 @@ class ApiV1CurationController(
             id,
             curationReq.title,
             curationReq.content,
-            curationReq.linkReqDtos.map { it.url },
-            curationReq.tagReqDtos.map { it.name },
+            curationReq.linkReqDtos!!.map { it.url },
+            curationReq.tagReqDtos!!.map { it.name },
             member
         )
 
-        return RsData("200-1", "글이 성공적으로 수정되었습니다.", CurationResDto(updatedCuration))
+        return RsData("200-1", "글이 성공적으로 수정되었습니다.", CurationResDto.from(updatedCuration))
     }
 
     /**
