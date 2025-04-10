@@ -2,7 +2,6 @@ package com.team8.project2.domain.image.service
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
@@ -17,7 +16,6 @@ class S3Uploader(
     @Value("\${spring.cloud.aws.s3.bucket}")
     private val bucketName: String
 ) {
-    @Transactional
     fun deleteFile(imageName: String) {
         val deleteObjectRequest = DeleteObjectRequest.builder()
             .bucket(bucketName)
@@ -27,7 +25,6 @@ class S3Uploader(
         s3Client.deleteObject(deleteObjectRequest)
     }
 
-    @Transactional
     @Throws(IOException::class)
     fun uploadFile(file: MultipartFile): String {
         val fileName = generateUniqueFileName(file.originalFilename)
