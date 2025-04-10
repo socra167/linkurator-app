@@ -69,6 +69,31 @@ import com.team8.project2.global.Rq;
 import com.team8.project2.global.exception.ServiceException;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SetOperations;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.Duration;
+import java.util.*;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(MockitoExtension.class)
@@ -120,7 +145,7 @@ class CurationServiceTest {
 	private Rq rq;
 
 	@InjectMocks
-	private CurationService curationService;
+	private  CurationService curationService;
 
 	private Curation curation;
 	private Link link;
@@ -129,12 +154,7 @@ class CurationServiceTest {
 
 	@BeforeEach
 	public void setup() {
-		member = Member.builder()
-				.id(1L)
-				.username("testUser")
-				.email("test@example.com")
-				.build();
-
+		member = new Member(1L, "testUser", "test@example.com");
 
 		curation = new Curation(
 				"Test Title",
@@ -292,9 +312,7 @@ class CurationServiceTest {
 		when(redisTemplate.opsForSet()).thenReturn(setOperations);
 
 		// Mocking repository to return a Curation
-
 		when(curationRepository.findById(anyLong())).thenReturn(Optional.of(curation));
-
 
 		when(memberService.isFollowed(any(), any())).thenReturn(true);
 
@@ -344,6 +362,11 @@ class CurationServiceTest {
 				.thenReturn(true)  // 첫 번째 조회에서는 키가 없으므로 true 반환
 				.thenReturn(false); // 두 번째 이후의 조회에서는 키가 이미 있으므로 false 반환
 
+		// 큐레이션 조회 로직이 제대로 동작하도록 설정
+		when(curationRepository.findById(1L)).thenReturn(Optional.of(curation));
+
+		// 조회수 초기 상태 저장
+		Long initialViewCount = curation.getViewCount();
 
 		// When: 큐레이션을 여러 번 조회한다
 		curationService.getCuration(1L, request);
@@ -524,6 +547,7 @@ class CurationServiceTest {
 		Set<String> memberIds = Set.of("100", "101");
 
 		Curation curation = new Curation();
+		curation.setId(1L);
 
 		SetOperations<String, Object> setOperations = mock(SetOperations.class);
 
@@ -533,7 +557,7 @@ class CurationServiceTest {
 		when(setOperations.size(key)).thenReturn((long) memberIds.size());
 
 		when(curationRepository.findById(1L)).thenReturn(Optional.of(curation));
-		when(memberRepository.findByMemberId(anyString())).thenReturn(Optional.of(new Member()));
+		when(memberRepository.findByMemberId(anyString())).thenReturn(new Member());
 
 		curationService.syncLikesToDatabase();
 
@@ -579,6 +603,7 @@ class CurationServiceTest {
 	void testReportCuration() {
 		Member actor = new Member();
 		Curation curation = new Curation();
+		curation.setId(1L);
 
 		Rq rq = mock(Rq.class);
 		when(rq.getActor()).thenReturn(mock(Member.class));
@@ -688,4 +713,10 @@ class CurationServiceTest {
 		assertEquals(3, result.getCurations().size());
 		assertEquals(100, result.getCurations().get(0).getViewCount());
 	}
+
+
+
+
+
+
 }

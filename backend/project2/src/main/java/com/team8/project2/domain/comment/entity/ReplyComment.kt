@@ -67,9 +67,9 @@ class ReplyComment(
     var modifiedAt: LocalDateTime? = null
         private set
 
-    fun getAuthorName(): String = author.username
+    fun getAuthorName(): String = author.getUsername()
 
-    fun getAuthorProfileImageUrl(): String = author.profileImage
+    fun getAuthorProfileImageUrl(): String = author.profileImage.toString()
 
     fun updateContent(content: String) {
         this.content = content
