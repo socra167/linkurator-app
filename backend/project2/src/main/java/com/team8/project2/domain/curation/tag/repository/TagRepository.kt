@@ -17,7 +17,7 @@ interface TagRepository : JpaRepository<Tag, Long> {
      * @param name 태그 이름
      * @return 해당 이름을 가진 태그 객체 (없을 경우 빈 Optional 반환)
      */
-    fun findByName(name: String): Tag?
+    fun findByName(name: String?): Tag?
 
     /**
      * 태그와 연관된 큐레이션 개수를 기준으로 내림차순 정렬하여 상위 5개만 가져오는 메서드
