@@ -42,7 +42,7 @@ class Curation(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "curationId", nullable = false)
-    val id: Long? = null
+    var id: Long? = null
 
     /**
      * 큐레이션 생성 시간 (자동 설정)
@@ -103,7 +103,7 @@ class Curation(
 
 
     val memberName: String
-        get() = member.username
+        get() = member.getUsername()
 
     val memberId: Long
         get() = member.id

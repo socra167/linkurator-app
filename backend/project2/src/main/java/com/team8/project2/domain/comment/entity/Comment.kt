@@ -70,11 +70,11 @@ class Comment(
         this.replyComments.add(replyComment)
     }
 
-    fun getAuthorName(): String = author.username
+    fun getAuthorName(): String = author.getUsername()
 
     fun getAuthorId(): Long = author.id
 
-    fun getAuthorImgUrl(): String = author.profileImage
+    fun getAuthorImgUrl(): String = author.profileImage.toString()
 
     fun updateContent(content: String) {
         this.content = content
