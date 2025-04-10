@@ -26,6 +26,7 @@ class Follow {
     var followedAt: LocalDateTime? = null
         private set
 
+    @Embeddable
     class FollowId {
         var followerId: Long? = null
         var followeeId: Long? = null
@@ -41,9 +42,9 @@ class Follow {
     }
 
     val followeeName: String
-        get() = followee!!.getUsername()
+        get() = followee?.getUsername() ?: "anonymous"
 
-    val followeeProfileImage: String?
-        get() = followee!!.profileImage
+    val followeeProfileImage: String
+        get() = followee?.profileImage ?: "fail profile"
 }
 

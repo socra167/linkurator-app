@@ -23,28 +23,28 @@ import java.util.*
 @ExtendWith(MockitoExtension::class)
 class MemberServiceTest {
     @InjectMocks
-    private val memberService: MemberService? = null
+    lateinit var memberService: MemberService
 
     @Mock
-    private val memberRepository: MemberRepository? = null
+    lateinit var memberRepository: MemberRepository
 
     @Mock
-    private val authTokenService: AuthTokenService? = null
+    lateinit var authTokenService: AuthTokenService
 
     @Mock
-    private val followRepository: FollowRepository? = null
+    lateinit var followRepository: FollowRepository
 
     @Mock
-    private lateinit var rq: Rq
+    lateinit var rq: Rq
 
     @Mock
-    private lateinit var curationRepository: CurationRepository
+    lateinit var curationRepository: CurationRepository
 
     @Mock
-    private lateinit var s3Uploader: S3Uploader
+    lateinit var s3Uploader: S3Uploader
 
     @Mock
-    private lateinit var eventPublisher: ApplicationEventPublisher
+    lateinit var eventPublisher: ApplicationEventPublisher
 
     @Test
     @DisplayName("회원 가입 - null 가능 필드가 모두 채워졌을 때 정상 저장된다.")
@@ -60,7 +60,7 @@ class MemberServiceTest {
         )
 
         whenever(
-            memberRepository!!.save(
+            memberRepository.save(
                 ArgumentMatchers.any(
                     Member::class.java
                 )
@@ -92,7 +92,7 @@ class MemberServiceTest {
         )
 
         whenever(
-            memberRepository!!.save(
+            memberRepository.save(
                 ArgumentMatchers.any(
                     Member::class.java
                 )
@@ -114,7 +114,7 @@ class MemberServiceTest {
         // given
         val member = Member("user1")
 
-        whenever(memberRepository!!.findByMemberId("user1")).thenReturn(member)
+        whenever(memberRepository.findByMemberId("user1")).thenReturn(member)
 
         // when
         memberService!!.deleteMember("user1")
@@ -127,7 +127,7 @@ class MemberServiceTest {
     @DisplayName("JWT 발급 - 회원 정보를 이용해 accessToken을 생성한다.")
     fun authToken_ReturnsAccessToken_WhenMemberIsValid() {
         val member = Member(1L, "user")
-        whenever(authTokenService!!.genAccessToken(member)).thenReturn("mocked.jwt.token")
+        whenever(authTokenService.genAccessToken(member)).thenReturn("mocked.jwt.token")
 
         val token = memberService!!.getAuthToken(member)
 
@@ -138,7 +138,7 @@ class MemberServiceTest {
     @DisplayName("JWT 인증 - accessToken의 payload로부터 사용자 정보를 생성한다.")
     fun memberByAccessToken_ReturnsMember_WhenPayloadIsValid() {
         val payload = mapOf<String, Any>("id" to 1L, "memberId" to "user")
-        whenever(authTokenService!!.getPayload("token123")).thenReturn(payload)
+        whenever(authTokenService.getPayload("token123")).thenReturn(payload)
 
         val result = memberService!!.getMemberByAccessToken("token123")
 
@@ -155,11 +155,11 @@ class MemberServiceTest {
         val followee = Member(2L, "user2")
 
 
-        whenever(memberRepository!!.findByUsername("user2")).thenReturn(followee)
-        whenever(followRepository!!.findByFollowerAndFollowee(follower, followee)).thenReturn(null)
+        whenever(memberRepository.findByUsername("user2")).thenReturn(followee)
+        whenever(followRepository.findByFollowerAndFollowee(follower, followee)).thenReturn(null)
         val follow = Follow()
         follow.setFollowerAndFollowee(follower, followee)
-        whenever(followRepository!!.save(any<Follow>())).thenReturn(follow)
+        whenever(followRepository.save(any<Follow>())).thenReturn(follow)
         val result = memberService!!.followUser(follower, "user2")
 
         Assertions.assertNotNull(result)
@@ -172,7 +172,7 @@ class MemberServiceTest {
         val follower = Member(1L, "user1")
 
         // followee도 동일한 user1로 세팅
-        whenever(memberRepository!!.findByUsername("user1")).thenReturn(follower)
+        whenever(memberRepository.findByUsername("user1")).thenReturn(follower)
 
         val ex = Assertions.assertThrows(
             ServiceException::class.java

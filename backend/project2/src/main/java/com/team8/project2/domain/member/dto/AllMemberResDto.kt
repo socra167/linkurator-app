@@ -2,13 +2,13 @@ package com.team8.project2.domain.member.dto
 
 import com.team8.project2.domain.member.entity.Member
 
-class AllMemberResDto {
-    var members: List<MemberResDTO> = listOf()
-    var totalPages: Int = 0
-    var totalElements: Long = 0
-    var numberOfElements: Int = 0
-    var size: Int = 0
-
+data class AllMemberResDto(
+    val members: List<MemberResDTO>,
+    val totalPages: Int,
+    val totalElements: Long,
+    val numberOfElements: Int,
+    val size: Int
+) {
     companion object {
         @JvmStatic
         fun of(
@@ -18,14 +18,13 @@ class AllMemberResDto {
             numberOfElements: Int,
             size: Int
         ): AllMemberResDto {
-            val dto = AllMemberResDto()
-            dto.members = members
-                .mapNotNull { it?.let { member -> MemberResDTO.fromEntity(member) } }
-            dto.totalPages = totalPages
-            dto.totalElements = totalElements
-            dto.numberOfElements = numberOfElements
-            dto.size = size
-            return dto
+            return AllMemberResDto(
+                members = members.mapNotNull { it?.let(MemberResDTO::fromEntity) },
+                totalPages = totalPages,
+                totalElements = totalElements,
+                numberOfElements = numberOfElements,
+                size = size
+            )
         }
     }
 }

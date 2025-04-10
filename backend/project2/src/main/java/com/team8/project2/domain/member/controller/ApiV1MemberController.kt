@@ -52,10 +52,8 @@ class ApiV1MemberController(
         )
     }
 
-    @JvmRecord
     data class LoginReqBody(val username: @NotBlank String?, val password: @NotBlank String?)
 
-    @JvmRecord
     data class LoginResBody(val item: MemberResDTO, val accessToken: String)
 
     @PostMapping("/login")
@@ -116,7 +114,7 @@ class ApiV1MemberController(
     @PreAuthorize("isAuthenticated()")
     fun updateMember(
         @PathVariable memberId: String,
-        @RequestBody updateReqDTO: @Valid MemberUpdateReqDTO?
+        @RequestBody @Valid updateReqDTO: MemberUpdateReqDTO
     ): RsData<MemberResDTO> {
         val actor = rq.actor
 
@@ -196,8 +194,8 @@ class ApiV1MemberController(
     @DeleteMapping("/delete")
     fun deleteMember(): RsData<Void> {
         val actor = rq.actor
-        val curations = curationService.findAllByMember(actor)
-        val comments = commentService.findAllByAuthor(actor)
+        curationService.findAllByMember(actor)
+        commentService.findAllByAuthor(actor)
         adminService.deleteMember(actor)
         return RsData("200-6", "회원 탈퇴가 완료되었습니다.")
     }
