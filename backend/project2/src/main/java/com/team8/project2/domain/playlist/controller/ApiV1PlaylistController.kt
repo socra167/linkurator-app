@@ -25,7 +25,7 @@ class ApiV1PlaylistController(
     @PostMapping
     fun createPlaylist(@Valid @RequestBody request: PlaylistCreateDto): RsData<PlaylistDto> {
         val playlist = playlistService.createPlaylist(request)
-        return RsData.success("플레이리스트가 생성되었습니다.", playlist)
+        return success("플레이리스트가 생성되었습니다.", playlist)
     }
 
     /**
@@ -175,7 +175,7 @@ class ApiV1PlaylistController(
      */
     @GetMapping("/{id}/like/status")
     fun likeStatus(@PathVariable id: Long): RsData<Boolean> {
-        if (!rq.isLogin()) {
+        if (!rq.isLogin) {
             return success("비로그인 상태입니다.", false)
         }
         val memberId = rq.actor.id

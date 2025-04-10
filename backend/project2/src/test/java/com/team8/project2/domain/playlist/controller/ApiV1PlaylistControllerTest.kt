@@ -211,10 +211,10 @@ internal class ApiV1PlaylistControllerTest {
             .role(RoleEnum.MEMBER)
             .build()
 
-        whenever(rq.getActor()).thenReturn(mockMember)
+        whenever(rq.actor).thenReturn(mockMember)
 
 
-        whenever(rq.getActor()).thenReturn(mockMember)
+        whenever(rq.actor).thenReturn(mockMember)
         doNothing().whenever(playlistService).likePlaylist(playlistId, memberId)
 
         // When & Then
@@ -662,8 +662,8 @@ internal class ApiV1PlaylistControllerTest {
             .role(RoleEnum.MEMBER)
             .build()
 
-        whenever(rq.isLogin()).thenReturn(true)
-        whenever(rq.getActor()).thenReturn(mockMember)
+        whenever(rq.isLogin).thenReturn(true)
+        whenever(rq.actor).thenReturn(mockMember)
         whenever(playlistService.hasLikedPlaylist(playlistId, memberId)).thenReturn(true)
 
         // When & Then
@@ -682,7 +682,7 @@ internal class ApiV1PlaylistControllerTest {
         // Given
         val playlistId = 1L
 
-        whenever(rq.isLogin()).thenReturn(false)
+        whenever(rq.isLogin).thenReturn(false)
 
         // When & Then
         mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/playlists/{id}/like/status", playlistId))
@@ -726,7 +726,7 @@ internal class ApiV1PlaylistControllerTest {
             .role(RoleEnum.MEMBER)
             .build()
 
-        whenever(rq.getActor()).thenReturn(mockMember)
+        whenever(rq.actor).thenReturn(mockMember)
 
 
         val likedPlaylists = listOf(

@@ -1,15 +1,11 @@
 package com.team8.project2.domain.member.service;
 
-import com.team8.project2.domain.curation.curation.repository.CurationRepository;
-import com.team8.project2.domain.image.service.S3Uploader;
-import com.team8.project2.domain.member.dto.FollowResDto;
-import com.team8.project2.domain.member.entity.Follow;
-import com.team8.project2.domain.member.entity.Member;
-import com.team8.project2.domain.member.entity.RoleEnum;
-import com.team8.project2.domain.member.repository.FollowRepository;
-import com.team8.project2.domain.member.repository.MemberRepository;
-import com.team8.project2.global.Rq;
-import com.team8.project2.global.exception.ServiceException;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.Map;
+import java.util.Optional;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
@@ -18,13 +14,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
-import java.util.Map;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.team8.project2.domain.member.dto.FollowResDto;
+import com.team8.project2.domain.member.entity.Follow;
+import com.team8.project2.domain.member.entity.Member;
+import com.team8.project2.domain.member.entity.RoleEnum;
+import com.team8.project2.domain.member.repository.FollowRepository;
+import com.team8.project2.domain.member.repository.MemberRepository;
+import com.team8.project2.global.exception.ServiceException;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(MockitoExtension.class)
