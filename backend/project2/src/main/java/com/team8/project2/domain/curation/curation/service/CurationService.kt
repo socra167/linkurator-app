@@ -123,24 +123,6 @@ class CurationService(
             addAll(curationTags)
         }
 
-//        // 큐레이션 - 링크 연결
-//        val curationLinks = urls.stream()
-//            .map { url: String ->
-//                val curationLink = CurationLink()
-//                curationLink.setCurationAndLink(curation, linkService.getLink(url))
-//            }.collect(Collectors.toList())
-//        curationLinkRepository.saveAll(curationLinks)
-//        curation.curationLinks = curationLinks
-//
-//        // 큐레이션 - 태그 연결
-//        val curationTags = tags.stream()
-//            .map { tag: String ->
-//                val curationTag = CurationTag()
-//                curationTag.setCurationAndTag(curation, tagService.getTag(tag))
-//            }.collect(Collectors.toList())
-//        curationTagRepository.saveAll(curationTags)
-//        curation.tags = curationTags
-
         // 작성한 큐레이션에 이미지가 첨부되어 있다면, 이미지에 큐레이션 번호를 연결 (연결이 이미 있는 이미지는 무시)
         val imageNames = curation.imageNames
 
