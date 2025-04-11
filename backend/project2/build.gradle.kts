@@ -95,6 +95,16 @@ dependencies {
     implementation("com.querydsl:querydsl-core")
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "21"
+    }
+}
+
+kotlin {
+    sourceSets["main"].kotlin.srcDir("build/generated/source/kapt/main")
+}
+
 tasks.test {
     useJUnitPlatform()
 }
