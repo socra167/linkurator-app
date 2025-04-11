@@ -1,9 +1,11 @@
-import java.time.LocalDateTime
+package com.team8.project2.domain.curation.curation.dto
+
 import com.team8.project2.domain.comment.entity.Comment
 import com.team8.project2.domain.comment.entity.ReplyComment
 import com.team8.project2.domain.curation.curation.entity.Curation
 import com.team8.project2.domain.curation.tag.entity.Tag
 import com.team8.project2.domain.link.entity.Link
+import java.time.LocalDateTime
 
 data class CurationDetailResDto(
     val id: Long?,

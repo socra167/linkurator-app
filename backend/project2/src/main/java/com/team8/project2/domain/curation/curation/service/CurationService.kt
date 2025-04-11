@@ -1,6 +1,6 @@
 package com.team8.project2.domain.curation.curation.service
 
-import CurationDetailResDto
+import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto
 import com.team8.project2.domain.curation.curation.dto.CurationResDto
 import com.team8.project2.domain.curation.curation.dto.CurationSearchResDto
 import com.team8.project2.domain.curation.curation.dto.TrendingCurationResDto
