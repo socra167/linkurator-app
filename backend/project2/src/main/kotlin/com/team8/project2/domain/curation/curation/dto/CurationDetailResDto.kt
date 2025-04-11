@@ -67,7 +67,7 @@ data class CurationDetailResDto(
         val content: String,
         val createdAt: LocalDateTime?,
         val modifiedAt: LocalDateTime?,
-        val replies: MutableList<ReplyComment>
+        val replies: List<ReplyCommentResDto>
     ) {
         companion object {
             fun from(comment: Comment): CommentResDto {
@@ -79,12 +79,11 @@ data class CurationDetailResDto(
                     content = comment.content,
                     createdAt = comment.createdAt,
                     modifiedAt = comment.modifiedAt,
-                    replies = comment.replyComments
+                    replies = comment.replyComments.map { ReplyCommentResDto.from(it) }
                 )
             }
         }
     }
-
 
     companion object {
         fun from(
@@ -114,4 +113,27 @@ data class CurationDetailResDto(
         }
     }
 
+    data class ReplyCommentResDto(
+        val commentId: Long?,
+        val authorId: Long?,
+        val authorName: String,
+        val authorImgUrl: String,
+        val content: String,
+        val createdAt: LocalDateTime?,
+        val modifiedAt: LocalDateTime?,
+    ) {
+        companion object {
+            fun from(reply: ReplyComment): ReplyCommentResDto {
+                return ReplyCommentResDto(
+                    commentId = reply.id,
+                    authorId = reply.author.id,
+                    authorName = reply.author.getUsername(),
+                    authorImgUrl = reply.author.profileImage!!,
+                    content = reply.content,
+                    createdAt = reply.createdAt,
+                    modifiedAt = reply.modifiedAt,
+                )
+            }
+        }
+    }
 }
