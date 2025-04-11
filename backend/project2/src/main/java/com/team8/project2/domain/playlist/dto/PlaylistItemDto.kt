@@ -37,7 +37,6 @@ data class PlaylistItemDto(
          * @param playlistItem 변환할 플레이리스트 아이템 엔티티
          * @return 변환된 PlaylistItemDto
          */
-        @JvmStatic
         fun fromEntity(playlistItem: PlaylistItem): PlaylistItemDto {
             val link = playlistItem.link
             val curation = playlistItem.curation
@@ -50,7 +49,7 @@ data class PlaylistItemDto(
                 description = link?.description.orEmpty(),
                 url = link?.url.orEmpty(),
                 curationId = curation?.id,
-                parentItemId = playlistItem.parentItemId
+                parentItemId = playlistItem.parentItemId,
             )
         }
     }

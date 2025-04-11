@@ -49,7 +49,7 @@ class Playlist(
     @JoinTable(
         name = "PlaylistTag",
         joinColumns = [JoinColumn(name = "playlist_id")],
-        inverseJoinColumns = [JoinColumn(name = "tag_id")]
+        inverseJoinColumns = [JoinColumn(name = "tag_id")],
     )
     var tags: MutableSet<Tag> = mutableSetOf(),
 
