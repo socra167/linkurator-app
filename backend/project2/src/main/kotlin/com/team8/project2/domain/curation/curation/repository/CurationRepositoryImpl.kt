@@ -3,10 +3,12 @@ package com.team8.project2.domain.curation.curation.repository
 import com.querydsl.jpa.impl.JPAQueryFactory
 import com.team8.project2.domain.comment.entity.QComment
 import com.team8.project2.domain.curation.curation.dto.CurationProjectionDto
-import com.team8.project2.domain.curation.curation.dto.QCurationProjectionDto
+import com.team8.project2.domain.curation.curation.dto.CurationResDto
 import com.team8.project2.domain.curation.curation.entity.QCuration
+import com.team8.project2.domain.curation.curation.entity.QCurationLink
 import com.team8.project2.domain.curation.curation.entity.QCurationTag
 import com.team8.project2.domain.curation.tag.entity.QTag
+import com.team8.project2.domain.link.entity.QLink
 import com.team8.project2.domain.member.entity.QMember
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -29,6 +31,8 @@ class CurationRepositoryImpl(
         val t = QTag.tag
         val m = QMember.member
         val cm = QComment.comment
+        val cl = QCurationLink.curationLink
+        val l = QLink.link
 
         val conditions = mutableListOf<com.querydsl.core.types.Predicate>()
 
@@ -45,49 +49,47 @@ class CurationRepositoryImpl(
             conditions.add(t.name.`in`(tags))
         }
 
-        val query = queryFactory
-            .select(
-                QCurationProjectionDto(
-                    c.id,
-                    c.title,
-                    c.content,
-                    c.viewCount,
-                    m.username,
-                    m.profileImage,
-                    c.createdAt,
-                    c.modifiedAt,
-                    cm.id.count().castToNum(Int::class.java)
-                )
-            )
+        val curations = queryFactory
+            .select(c)
             .from(c)
-            .leftJoin(c.member, m)
-            .leftJoin(c.tags, ct)
-            .leftJoin(ct.tag, t)
+            .leftJoin(c.member, m).fetchJoin()
+            .leftJoin(c.tags, ct).leftJoin(ct.tag, t)
+            .leftJoin(c.curationLinks, cl).leftJoin(cl.link, l)
             .leftJoin(cm).on(cm.curation.eq(c))
             .where(*conditions.toTypedArray())
-            .groupBy(
-                c.id,
-                c.title,
-                c.content,
-                c.viewCount,
-                m.username,
-                m.profileImage,
-                c.createdAt,
-                c.modifiedAt
-            )
+            .groupBy(c.id)
             .offset(pageable.offset)
             .limit(pageable.pageSize.toLong())
+            .fetch()
 
-        val content = query.fetch()
+        val result = curations.map { curation ->
+            val tagNames = curation.tags.mapNotNull { it.tag.name }
+            val linkDtos = curation.curationLinks.map { CurationResDto.LinkResDto.from(it.link) }
+            val commentCount = curation.comments.size
 
-        val countQuery = queryFactory
+            CurationProjectionDto(
+                id = curation.id!!,
+                title = curation.title,
+                content = curation.content,
+                viewCount = curation.viewCount,
+                authorName = curation.member.getUsername(),
+                memberImgUrl = curation.member.profileImage,
+                createdAt = curation.createdAt,
+                modifiedAt = curation.modifiedAt,
+                commentCount = commentCount,
+                tags = tagNames,
+                urls = linkDtos
+            )
+        }
+
+        val total = queryFactory
             .select(c.countDistinct())
             .from(c)
+            .leftJoin(c.tags, ct).leftJoin(ct.tag, t)
             .leftJoin(c.member, m)
-            .leftJoin(c.tags, ct)
-            .leftJoin(ct.tag, t)
             .where(*conditions.toTypedArray())
+            .fetchOne() ?: 0L
 
-        return PageImpl(content, pageable, countQuery.fetchOne() ?: 0L)
+        return PageImpl(result, pageable, total)
     }
 }

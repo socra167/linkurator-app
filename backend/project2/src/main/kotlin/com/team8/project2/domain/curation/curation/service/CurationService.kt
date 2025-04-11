@@ -374,8 +374,8 @@ class CurationService(
                 viewCount = it.viewCount,
                 authorName = it.authorName,
                 memberImgUrl = it.memberImgUrl,
-                urls = emptyList(), // 링크는 Projection에 포함 안했으므로 추후 필요 시 fetch join으로 확장
-                tags = emptyList(),
+                urls = it.urls,
+                tags = it.tags.map { tag -> CurationResDto.TagResDto(name = tag) },
                 createdAt = it.createdAt,
                 modifiedAt = it.modifiedAt,
                 likeCount = likeCount ?: 0,
@@ -391,8 +391,6 @@ class CurationService(
             size = projectionPage.size
         )
     }
-
-
 
     @Transactional
     fun likeCuration(curationId: Long, memberId: Long) {

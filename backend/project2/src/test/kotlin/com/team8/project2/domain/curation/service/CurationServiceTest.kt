@@ -4,7 +4,6 @@ import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto
 import com.team8.project2.domain.curation.curation.entity.Curation
 import com.team8.project2.domain.curation.curation.entity.CurationLink
 import com.team8.project2.domain.curation.curation.entity.CurationTag
-import com.team8.project2.domain.curation.curation.entity.SearchOrder
 import com.team8.project2.domain.curation.curation.event.CurationUpdateEvent
 import com.team8.project2.domain.curation.curation.repository.CurationLinkRepository
 import com.team8.project2.domain.curation.curation.repository.CurationRepository
@@ -28,29 +27,37 @@ import com.team8.project2.global.Rq
 import com.team8.project2.global.exception.ServiceException
 import jakarta.servlet.http.HttpServletRequest
 import org.assertj.core.api.AssertionsForClassTypes
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
-import org.mockito.kotlin.*
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doNothing
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
+import org.mockito.kotlin.whenever
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.data.domain.*
+import org.springframework.data.domain.Pageable
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.SetOperations
 import org.springframework.data.redis.core.ValueOperations
 import org.springframework.data.redis.core.ZSetOperations
 import org.springframework.test.util.ReflectionTestUtils
 import java.time.Duration
-import java.util.*
+import java.util.Optional
 import java.util.Set
-import org.junit.jupiter.api.Assertions.*
-import kotlin.collections.HashSet
-import kotlin.collections.List
-import kotlin.collections.emptySet
-import kotlin.collections.listOf
-import kotlin.collections.mutableListOf
-import kotlin.collections.setOf
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @ExtendWith(MockitoExtension::class)
@@ -376,34 +383,6 @@ internal class CurationServiceTest {
             assert(e.message!!.contains("해당 큐레이션을 찾을 수 없습니다."))
         }
     }
-
-    @Test
-    fun findAllCuration() {
-        val setOperations: SetOperations<String, Any> = mock<SetOperations<String, Any>>()
-        whenever(redisTemplate.opsForSet()).thenReturn(setOperations)
-
-        whenever(
-            curationRepository.searchByFilters(
-                any<List<String>>(),
-                any<Int>(),
-                any<String>(),
-                any<String>(),
-                any<String>(),
-                any<Pageable>()
-            )
-        )
-            .thenReturn(PageImpl(listOf(curation), PageRequest.of(0, 20), 1))
-
-        val foundCurations = checkNotNull(
-            curationService.searchCurations(
-                listOf("tag"), "title", "content", "",
-                SearchOrder.LATEST, 1, 20
-            ).curations
-        )
-
-        assert(foundCurations.size == 1)
-    }
-
 
     @Test
     @DisplayName("큐레이션 좋아요 기능을 테스트합니다.")

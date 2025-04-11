@@ -12,5 +12,7 @@ data class CurationProjectionDto @QueryProjection constructor(
     val memberImgUrl: String?,
     val createdAt: LocalDateTime?,
     val modifiedAt: LocalDateTime?,
-    val commentCount: Int
+    val commentCount: Int,
+    val tags: List<String>,
+    val urls: List<CurationResDto.LinkResDto>
 )

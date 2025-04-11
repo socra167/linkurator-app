@@ -110,7 +110,6 @@ class ApiV1CurationController(
      * @return 조회된 큐레이션 정보 응답
      */
     @GetMapping("/{id}")
-    @Transactional(readOnly = true)
     fun getCuration(@PathVariable id: Long, request: HttpServletRequest): RsData<CurationDetailResDto> {
         // 큐레이션 서비스 호출 시 IP를 전달
         val curationDetailResDto = curationService.getCuration(id, request)
