@@ -17,6 +17,11 @@ java {
     }
 }
 
+kotlin {
+    jvmToolchain(21)
+    sourceSets["main"].kotlin.srcDir("build/generated/source/kapt/main")
+}
+
 configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
@@ -99,10 +104,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         jvmTarget = "21"
     }
-}
-
-kotlin {
-    sourceSets["main"].kotlin.srcDir("build/generated/source/kapt/main")
 }
 
 tasks.test {
