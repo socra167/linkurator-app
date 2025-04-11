@@ -49,7 +49,19 @@ class CurationRepositoryImpl(
             conditions.add(t.name.`in`(tags))
         }
 
-        val curations = queryFactory
+        // 정렬 조건 추출
+        val orderSpecifiers = pageable.sort.mapNotNull { order ->
+            when (order.property) {
+                "createdAt" -> if (order.isAscending) c.createdAt.asc() else c.createdAt.desc()
+                "modifiedAt" -> if (order.isAscending) c.modifiedAt.asc() else c.modifiedAt.desc()
+                "viewCount" -> if (order.isAscending) c.viewCount.asc() else c.viewCount.desc()
+                // TODO: Redis 기반 likeCount는 DB 정렬 불가
+                else -> null
+            }
+        }.toTypedArray()
+
+        // 쿼리 구성
+        val query = queryFactory
             .select(c)
             .from(c)
             .leftJoin(c.member, m).fetchJoin()
@@ -60,7 +72,12 @@ class CurationRepositoryImpl(
             .groupBy(c.id)
             .offset(pageable.offset)
             .limit(pageable.pageSize.toLong())
-            .fetch()
+
+        if (orderSpecifiers.isNotEmpty()) {
+            query.orderBy(*orderSpecifiers)
+        }
+
+        val curations = query.fetch()
 
         val result = curations.map { curation ->
             val tagNames = curation.tags.mapNotNull { it.tag.name }
@@ -82,6 +99,7 @@ class CurationRepositoryImpl(
             )
         }
 
+        // total count 계산
         val total = queryFactory
             .select(c.countDistinct())
             .from(c)
