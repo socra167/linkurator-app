@@ -1,6 +1,6 @@
 package com.team8.project2.domain.curation.controller
 
-import com.team8.project2.domain.curation.curation.dto.CurationDetailResDto
+import CurationDetailResDto
 import com.team8.project2.domain.curation.curation.repository.CurationRepository
 import com.team8.project2.domain.curation.curation.service.CurationService
 import com.team8.project2.domain.member.repository.MemberRepository

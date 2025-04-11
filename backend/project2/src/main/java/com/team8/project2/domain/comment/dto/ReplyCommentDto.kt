@@ -41,8 +41,8 @@ data class ReplyCommentDto(
             return ReplyCommentDto(
                 id = reply.id,
                 authorId = reply.author.id,
-                authorName = reply.author.username,
-                authorProfileImageUrl = reply.author.profileImage,
+                authorName = reply.author.getUsername(),
+                authorProfileImageUrl = reply.author.profileImage.toString(),
                 content = reply.content,
                 createdAt = reply.createdAt,
                 modifiedAt = reply.modifiedAt

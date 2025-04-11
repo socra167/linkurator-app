@@ -36,6 +36,9 @@ class AdminService(
 	private val reportRepository: ReportRepository
 ) {
 
+	/**
+	 * ✅ 회원 탈퇴 시 관련 데이터 일괄 삭제 처리
+	 */
 	@Transactional(noRollbackFor = [ServiceException::class])
 	fun deleteMember(member: Member) {
 		commentRepository.deleteByAuthor(member)
@@ -43,11 +46,12 @@ class AdminService(
 		followRepository.deleteByFollowerOrFollowee(member, member)
 
 		// ✅ Lombok의 @Getter에 의해 Kotlin에서는 프로퍼티 접근으로 가능
-		memberService.deleteMember(member.memberId)
+		memberService.deleteMember(member.getMemberId())
 	}
 
-
-
+	/**
+	 * ✅ ID 기반 회원 삭제
+	 */
 	fun deleteMemberById(id: Long) {
 		if (!memberRepository.existsById(id)) {
 			throw NotFoundException("멤버를 찾을 수 없습니다.")
@@ -55,6 +59,9 @@ class AdminService(
 		memberRepository.deleteById(id)
 	}
 
+	/**
+	 * ✅ 큐레이션 삭제
+	 */
 	@Transactional
 	fun deleteCuration(curationId: Long) {
 		if (!curationRepository.existsById(curationId)) {
@@ -63,6 +70,9 @@ class AdminService(
 		curationRepository.deleteById(curationId)
 	}
 
+	/**
+	 * ✅ 최소 신고 횟수를 기준으로 신고된 큐레이션 ID 리스트 조회
+	 */
 	fun getReportedCurations(minReports: Int, page: Int, size: Int): List<Long> {
 		val pageable: Pageable = PageRequest.of(page, size, Sort.by("createdAt"))
 		val reportedCurations: List<Curation> = curationRepository.findReportedCurations(minReports, pageable)
@@ -70,6 +80,9 @@ class AdminService(
 		return reportedCurations.map { it.id!! }
 	}
 
+	/**
+	 * ✅ 큐레이션 및 플레이리스트 통계 조회
+	 */
 	fun getCurationAndPlaylistStats(): StatsResDto {
 		val totalCurationViews = curationRepository.sumTotalViews()
 		val totalCurationLikes = curationRepository.sumTotalLikes()
@@ -84,6 +97,9 @@ class AdminService(
 		)
 	}
 
+	/**
+	 * ✅ 전체 회원 목록 조회 (페이징 포함)
+	 */
 	fun getAllMembers(page: Int, size: Int): AllMemberResDto {
 		val pageable = PageRequest.of(page, size, Sort.by("createdDate").descending())
 		val memberPage = memberRepository.findAll(pageable)
