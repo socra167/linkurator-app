@@ -55,7 +55,7 @@ class CurationRepositoryImpl(
                 "createdAt" -> if (order.isAscending) c.createdAt.asc() else c.createdAt.desc()
                 "modifiedAt" -> if (order.isAscending) c.modifiedAt.asc() else c.modifiedAt.desc()
                 "viewCount" -> if (order.isAscending) c.viewCount.asc() else c.viewCount.desc()
-                // TODO: Redis 기반 likeCount는 DB 정렬 불가
+                "likeCount" -> if (order.isAscending) c.likeCount.asc() else c.likeCount.desc()
                 else -> null
             }
         }.toTypedArray()
