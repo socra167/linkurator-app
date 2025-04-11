@@ -1,11 +1,28 @@
 plugins {
 	kotlin("jvm") version "1.9.25"
 	kotlin("plugin.spring") version "1.9.25"
-	kotlin("plugin.jpa") version "1.9.22"
+	kotlin("plugin.jpa") version "1.9.25"
     kotlin("kapt") version "1.9.25"
+
+    kotlin("plugin.allopen") version "2.0.21"
+    kotlin("plugin.noarg") version "2.0.21"
 
 	id("org.springframework.boot") version "3.4.3"
 	id("io.spring.dependency-management") version "1.1.7"
+}
+
+// kotlin jpa : 아래의 어노테이션 클래스에 no-arg 생성자를 생성
+noArg {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
+
+// kotlin jpa : 아래의 어노테이션 클래스를 open class 로 자동 설정
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
 }
 
 group = "com.team8"
@@ -85,12 +102,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 
     // QueryDSL (JPA & Kotlin용)
-    implementation("com.querydsl:querydsl-jpa")
-    kapt("com.querydsl:querydsl-apt:${dependencyManagement.importedProperties["querydsl.version"]}:jpa")
-    kapt("jakarta.annotation:jakarta.annotation-api") // 🔧 kapt 에러 방지용
-
-    // QueryDSL Q파일 사용을 위해 필요
-    implementation("com.querydsl:querydsl-core")
+    implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
+    kapt("com.querydsl:querydsl-apt:5.1.0:jakarta")
+    kapt("jakarta.annotation:jakarta.annotation-api")
+    kapt("jakarta.persistence:jakarta.persistence-api")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
