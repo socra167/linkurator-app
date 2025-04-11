@@ -115,13 +115,15 @@ class PlaylistServiceTest {
         whenever(redisTemplate.opsForZSet()).thenReturn(zSetOperations)
 
         playlistService = PlaylistService(
-            playlistRepository,
-            redisTemplate,
-            memberRepository,
-            playlistLikeRepository,
-            rq,
-            linkService
+            playlistRepository = playlistRepository,
+            playlistItemRepository = playlistItemRepository,
+            redisTemplate = redisTemplate,
+            memberRepository = memberRepository,
+            playlistLikeRepository = playlistLikeRepository,
+            rq = rq,
+            linkService = linkService,
         )
+
 
     }
 
