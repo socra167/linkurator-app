@@ -1,7 +1,12 @@
 package com.team8.project2.domain.member.entity
 
-import jakarta.persistence.*
-import lombok.*
+import jakarta.persistence.Column
+import jakarta.persistence.Embeddable
+import jakarta.persistence.EmbeddedId
+import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDateTime
@@ -24,7 +29,6 @@ class Follow {
     @CreatedDate
     @Column(updatable = false)
     var followedAt: LocalDateTime? = null
-        private set
 
     @Embeddable
     class FollowId {

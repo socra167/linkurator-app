@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.transaction.annotation.Transactional
-import java.util.stream.Collectors
 
 @Transactional
 @ActiveProfiles("test")
@@ -488,7 +487,7 @@ class ApiV1CurationControllerTest {
     fun findPlaylistByCuration() {
         val curationId = 1L
         mockMvc.perform(
-            MockMvcRequestBuilders.get("/api/v1/curation/%d/playlists".formatted(curationId))
+            MockMvcRequestBuilders.get("/api/v1/curation/${curationId}/playlists")
                 .header("Authorization", "Bearer $memberAccessKey")
         )
             .andExpect(MockMvcResultMatchers.status().isOk())
@@ -529,7 +528,7 @@ class ApiV1CurationControllerTest {
         val curationId = 1L
         // member1이 curation1에 대한 좋아요 여부 조회 - false
         mockMvc.perform(
-            MockMvcRequestBuilders.get("/api/v1/curation/like/%d/status".formatted(curationId))
+            MockMvcRequestBuilders.get("/api/v1/curation/like/${curationId}/status")
                 .header("Authorization", "Bearer $memberAccessKey")
         )
             .andExpect(MockMvcResultMatchers.status().isOk())
@@ -550,7 +549,7 @@ class ApiV1CurationControllerTest {
 
         // member1이 curation1에 대한 좋아요 여부 조회 - true
         mockMvc.perform(
-            MockMvcRequestBuilders.get("/api/v1/curation/like/%d/status".formatted(curationId))
+            MockMvcRequestBuilders.get("/api/v1/curation/like/${curationId}/status")
                 .header("Authorization", "Bearer $memberAccessKey")
         )
             .andExpect(MockMvcResultMatchers.status().isOk())

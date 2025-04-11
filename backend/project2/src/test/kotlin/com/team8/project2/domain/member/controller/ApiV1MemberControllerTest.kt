@@ -53,19 +53,17 @@ class ApiV1MemberControllerTest @Autowired constructor(
                     .content(
                         """
                                         {
-                                            "memberId": "%s",
-                                            "password": "%s",
-                                            "username": "%s",
-                                            "email": "%s",
-                                            "role": "%s",
-                                            "profileImage": "%s",
-                                            "introduce": "%s"
+                                            "memberId": "${memberId}",
+                                            "password": "${password}",
+                                            "username": "${memberId}",
+                                            "email": "${email}",
+                                            "role": "${role}",
+                                            "profileImage": "${profileImage}",
+                                            "introduce": "${introduce}"
                                         }
                                         
                                         """
                             .trimIndent()
-                            .formatted(memberId, password, memberId, email, role, profileImage, introduce)
-                            .stripIndent()
                     )
                     .contentType(
                         MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
@@ -332,13 +330,12 @@ class ApiV1MemberControllerTest @Autowired constructor(
                 .content(
                     """
                 {
-                  "memberId": "%s",
-                  "username": "%s",
-                  "email": "%s",
-                  "introduce": "%s"
+                  "memberId": "${member.getMemberId()}",
+                  "username": "${newUsername}",
+                  "email": "${newEmail}",
+                  "introduce": "${newIntroduce}"
                 }
-            
-            """.trimIndent().formatted(member.getMemberId(), newUsername, newEmail, newIntroduce)
+                """.trimIndent()
                 )
         ) // Then
             .andExpect(MockMvcResultMatchers.status().isOk())
@@ -364,13 +361,13 @@ class ApiV1MemberControllerTest @Autowired constructor(
             val accessToken = memberService.genAccessToken(member)
 
             mvc.perform(
-                MockMvcRequestBuilders.post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
+                MockMvcRequestBuilders.post("/api/v1/members/${followee.getUsername()}/follow")
                     .header("Authorization", "Bearer $accessToken")
             )
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-1"))
                 .andExpect(
-                    MockMvcResultMatchers.jsonPath("$.msg").value("%s님을 팔로우했습니다.".formatted(followee.getUsername()))
+                    MockMvcResultMatchers.jsonPath("$.msg").value("${followee.getUsername()}님을 팔로우했습니다.")
                 )
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.followee").value(followee.getUsername()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.followedAt").isNotEmpty())
@@ -389,7 +386,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
             val accessToken = memberService.genAccessToken(member)
 
             mvc.perform(
-                MockMvcRequestBuilders.post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
+                MockMvcRequestBuilders.post("/api/v1/members/${followee.getUsername()}/follow")
                     .header("Authorization", "Bearer $accessToken")
             )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
@@ -409,7 +406,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
             val accessToken = memberService.genAccessToken(member)
 
             mvc.perform(
-                MockMvcRequestBuilders.post("/api/v1/members/%s/follow".formatted(invalidFolloweeMemberId))
+                MockMvcRequestBuilders.post("/api/v1/members/${invalidFolloweeMemberId}/follow")
                     .header("Authorization", "Bearer $accessToken")
             )
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
@@ -428,7 +425,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
             val accessToken = memberService.genAccessToken(member)
 
             mvc.perform(
-                MockMvcRequestBuilders.post("/api/v1/members/%s/follow".formatted(followee.getUsername()))
+                MockMvcRequestBuilders.post("/api/v1/members/${followee.getUsername()}/follow")
                     .header("Authorization", "Bearer $accessToken")
             )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())
@@ -453,7 +450,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-1"))
                 .andExpect(
-                    MockMvcResultMatchers.jsonPath("$.msg").value("%s님을 팔로우 취소했습니다.".formatted(followee.getUsername()))
+                    MockMvcResultMatchers.jsonPath("$.msg").value("${followee.getUsername()}님을 팔로우 취소했습니다.")
                 )
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.followee").value(followee.getUsername()))
         }
@@ -471,7 +468,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
             val accessToken = memberService.genAccessToken(member)
 
             mvc.perform(
-                MockMvcRequestBuilders.post("/api/v1/members/%s/unfollow".formatted(followee.getUsername()))
+                MockMvcRequestBuilders.post("/api/v1/members/${followee.getUsername()}/unfollow")
                     .header("Authorization", "Bearer $accessToken")
             )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())

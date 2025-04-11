@@ -2,7 +2,15 @@ package com.team8.project2.domain.comment.entity
 
 import com.team8.project2.domain.curation.curation.entity.Curation
 import com.team8.project2.domain.member.entity.Member
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -57,7 +65,6 @@ class ReplyComment(
     @CreatedDate
     @Column(nullable = false, updatable = false)
     var createdAt: LocalDateTime? = null
-        private set
 
     /**
      * 답글 수정 시간
@@ -65,7 +72,6 @@ class ReplyComment(
     @LastModifiedDate
     @Column(nullable = false)
     var modifiedAt: LocalDateTime? = null
-        private set
 
     fun getAuthorName(): String = author.getUsername()
 

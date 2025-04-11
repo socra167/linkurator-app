@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository
  * 큐레이션 검색 기능을 포함하고 있습니다.
  */
 @Repository
-interface CurationRepository : JpaRepository<Curation, Long> {
+interface CurationRepository : JpaRepository<Curation, Long>, CurationRepositoryCustom {
     @Query("SELECT COUNT(c) FROM Curation c WHERE c.member.memberId = :memberId")
     fun countByMemberId(@Param("memberId") memberId: String): Long
 

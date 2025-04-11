@@ -29,7 +29,6 @@ import com.team8.project2.global.exception.ServiceException
 import jakarta.servlet.http.HttpServletRequest
 import lombok.RequiredArgsConstructor
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -357,39 +356,42 @@ class CurationService(
         page: Int = 0,
         size: Int = 10
     ): CurationSearchResDto {
-        var sort = Sort.by(Sort.Direction.DESC, "createdAt")
-        if (order == SearchOrder.OLDEST) {
-            sort = Sort.by(Sort.Direction.ASC, "createdAt")
+        val sort = when (order) {
+            SearchOrder.LATEST -> Sort.by(Sort.Direction.DESC, "createdAt")
+            SearchOrder.OLDEST -> Sort.by(Sort.Direction.ASC, "createdAt")
+            SearchOrder.LIKECOUNT -> Sort.by(Sort.Direction.DESC, "likeCount")
         }
-        if (order == SearchOrder.LIKECOUNT) {
-            sort = Sort.by(Sort.Direction.DESC, "likeCount")
-        }
-        val pageable: Pageable = PageRequest.of(page, size, sort)
-        val curationPage: Page<Curation>
-        val curations: List<Curation>
+        val pageable = PageRequest.of(page, size, sort)
 
-        if (tags == null || tags.isEmpty()) {
-            // tags가 null이거나 빈 리스트인 경우 → 태그 필터 없이 검색
-            curationPage = curationRepository.searchByFiltersWithoutTags(tags, title, content, author, pageable)
-        } else {
-            // tags가 null이 아니고 비어있지도 않은 경우 → 태그 필터 적용
-            curationPage = curationRepository.searchByFilters(tags, tags.size, title, content, author, pageable)
+        val projectionPage = curationRepository.searchByProjection(tags, tags?.size ?: 0, title, content, author, pageable)
+
+        val results = projectionPage.content.map {
+            val likeCount = redisTemplate.opsForSet().size("curation_like:${it.id}")
+            CurationResDto(
+                id = it.id,
+                title = it.title,
+                content = it.content,
+                viewCount = it.viewCount,
+                authorName = it.authorName,
+                memberImgUrl = it.memberImgUrl,
+                urls = emptyList(), // 링크는 Projection에 포함 안했으므로 추후 필요 시 fetch join으로 확장
+                tags = emptyList(),
+                createdAt = it.createdAt,
+                modifiedAt = it.modifiedAt,
+                likeCount = likeCount ?: 0,
+                commentCount = it.commentCount
+            )
         }
 
-        curations = curationPage.content.map { curation ->
-            val redisKey = "curation_like:${curation.id}"
-            curation.likeCount = redisTemplate.opsForSet().size(redisKey)
-            curation
-        }
-
-        return CurationSearchResDto.from(
-            curations,
-            curationPage.totalPages,
-            curationPage.totalElements,
-            curationPage.numberOfElements,
-            curationPage.size
+        return CurationSearchResDto(
+            curations = results,
+            totalPages = projectionPage.totalPages,
+            totalElements = projectionPage.totalElements,
+            numberOfElements = projectionPage.numberOfElements,
+            size = projectionPage.size
         )
     }
+
 
 
     @Transactional
