@@ -2,6 +2,7 @@ plugins {
 	kotlin("jvm") version "1.9.25"
 	kotlin("plugin.spring") version "1.9.25"
 	kotlin("plugin.jpa") version "1.9.22"
+    kotlin("kapt") version "1.9.25"
 
 	id("org.springframework.boot") version "3.4.3"
 	id("io.spring.dependency-management") version "1.1.7"
@@ -84,6 +85,14 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-redis")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+
+    // QueryDSL (JPA & Kotlin용)
+    implementation("com.querydsl:querydsl-jpa")
+    kapt("com.querydsl:querydsl-apt:${dependencyManagement.importedProperties["querydsl.version"]}:jpa")
+    kapt("jakarta.annotation:jakarta.annotation-api") // 🔧 kapt 에러 방지용
+
+    // QueryDSL Q파일 사용을 위해 필요
+    implementation("com.querydsl:querydsl-core")
 }
 
 tasks.test {
