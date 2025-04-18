@@ -31,8 +31,6 @@ class CurationImage(
     val uploadedAt: LocalDateTime? = null
 
     fun setCurationIdIfNull(curationId: Long) {
-        if (this.curationId == null) {
-            this.curationId = curationId
-        }
+        this.curationId = this.curationId ?: curationId
     }
 }

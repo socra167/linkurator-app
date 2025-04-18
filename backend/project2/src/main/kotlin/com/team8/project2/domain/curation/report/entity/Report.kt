@@ -26,23 +26,19 @@ class Report(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reportId")
     val id: Long? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "curationId")
     val curation: Curation,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporterId")
     val reporter: Member,
+
     @Enumerated(EnumType.STRING)
     val reportType: ReportType,
-) {
+
     @CreatedDate
     @Column(updatable = false)
-    lateinit var reportDate: LocalDateTime
-
-    constructor(curation: Curation, reportType: ReportType, reporter: Member) : this(
-        id = null,
-        curation = curation,
-        reporter = reporter,
-        reportType = reportType,
-    )
-}
+    var reportDate: LocalDateTime? = null
+)
