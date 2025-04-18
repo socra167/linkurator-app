@@ -35,7 +35,7 @@ class ApiV1MemberController(
 
     @PostMapping("/join")
     fun join(@Valid @RequestBody body:  MemberReqDTO): RsData<LoginResBody> {
-        memberService.findByMemberId(body.memberId!!)?.let {
+        memberService.findByLoginId(body.loginId!!)?.let {
             throw ServiceException("409-1", "사용중인 아이디")
         }
 
@@ -58,7 +58,7 @@ class ApiV1MemberController(
 
     @PostMapping("/login")
     fun login(@Valid @RequestBody reqBody: LoginReqBody): RsData<LoginResBody> {
-        val member = memberService.findByMemberId(reqBody.username!!)
+        val member = memberService.findByLoginId(reqBody.username!!)
             ?: throw ServiceException("401-1", "잘못된 아이디입니다.")
 
         if (member.getPassword() != reqBody.password) {
@@ -110,19 +110,19 @@ class ApiV1MemberController(
         return RsData("200-4", "큐레이터 정보 조회 성공", curatorInfoDto)
     }
 
-    @PutMapping("/{memberId}")
+    @PutMapping("/{loginId}")
     @PreAuthorize("isAuthenticated()")
     fun updateMember(
-        @PathVariable memberId: String,
+        @PathVariable loginId: String,
         @RequestBody @Valid updateReqDTO: MemberUpdateReqDTO
     ): RsData<MemberResDTO> {
         val actor = rq.actor
 
-        if (actor == null || actor.getMemberId() != memberId) {
+        if (actor == null || actor.getLoginId() != loginId) {
             throw ServiceException("403-1", "권한이 없습니다.")
         }
 
-        val existingMember = memberService.findByMemberId(memberId)
+        val existingMember = memberService.findByLoginId(loginId)
 
         if (updateReqDTO!!.email != null) {
             existingMember?.email = updateReqDTO.email

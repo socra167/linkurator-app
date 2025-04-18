@@ -159,8 +159,8 @@ class ApiV1CurationController(
     @PostMapping("/like/{id}")
     @PreAuthorize("isAuthenticated()")
     fun likeCuration(@PathVariable id: Long): RsData<Void?> {
-        val memberId = rq.actor.id
-        curationService.likeCuration(id, memberId!!)
+        val loginId = rq.actor.id
+        curationService.likeCuration(id, loginId!!)
         return RsData("200-1", "글에 좋아요를 했습니다.", null)
     }
 
@@ -172,8 +172,8 @@ class ApiV1CurationController(
      */
     @GetMapping("/like/{id}/status")
     fun isCurationLiked(@PathVariable id: Long): RsData<Boolean> {
-        val memberId = rq.actor.id
-        val isLiked = curationService.isLikedByMember(id, memberId!!)
+        val loginId = rq.actor.id
+        val isLiked = curationService.isLikedByMember(id, loginId!!)
         return RsData("200-1", "좋아요 여부 확인 성공", isLiked)
     }
 

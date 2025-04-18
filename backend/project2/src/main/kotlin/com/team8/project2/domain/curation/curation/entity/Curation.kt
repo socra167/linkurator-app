@@ -33,7 +33,7 @@ class Curation(
      * 큐레이션 작성자 (Member와 N:1 관계, 선택적)
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "memberId", nullable = true)
+    @JoinColumn(name = "loginId", nullable = true)
     val member: Member,
 ) {
     /**
@@ -105,7 +105,7 @@ class Curation(
     val memberName: String
         get() = member.getUsername()
 
-    val memberId: Long
+    val loginId: Long
         get() = member.id!!
 
     val memberImgUrl: String?

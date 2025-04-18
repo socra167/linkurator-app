@@ -6,7 +6,6 @@ import com.team8.project2.domain.image.service.S3Uploader
 import com.team8.project2.domain.member.dto.MemberReqDTO
 import com.team8.project2.domain.member.entity.RoleEnum
 import com.team8.project2.domain.member.repository.MemberRepository
-import com.team8.project2.domain.member.repository.findByIdOrThrow
 import com.team8.project2.domain.member.service.MemberService
 import com.team8.project2.global.exception.ServiceException
 import org.junit.jupiter.api.DisplayName
@@ -41,7 +40,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
 
     @Throws(Exception::class)
     private fun joinRequest(
-        memberId: String,
+        loginId: String,
         password: String,
         email: String,
         role: String,
@@ -54,9 +53,9 @@ class ApiV1MemberControllerTest @Autowired constructor(
                     .content(
                         """
                                         {
-                                            "memberId": "${memberId}",
+                                            "loginId": "${loginId}",
                                             "password": "${password}",
-                                            "username": "${memberId}",
+                                            "username": "${loginId}",
                                             "email": "${email}",
                                             "role": "${role}",
                                             "profileImage": "${profileImage}",
@@ -77,16 +76,16 @@ class ApiV1MemberControllerTest @Autowired constructor(
     @DisplayName("회원 가입1")
     @Throws(Exception::class)
     fun join1() {
-        val memberId = "user123"
+        val loginId = "user123"
         val password = "securePass123"
         val email = "user123@example.com"
         val role = "MEMBER" // RoleEnum이 문자열로 변환됨
         val profileImage = "https://example.com/profile.jpg"
         val introduce = "안녕하세요! 저는 새로운 회원입니다."
 
-        val resultActions = joinRequest(memberId, password, email, role, profileImage, introduce)
+        val resultActions = joinRequest(loginId, password, email, role, profileImage, introduce)
         //입력 확인
-        val member = memberService.findByMemberId("user123")
+        val member = memberService.findByLoginId("user123")
             ?: throw ServiceException("404-1", "해당 회원을 찾을 수 없습니다.")
 
 
@@ -103,7 +102,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
     @DisplayName("회원 가입2 - username이 이미 존재하는 케이스")
     @Throws(Exception::class)
     fun join2() {
-        val memberId = "user123"
+        val loginId = "user123"
         val password = "securePass123"
         val email = "user123@example.com"
         val role = "MEMBER" // RoleEnum이 문자열로 변환됨
@@ -111,9 +110,9 @@ class ApiV1MemberControllerTest @Autowired constructor(
         val introduce = "안녕하세요! 저는 새로운 회원입니다."
 
         // 회원 가입 요청
-        val resultActions = joinRequest(memberId, password, email, role, profileImage, introduce)
-        // 같은 memberId를 통한 회원 가입 재요청
-        val resultActions2 = joinRequest(memberId, password, email, role, profileImage, introduce)
+        val resultActions = joinRequest(loginId, password, email, role, profileImage, introduce)
+        // 같은 loginId를 통한 회원 가입 재요청
+        val resultActions2 = joinRequest(loginId, password, email, role, profileImage, introduce)
         resultActions2
             .andExpect(MockMvcResultMatchers.status().isConflict())
             .andExpect(MockMvcResultMatchers.handler().handlerType(ApiV1MemberController::class.java))
@@ -174,7 +173,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
     @Test
     @DisplayName("회원 가입5 - 필수 입력값 누락 (사용자명 없음)")
     @Throws(Exception::class)
-    fun joinWithoutMemberId() {
+    fun joinWithoutLoginId() {
         // 사용자명 누락 테스트
         val memberReqDTO = MemberReqDTO(
             null,
@@ -192,7 +191,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
                 .content(ObjectMapper().writeValueAsString(memberReqDTO))
         )
             .andExpect(MockMvcResultMatchers.status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("$.msg").value("memberId : NotBlank : 회원 ID는 필수 입력값입니다."))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.msg").value("loginId : NotBlank : 회원 ID는 필수 입력값입니다."))
     }
 
     @Test
@@ -219,13 +218,13 @@ class ApiV1MemberControllerTest @Autowired constructor(
     }
 
     @Test
-    @DisplayName("이미 존재하는 memberId로 회원 가입 시 오류 발생")
+    @DisplayName("이미 존재하는 loginId로 회원 가입 시 오류 발생")
     @Throws(
         Exception::class
     )
-    fun joinWithDuplicateMemberId() {
+    fun joinWithDuplicateLoginId() {
         // Given
-        val duplicateMemberId = "memberId" // BaseInitData 에서 이미 생성된 ID 사용
+        val duplicateLoginId = "loginId" // BaseInitData 에서 이미 생성된 ID 사용
         val password = "123456"
         val email = "duplicate@example.com"
         val role = "MEMBER"
@@ -233,7 +232,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
         val introduce = "안녕"
 
         // When
-        val resultActions = joinRequest(duplicateMemberId, password, email, role, profileImage, introduce)
+        val resultActions = joinRequest(duplicateLoginId, password, email, role, profileImage, introduce)
 
         // Then
         resultActions
@@ -325,13 +324,13 @@ class ApiV1MemberControllerTest @Autowired constructor(
 
         // When
         mvc.perform(
-            MockMvcRequestBuilders.put("/api/v1/members/{memberId}", member.getMemberId())
+            MockMvcRequestBuilders.put("/api/v1/members/{loginId}", member.getLoginId())
                 .header("Authorization", "Bearer $accessToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
                 {
-                  "memberId": "${member.getMemberId()}",
+                  "loginId": "${member.getLoginId()}",
                   "username": "${newUsername}",
                   "email": "${newEmail}",
                   "introduce": "${newIntroduce}"
@@ -358,7 +357,7 @@ class ApiV1MemberControllerTest @Autowired constructor(
             val followeeId = 1L
             val followerId = 2L
             val followee = memberService.findById(followeeId)
-            val member = memberRepository.findByIdOrThrow(followerId)
+            val member = memberService.findById(followerId)
             val accessToken = memberService.genAccessToken(member)
 
             mvc.perform(
@@ -401,13 +400,13 @@ class ApiV1MemberControllerTest @Autowired constructor(
             Exception::class
         )
         fun follow_invalidFollowee() {
-            val invalidFolloweeMemberId = "invalidMemberId"
+            val invalidFolloweeLoginId = "invalidLoginId"
             val followerId = 1L
             val member = memberRepository.findById(followerId).get()
             val accessToken = memberService.genAccessToken(member)
 
             mvc.perform(
-                MockMvcRequestBuilders.post("/api/v1/members/${invalidFolloweeMemberId}/follow")
+                MockMvcRequestBuilders.post("/api/v1/members/${invalidFolloweeLoginId}/follow")
                     .header("Authorization", "Bearer $accessToken")
             )
                 .andExpect(MockMvcResultMatchers.status().isNotFound())

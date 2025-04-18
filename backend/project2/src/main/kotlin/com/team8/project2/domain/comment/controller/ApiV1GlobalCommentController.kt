@@ -6,8 +6,11 @@ import com.team8.project2.domain.curation.curation.service.CurationService
 import com.team8.project2.domain.member.service.MemberService
 import com.team8.project2.global.Rq
 import com.team8.project2.global.dto.RsData
-import com.team8.project2.global.exception.ServiceException
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 /**
  * 전체 댓글 API 컨트롤러입니다.
@@ -29,7 +32,7 @@ class ApiV1GlobalCommentController(
     @GetMapping("/mycomments")
     fun getCommentsByCurationId(): RsData<List<CommentDto>> {
         val author = rq.actor
-        val member = memberService.findById(author.id)
+        val member = memberService.findById(author.id!!)
 
         val commentDtos = commentService.findAllByAuthorId(member.id!!)
         return RsData.success("내 댓글 조회 성공", commentDtos)

@@ -77,22 +77,22 @@ class AdminServiceTest {
     @Test
     @DisplayName("멤버 삭제 - 존재하는 멤버이면 정상적으로 삭제된다.")
     fun deleteMember_ShouldDelete_WhenMemberExists() {
-        val memberId = 1L
-        `when`(memberRepository.existsById(memberId)).thenReturn(true)
+        val loginId = 1L
+        `when`(memberRepository.existsById(loginId)).thenReturn(true)
 
-        adminService.deleteMemberById(memberId)
+        adminService.deleteMemberById(loginId)
 
-        verify(memberRepository, times(1)).deleteById(memberId)
+        verify(memberRepository, times(1)).deleteById(loginId)
     }
 
     @Test
     @DisplayName("멤버 삭제 - 존재하지 않는 멤버이면 NotFoundException 발생")
     fun deleteMember_ShouldThrowException_WhenMemberNotFound() {
-        val memberId = 1L
-        `when`(memberRepository.existsById(memberId)).thenReturn(false)
+        val loginId = 1L
+        `when`(memberRepository.existsById(loginId)).thenReturn(false)
 
         val exception = assertFailsWith<NotFoundException> {
-            adminService.deleteMemberById(memberId)
+            adminService.deleteMemberById(loginId)
         }
 
         assertEquals("멤버를 찾을 수 없습니다.", exception.message)

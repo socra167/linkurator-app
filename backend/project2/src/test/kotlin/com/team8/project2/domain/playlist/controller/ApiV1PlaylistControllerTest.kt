@@ -202,7 +202,7 @@ internal class ApiV1PlaylistControllerTest {
     fun shouldIncreaseLikeCount() {
         // Given
         val playlistId = 1L
-        val memberId = 100L
+        val loginId = 100L
 
         val mockMember = Member(
             id = 100L,
@@ -215,7 +215,7 @@ internal class ApiV1PlaylistControllerTest {
 
 
         whenever(rq.actor).thenReturn(mockMember)
-        doNothing().whenever(playlistService).likePlaylist(playlistId, memberId)
+        doNothing().whenever(playlistService).likePlaylist(playlistId, loginId)
 
         // When & Then
         mockMvc.perform(
@@ -224,7 +224,7 @@ internal class ApiV1PlaylistControllerTest {
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andExpect(MockMvcResultMatchers.jsonPath("$.msg").value("좋아요 상태가 토글되었습니다."))
 
-        verify(playlistService, times(1)).likePlaylist(playlistId, memberId)
+        verify(playlistService, times(1)).likePlaylist(playlistId, loginId)
     }
 
     @Test
@@ -653,7 +653,7 @@ internal class ApiV1PlaylistControllerTest {
     fun getLikeStatus_whenLoggedIn() {
         // Given
         val playlistId = 1L
-        val memberId = 100L
+        val loginId = 100L
 
         val mockMember = Member(
             id = 100L,
@@ -664,7 +664,7 @@ internal class ApiV1PlaylistControllerTest {
 
         whenever(rq.isLogin).thenReturn(true)
         whenever(rq.actor).thenReturn(mockMember)
-        whenever(playlistService.hasLikedPlaylist(playlistId, memberId)).thenReturn(true)
+        whenever(playlistService.hasLikedPlaylist(playlistId, loginId)).thenReturn(true)
 
         // When & Then
         mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/playlists/{id}/like/status", playlistId))
@@ -672,7 +672,7 @@ internal class ApiV1PlaylistControllerTest {
             .andExpect(MockMvcResultMatchers.jsonPath("$.msg").value("좋아요 상태 조회 성공"))
             .andExpect(MockMvcResultMatchers.jsonPath("$.data").value(true))
 
-        verify(playlistService, times(1)).hasLikedPlaylist(playlistId, memberId)
+        verify(playlistService, times(1)).hasLikedPlaylist(playlistId, loginId)
     }
 
 
@@ -717,7 +717,7 @@ internal class ApiV1PlaylistControllerTest {
     @DisplayName("사용자가 좋아요한 플레이리스트 목록을 조회할 수 있다.")
     fun getLikedPlaylists() {
         // Given
-        val memberId = 100L
+        val loginId = 100L
 
         val mockMember = Member(
             id = 100L,
@@ -767,7 +767,7 @@ internal class ApiV1PlaylistControllerTest {
             .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].title").value("좋아요1"))
             .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].id").value(2L))
 
-        verify(playlistService, times(1)).getLikedPlaylistsFromRedis(memberId)
+        verify(playlistService, times(1)).getLikedPlaylistsFromRedis(loginId)
     }
 
 

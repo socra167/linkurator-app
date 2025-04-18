@@ -28,7 +28,7 @@ class ReplyComment(
      * 답글 작성자의 사용자 ID
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "memberId", nullable = false)
+    @JoinColumn(name = "loginId", nullable = false)
     var author: Member,
 
     /**

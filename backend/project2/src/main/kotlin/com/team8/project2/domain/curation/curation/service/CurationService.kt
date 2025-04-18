@@ -67,12 +67,12 @@ class CurationService(
 
     /**
      * ✅ 특정 큐레이터의 큐레이션 개수를 반환하는 메서드 추가
-     * @param member 조회할 큐레이터의 memberId
+     * @param member 조회할 큐레이터의 loginId
      * @return 해당 큐레이터가 작성한 큐레이션 개수
      */
     @Transactional
     fun countByMember(member: Member): Long {
-        return curationRepository.countByMemberId(member.getMemberId())
+        return curationRepository.countByLoginId(member.getLoginId())
     }
 
     /**
@@ -326,7 +326,7 @@ class CurationService(
             isLogin = true
             val actor = rq.actor
             isLiked = isLikedByMember(curationId, actor.id!!)
-            isFollowed = memberService.isFollowed(curation.memberId, actor.id)
+            isFollowed = memberService.isFollowed(curation.loginId, actor.id)
         }
 
         if (isNewView) {
@@ -392,7 +392,7 @@ class CurationService(
     }
 
     @Transactional
-    fun likeCuration(curationId: Long, memberId: Long) {
+    fun likeCuration(curationId: Long, loginId: Long) {
         // 큐레이션과 멤버를 찾음
         val curation = curationRepository.findById(curationId)
             .orElseThrow {
@@ -402,7 +402,7 @@ class CurationService(
                 )
             }!!
 
-        val member = memberRepository.findById(memberId)
+        val member = memberRepository.findById(loginId)
             .orElseThrow {
                 ServiceException(
                     "404-1",
@@ -412,7 +412,7 @@ class CurationService(
 
         // Redis Key 설정
         val redisKey = "curation_like:$curationId"
-        val value = memberId.toString()
+        val value = loginId.toString()
 
         // LUA 스크립트: 좋아요가 있으면 삭제, 없으면 추가
         val luaScript =
@@ -442,10 +442,10 @@ class CurationService(
             val curationId = parts[1].toLong()
 
             // Like Repo에 좋아요 정보 추가
-            val memberIds = redisTemplate.opsForSet().members(key)
-            for (memberId in memberIds!!) {
+            val loginIds = redisTemplate.opsForSet().members(key)
+            for (loginId in loginIds!!) {
                 val curation = curationRepository.findById(curationId).get()
-                val member = memberRepository.findByMemberId(memberId)
+                val member = memberRepository.findByLoginId(loginId)
                 likeRepository.save(Like.of(curation, member!!))
             }
 
@@ -468,12 +468,12 @@ class CurationService(
     /**
      * 특정 큐레이션에 대한 좋아요 여부를 확인합니다.
      * @param curationId 큐레이션 ID
-     * @param memberId 사용자 ID
+     * @param loginId 사용자 ID
      * @return 좋아요 여부 (true: 좋아요 누름, false: 좋아요 안 누름)
      */
-    fun isLikedByMember(curationId: Long, memberId: Long): Boolean {
+    fun isLikedByMember(curationId: Long, loginId: Long): Boolean {
         val redisKey = "curation_like:$curationId"
-        return redisTemplate.opsForSet().isMember(redisKey, memberId.toString())
+        return redisTemplate.opsForSet().isMember(redisKey, loginId.toString())
     }
 
     /**
@@ -520,10 +520,10 @@ class CurationService(
 
     @Transactional(readOnly = true)
     fun getTrendingCuration(): TrendingCurationResDto {
-        val topCurations = redisTemplate?.opsForZSet()
+        val topCurations = redisTemplate.opsForZSet()
             ?.reverseRange(DAY_VIEW_COUNT_KEY, 0, 2)
             ?.mapNotNull { curationId ->
-                curationRepository.findById(curationId.toLong())?.orElseGet {
+                curationRepository.findById(curationId.toLong()).orElseGet {
                     redisTemplate.opsForZSet().remove(DAY_VIEW_COUNT_KEY, curationId)
                     null
                 }

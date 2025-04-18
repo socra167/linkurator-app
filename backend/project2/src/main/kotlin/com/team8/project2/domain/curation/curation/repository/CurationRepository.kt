@@ -15,8 +15,8 @@ import org.springframework.stereotype.Repository
  */
 @Repository
 interface CurationRepository : JpaRepository<Curation, Long>, CurationRepositoryCustom {
-    @Query("SELECT COUNT(c) FROM Curation c WHERE c.member.memberId = :memberId")
-    fun countByMemberId(@Param("memberId") memberId: String): Long
+    @Query("SELECT COUNT(c) FROM Curation c WHERE c.member.loginId = :loginId")
+    fun countByLoginId(@Param("loginId") loginId: String): Long
 
     /**
      * 필터 조건을 기반으로 큐레이션을 검색하는 메서드입니다.

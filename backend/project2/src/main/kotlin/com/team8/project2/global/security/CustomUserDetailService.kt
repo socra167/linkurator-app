@@ -11,12 +11,12 @@ class CustomUserDetailService(
     private val memberRepository: MemberRepository,
 ) : UserDetailsService {
     override fun loadUserByUsername(username: String): UserDetails {
-        val member = memberRepository.findByMemberId(username)
+        val member = memberRepository.findByLoginId(username)
             ?: throw UsernameNotFoundException("사용자를 찾을 수 없습니다.")
 
         return SecurityUser(
             id = member.id!!,
-            username = member.getMemberId(),
+            username = member.getLoginId(),
             password = member.getPassword(),
             authorities = member.authorities,
         )

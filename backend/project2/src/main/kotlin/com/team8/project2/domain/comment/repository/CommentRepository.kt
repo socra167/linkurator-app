@@ -20,9 +20,9 @@ interface CommentRepository : JpaRepository<Comment, Long> {
 
     /**
      * 특정 회원 ID가 작성한 모든 댓글을 조회합니다.
-     * @param memberId 회원 ID
+     * @param loginId 회원 ID
      */
-    fun findAllByAuthor_Id(memberId: Long): List<Comment>
+    fun findAllByAuthor_Id(loginId: Long): List<Comment>
 
     /**
      * 특정 회원이 작성한 모든 댓글을 조회합니다.

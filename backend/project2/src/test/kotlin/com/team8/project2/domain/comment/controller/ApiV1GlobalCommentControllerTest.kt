@@ -41,7 +41,7 @@ class ApiV1GlobalCommentControllerTest {
     @BeforeEach
     fun setUp() {
         val author = memberRepository.findById(2L)
-            .orElseThrow { RuntimeException("BaseInitData: memberId=2 not found") }
+            .orElseThrow { RuntimeException("BaseInitData: loginId=2 not found") }
 
         accessToken = authTokenService.genAccessToken(author)
     }
@@ -51,7 +51,7 @@ class ApiV1GlobalCommentControllerTest {
     fun deleteCommentOfOther() {
         val myComment = commentRepository.findAll()
             .firstOrNull { it.author.id == 2L }
-            ?: throw RuntimeException("BaseInitData: memberId=2의 댓글 없음")
+            ?: throw RuntimeException("BaseInitData: loginId=2의 댓글 없음")
 
         mockMvc.perform(
             delete("/api/v1/comments/{id}", myComment.id)
@@ -69,7 +69,7 @@ class ApiV1GlobalCommentControllerTest {
     @DisplayName("BaseInitData 기반 - 내 댓글 조회")
     fun getMyCommentsList() {
         val member1 = memberRepository.findById(1L)
-            .orElseThrow { RuntimeException("BaseInitData: memberId=1 not found") }
+            .orElseThrow { RuntimeException("BaseInitData: loginId=1 not found") }
         val tokenForUser1 = authTokenService.genAccessToken(member1)
 
         mockMvc.perform(
@@ -80,6 +80,6 @@ class ApiV1GlobalCommentControllerTest {
             .andExpect(jsonPath("$.code").value("200-1"))
             .andExpect(jsonPath("$.msg").value("내 댓글 조회 성공"))
             .andExpect(jsonPath("$.data").isArray)
-            .andExpect(jsonPath("$.data.length()").value(0)) // memberId=1은 댓글 작성 X
+            .andExpect(jsonPath("$.data.length()").value(0)) // loginId=1은 댓글 작성 X
     }
 }

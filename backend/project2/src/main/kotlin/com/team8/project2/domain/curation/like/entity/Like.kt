@@ -35,7 +35,7 @@ class Like private constructor(
      * 좋아요를 누른 회원 (다대일 관계)
      */
     @ManyToOne
-    @JoinColumn(name = "memberId", insertable = false, updatable = false)
+    @JoinColumn(name = "loginId", insertable = false, updatable = false)
     val member: Member
 ) {
     /**
@@ -67,7 +67,7 @@ class Like private constructor(
         /**
          * 좋아요를 누른 회원 ID
          */
-        @Column(name = "memberId")
-        var memberId: Long? = null,
+        @Column(name = "loginId")
+        var loginId: Long? = null,
     ) : Serializable
 }

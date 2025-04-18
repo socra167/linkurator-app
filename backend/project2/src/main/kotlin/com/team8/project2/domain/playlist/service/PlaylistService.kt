@@ -272,7 +272,7 @@ class PlaylistService(
 
         val actor = rq.actor
 
-        if (playlist.member.getMemberId() != actor.getMemberId()) {
+        if (playlist.member.getLoginId() != actor.getLoginId()) {
             throw BadRequestException("자신이 소유한 플레이리스트만 삭제할 수 있습니다.")
         }
 
@@ -287,16 +287,16 @@ class PlaylistService(
      * Redis로 좋아요 토글, 좋아요 수 업데이트 후 DB에 반영합니다.
      *
      * @param playlistId 대상 플레이리스트 ID
-     * @param memberId 좋아요 한 사용자 ID
+     * @param loginId 좋아요 한 사용자 ID
      */
     @Transactional
     fun likePlaylist(
         playlistId: Long,
-        memberId: Long,
+        loginId: Long,
     ) {
         val redisKey = "playlist_like:$playlistId"
-        val memberLikedKey = "member_liked_playlists:$memberId"
-        val memberStr = memberId.toString()
+        val memberLikedKey = "member_liked_playlists:$loginId"
+        val memberStr = loginId.toString()
 
         val luaScript =
             """
@@ -335,15 +335,15 @@ class PlaylistService(
      * 사용자가 특정 플레이리스트에 좋아요를 눌렀는지 여부를 확인합니다.
      *
      * @param playlistId 대상 플레이리스트 ID
-     * @param memberId 사용자 ID
+     * @param loginId 사용자 ID
      * @return 좋아요 여부
      */
     fun hasLikedPlaylist(
         playlistId: Long,
-        memberId: Long,
+        loginId: Long,
     ): Boolean {
         val redisKey = "playlist_like:$playlistId"
-        return redisTemplate.opsForSet().isMember(redisKey, memberId.toString()) == true
+        return redisTemplate.opsForSet().isMember(redisKey, loginId.toString()) == true
     }
 
     /**
@@ -362,24 +362,24 @@ class PlaylistService(
     /**
      * 사용자가 좋아요한 모든 플레이리스트 목록을 조회합니다.
      *
-     * @param memberId 사용자 ID
+     * @param loginId 사용자 ID
      * @return 좋아요한 플레이리스트 DTO 리스트
      */
     @Transactional(readOnly = true)
-    fun getLikedPlaylists(memberId: Long): List<PlaylistDto> {
-        val likedEntities = playlistLikeRepository.findByIdMemberId(memberId)
+    fun getLikedPlaylists(loginId: Long): List<PlaylistDto> {
+        val likedEntities = playlistLikeRepository.findByIdLoginId(loginId)
         return toDtoList(likedEntities.map { it.playlist })
     }
 
     /**
      * Redis에 저장된 사용자의 좋아요 플레이리스트 목록을 조회합니다.
      *
-     * @param memberId 사용자 ID
+     * @param loginId 사용자 ID
      * @return 좋아요한 플레이리스트 DTO 리스트 (없으면 빈 리스트)
      */
     @Transactional(readOnly = true)
-    fun getLikedPlaylistsFromRedis(memberId: Long): List<PlaylistDto> {
-        val memberLikedKey = "member_liked_playlists:$memberId"
+    fun getLikedPlaylistsFromRedis(loginId: Long): List<PlaylistDto> {
+        val memberLikedKey = "member_liked_playlists:$loginId"
         val playlistIdObjs = redisTemplate.opsForSet().members(memberLikedKey)
 
         if (playlistIdObjs.isNullOrEmpty()) return emptyList()
@@ -409,14 +409,14 @@ class PlaylistService(
                 continue
             }
             val playlist = playlistRepository.findById(playlistId).orElse(null) ?: continue
-            val rawMemberIds = redisTemplate.opsForSet().members(key) ?: continue
-            val memberIds = rawMemberIds.mapNotNull { it.toString().toLongOrNull() }.toSet()
+            val rawLoginIds = redisTemplate.opsForSet().members(key) ?: continue
+            val loginIds = rawLoginIds.mapNotNull { it.toString().toLongOrNull() }.toSet()
 
-            for (memberId in memberIds) {
-                val member = memberRepository.findById(memberId).orElse(null) ?: continue
+            for (loginId in loginIds) {
+                val member = memberRepository.findById(loginId).orElse(null) ?: continue
                 val likeId = PlaylistLike.PlaylistLikeId().apply {
                     this.playlistId = playlistId
-                    this.memberId = memberId
+                    this.loginId = loginId
                 }
 
                 if (!playlistLikeRepository.existsById(likeId)) {
@@ -429,10 +429,10 @@ class PlaylistService(
             playlistRepository.save(playlist)
 
             val currentLikesInDB = playlistLikeRepository.findAllById_PlaylistId(playlistId)
-            val currentMemberIdSet = memberIds
+            val currentLoginIdSet = loginIds
 
             for (dbLike in currentLikesInDB) {
-                if (!currentMemberIdSet.contains(dbLike.member.id)) {
+                if (!currentLoginIdSet.contains(dbLike.member.id)) {
                     playlistLikeRepository.delete(dbLike)
                 }
             }

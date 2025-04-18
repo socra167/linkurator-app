@@ -1,6 +1,14 @@
 package com.team8.project2.domain.member.entity
 
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.Table
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
@@ -10,13 +18,14 @@ import java.time.LocalDateTime
 
 @Entity
 @EntityListeners(AuditingEntityListener::class)
+@Table(name = "members")
 class Member(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
 
     @Column(length = 100, unique = true)
-    private var memberId: String? = null,
+    private var loginId: String? = null,
 
     @Column(nullable = false)
     private var password: String? = null,
@@ -52,7 +61,7 @@ class Member(
     }
 
     // getter 예시
-    fun getMemberId(): String = memberId ?: throw UninitializedPropertyAccessException("memberId is not initialized")
+    fun getLoginId(): String = loginId ?: throw UninitializedPropertyAccessException("loginId is not initialized")
     fun getUsername(): String = username ?: throw UninitializedPropertyAccessException("username is not initialized")
     fun getPassword(): String = password ?: throw UninitializedPropertyAccessException("password is not initialized")
     fun setUsername(username: String) {

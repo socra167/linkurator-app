@@ -29,7 +29,7 @@ class Comment(
      * 댓글 작성자의 사용자 ID
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "memberId", nullable = false)
+    @JoinColumn(name = "loginId", nullable = false)
     val author: Member,
 
     /**

@@ -18,7 +18,12 @@ import com.team8.project2.domain.playlist.repository.PlaylistRepository
 import com.team8.project2.global.Rq
 import com.team8.project2.global.exception.BadRequestException
 import com.team8.project2.global.exception.NotFoundException
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertDoesNotThrow
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -28,7 +33,12 @@ import org.mockito.Mockito.lenient
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.junit.jupiter.MockitoSettings
-import org.mockito.kotlin.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doNothing
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.mockito.quality.Strictness
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.SetOperations
@@ -38,7 +48,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript
 import org.springframework.mock.web.MockHttpServletRequest
 import java.time.Duration
 import java.time.LocalDateTime
-import java.util.*
+import java.util.Optional
 
 @ExtendWith(MockitoExtension::class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -85,7 +95,7 @@ class PlaylistServiceTest {
     fun setUp() {
         sampleMember = Member(
             id = 1L,
-            memberId = "test123",
+            loginId = "test123",
             username = "테스트 유저",
             password = "testPassword123!",
             role = RoleEnum.MEMBER,
@@ -434,7 +444,7 @@ class PlaylistServiceTest {
     @DisplayName("좋아요가 Redis에서 정상적으로 증가해야 한다.")
     fun shouldIncreaseLikeCountInRedis() {
         val playlistId = 1L
-        val memberId = 1L
+        val loginId = 1L
 
         // Given
         whenever(playlistRepository.findById(playlistId)).thenReturn(Optional.of(samplePlaylist))
@@ -443,20 +453,20 @@ class PlaylistServiceTest {
             redisTemplate.execute(
                 any<DefaultRedisScript<Long>>(),
                 eq(listOf("playlist_like:$playlistId")),
-                eq(memberId.toString())
+                eq(loginId.toString())
             )
         )
             .thenReturn(1L)
         whenever(setOperations.size("playlist_like:$playlistId")).thenReturn(1L)
 
         // When
-        playlistService.likePlaylist(playlistId, memberId)
+        playlistService.likePlaylist(playlistId, loginId)
 
         // Then
         verify(redisTemplate, times(1)).execute(
             any<DefaultRedisScript<Long>>(),
             eq(listOf("playlist_like:$playlistId")),
-            eq(memberId.toString())
+            eq(loginId.toString())
         )
         assertEquals(1L, samplePlaylist.likeCount)
     }
@@ -692,7 +702,7 @@ class PlaylistServiceTest {
 
         val sampleMember = Member(
             id = 1L,
-            memberId = "test123",
+            loginId = "test123",
             username = "테스트 유저",
             password = "1234",
             role = RoleEnum.MEMBER,
@@ -771,7 +781,7 @@ class PlaylistServiceTest {
         // given
         val member = Member(
             id = 1L,
-            memberId = "test123",
+            loginId = "test123",
             username = "테스트 유저",
             password = "1234",
             role = RoleEnum.MEMBER,
@@ -782,7 +792,7 @@ class PlaylistServiceTest {
 
         val originalOwner = Member(
             id = 2L,
-            memberId = "owner123",
+            loginId = "owner123",
             username = "originalOwner",
             password = "ownerPw",
             role = RoleEnum.MEMBER,
@@ -838,7 +848,7 @@ class PlaylistServiceTest {
 
         val member = Member(
             id = 1L,
-            memberId = "member123",
+            loginId = "member123",
             username = "testUser",
             password = "1234",
             role = RoleEnum.MEMBER,
@@ -928,18 +938,18 @@ class PlaylistServiceTest {
     fun checkUserLikedPlaylist() {
         // given
         val playlistId = 1L
-        val memberId = 1L
+        val loginId = 1L
         val redisKey = "playlist_like:$playlistId"
 
         whenever(redisTemplate.opsForSet()).thenReturn(setOperations)
-        whenever(setOperations.isMember(redisKey, memberId.toString())).thenReturn(true)
+        whenever(setOperations.isMember(redisKey, loginId.toString())).thenReturn(true)
 
         // when
-        val isLiked = playlistService.hasLikedPlaylist(playlistId, memberId)
+        val isLiked = playlistService.hasLikedPlaylist(playlistId, loginId)
 
         // then
         assertTrue(isLiked)
-        verify(setOperations, times(1)).isMember(redisKey, memberId.toString())
+        verify(setOperations, times(1)).isMember(redisKey, loginId.toString())
     }
 
     @Test
@@ -964,8 +974,8 @@ class PlaylistServiceTest {
     @DisplayName("현재 로그인한 사용자가 좋아요한 플레이리스트 목록 조회한다")
     fun getLikedPlaylists() {
         // given
-        val memberId = 1L
-        val redisKey = "member_liked_playlists:$memberId"
+        val loginId = 1L
+        val redisKey = "member_liked_playlists:$loginId"
 
         val playlist1 = Playlist(
             id = 10L,
@@ -1004,7 +1014,7 @@ class PlaylistServiceTest {
         whenever(playlistRepository.findAllById(any())).thenReturn(listOf(playlist1, playlist2))
 
         // when
-        val result = playlistService.getLikedPlaylistsFromRedis(memberId)
+        val result = playlistService.getLikedPlaylistsFromRedis(loginId)
 
         // then
         assertEquals(2, result.size)

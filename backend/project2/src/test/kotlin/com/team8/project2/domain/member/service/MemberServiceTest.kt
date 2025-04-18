@@ -9,15 +9,20 @@ import com.team8.project2.domain.member.repository.FollowRepository
 import com.team8.project2.domain.member.repository.MemberRepository
 import com.team8.project2.global.Rq
 import com.team8.project2.global.exception.ServiceException
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentMatchers
 import org.mockito.InjectMocks
 import org.mockito.Mock
-import org.mockito.kotlin.*
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.springframework.context.ApplicationEventPublisher
-import java.util.*
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @ExtendWith(MockitoExtension::class)
@@ -50,7 +55,7 @@ class MemberServiceTest {
     @DisplayName("회원 가입 - null 가능 필드가 모두 채워졌을 때 정상 저장된다.")
     fun join_Succeeds_WhenAllNullableFieldsAreFilled() {
         val member = Member(
-            memberId = "fullUser",
+            loginId = "fullUser",
             username = "Full Name",
             password = "fullpw",
             role = RoleEnum.MEMBER,
@@ -71,7 +76,7 @@ class MemberServiceTest {
         )
 
         Assertions.assertNotNull(result)
-        Assertions.assertEquals("fullUser", result.getMemberId())
+        Assertions.assertEquals("fullUser", result.getLoginId())
         Assertions.assertEquals("Full Name", result.getUsername())
         Assertions.assertEquals("full@test.com", result.email)
         Assertions.assertEquals("fullImage.png", result.profileImage)
@@ -81,7 +86,7 @@ class MemberServiceTest {
     @DisplayName("회원 가입 - null 가능 필드가 모두 비어 있을 때 정상 저장된다.")
     fun join_Succeeds_WhenAllNullableFieldsAreNull() {
         val member = Member(
-            memberId = "minimalUser",
+            loginId = "minimalUser",
             username = "username",
             password = "minpw",
             role = RoleEnum.MEMBER,
@@ -101,7 +106,7 @@ class MemberServiceTest {
         val result = memberService!!.join("minimalUser", "minpw", null, null, null)
 
         Assertions.assertNotNull(result)
-        Assertions.assertEquals("minimalUser", result.getMemberId())
+        Assertions.assertEquals("minimalUser", result.getLoginId())
         Assertions.assertEquals("username", result.getUsername())
         Assertions.assertNull(result.email)
         Assertions.assertNull(result.profileImage)
@@ -111,9 +116,9 @@ class MemberServiceTest {
     @DisplayName("회원 삭제 - 존재하는 회원이면 정상적으로 삭제된다.")
     fun deleteMember_Succeeds_WhenMemberExists() {
         // given
-        val member = Member(memberId = "user1")
+        val member = Member(loginId = "user1")
 
-        whenever(memberRepository.findByMemberId("user1")).thenReturn(member)
+        whenever(memberRepository.findByLoginId("user1")).thenReturn(member)
 
         // when
         memberService!!.deleteMember("user1")
@@ -136,14 +141,14 @@ class MemberServiceTest {
     @Test
     @DisplayName("JWT 인증 - accessToken의 payload로부터 사용자 정보를 생성한다.")
     fun memberByAccessToken_ReturnsMember_WhenPayloadIsValid() {
-        val payload = mapOf<String, Any>("id" to 1L, "memberId" to "user")
+        val payload = mapOf<String, Any>("id" to 1L, "loginId" to "user")
         whenever(authTokenService.getPayload("token123")).thenReturn(payload)
 
         val result = memberService!!.getMemberByAccessToken("token123")
 
         Assertions.assertTrue(result.isPresent)
         Assertions.assertEquals(1L, result.get().id)
-        Assertions.assertEquals("user", result.get().getMemberId())
+        Assertions.assertEquals("user", result.get().getLoginId())
     }
 
 

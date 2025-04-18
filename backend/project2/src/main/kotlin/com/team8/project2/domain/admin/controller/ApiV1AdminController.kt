@@ -38,9 +38,9 @@ class ApiV1AdminController(
     /**
      * ✅ 멤버를 삭제합니다.
      */
-    @DeleteMapping("/members/{memberId}")
-    fun deleteMember(@PathVariable memberId: Long): RsData<Unit> {
-        val member = memberService.findById(memberId)
+    @DeleteMapping("/members/{loginId}")
+    fun deleteMember(@PathVariable loginId: Long): RsData<Unit> {
+        val member = memberService.findById(loginId)
 
         adminService.deleteMember(member)
         return RsData.success("멤버가 삭제되었습니다.")

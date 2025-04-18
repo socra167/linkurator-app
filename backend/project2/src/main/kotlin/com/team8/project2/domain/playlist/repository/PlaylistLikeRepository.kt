@@ -13,7 +13,7 @@ interface PlaylistLikeRepository : JpaRepository<PlaylistLike, PlaylistLike.Play
     fun deleteById_PlaylistId(playlistId: Long)
 
     /** 특정 사용자의 모든 좋아요 데이터 조회  */
-    fun findByIdMemberId(memberId: Long): List<PlaylistLike>
+    fun findByIdLoginId(loginId: Long): List<PlaylistLike>
 
     /** 특정 플레이리스트의 모든 좋아요 데이터 조회  */
     fun findAllById_PlaylistId(playlistId: Long): List<PlaylistLike>

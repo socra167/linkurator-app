@@ -30,7 +30,7 @@ class PlaylistLike(
      * 좋아요를 누른 사용자 (N:1 관계, 읽기 전용)
      */
     @ManyToOne
-    @JoinColumn(name = "memberId", insertable = false, updatable = false)
+    @JoinColumn(name = "loginId", insertable = false, updatable = false)
     var member: Member
 
 )  {
@@ -44,7 +44,7 @@ class PlaylistLike(
         fun createLike(playlist: Playlist, member: Member): PlaylistLike {
             val likeId = PlaylistLikeId(
                 playlistId = playlist.id,
-                memberId = member.id
+                loginId = member.id
             )
             return PlaylistLike(
                 id = likeId,
@@ -61,6 +61,6 @@ class PlaylistLike(
     @Embeddable
     data class PlaylistLikeId(
         var playlistId: Long? = null,
-        var memberId: Long? = null
+        var loginId: Long? = null
     ) : Serializable
 }

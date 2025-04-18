@@ -33,7 +33,7 @@ class AuthTokenServiceTest {
 
     @BeforeEach
     fun setUp() {
-        testMember = memberService!!.findByMemberId("memberId")
+        testMember = memberService!!.findByLoginId("loginId")
         //예외 throw 삭제함
     }
 
@@ -48,7 +48,7 @@ class AuthTokenServiceTest {
         // Payload 검증
         val parsedPayload = authTokenService.getPayload(accessToken)
         Assertions.assertThat(parsedPayload).containsEntry("id", testMember!!.id)
-        Assertions.assertThat(parsedPayload).containsEntry("memberId", testMember!!.getMemberId())
+        Assertions.assertThat(parsedPayload).containsEntry("loginId", testMember!!.getLoginId())
 
         println("AccessToken = $accessToken")
     }

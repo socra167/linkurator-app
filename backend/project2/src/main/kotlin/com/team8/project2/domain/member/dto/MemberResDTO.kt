@@ -11,8 +11,8 @@ data class MemberResDTO(
     @JsonProperty("id")
     val id: Long,
 
-    @JsonProperty("memberId")
-    val memberId: String?,
+    @JsonProperty("loginId")
+    val loginId: String?,
 
     @JsonProperty("username")
     val username: String,
@@ -40,7 +40,7 @@ data class MemberResDTO(
         fun fromEntity(member: Member): MemberResDTO {
             return MemberResDTO(
                 id = member.id?: throw ServiceException("400-1", "ID는 null일 수 없습니다."),
-                memberId = member.getMemberId(),
+                loginId = member.getLoginId(),
                 username = member.getUsername(),
                 email = member.email,
                 role = member.role,

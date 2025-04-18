@@ -38,7 +38,7 @@ class LikeCurationConcurrencyTest {
     private lateinit var redisUtils: RedisUtils
 
     private var testCurationId: Long = 0
-    private var testMemberId: Long = 0
+    private var testLoginId: Long = 0
 
     @BeforeEach
     fun setUp() {
@@ -48,7 +48,7 @@ class LikeCurationConcurrencyTest {
         testCurationId = curation.id!!
 
         val member = memberRepository.findById(1L).get()
-        testMemberId = member.id!!
+        testLoginId = member.id!!
     }
 
     @Test
@@ -60,7 +60,7 @@ class LikeCurationConcurrencyTest {
         repeat(threadCount) {
             executorService.submit {
                 try {
-                    curationService.likeCuration(testCurationId, testMemberId)
+                    curationService.likeCuration(testCurationId, testLoginId)
                 } finally {
                     latch.countDown()
                 }

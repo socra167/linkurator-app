@@ -12,7 +12,6 @@ import com.team8.project2.domain.member.entity.RoleEnum
 import com.team8.project2.domain.member.event.ProfileImageUpdateEvent
 import com.team8.project2.domain.member.repository.FollowRepository
 import com.team8.project2.domain.member.repository.MemberRepository
-import com.team8.project2.domain.member.repository.findByIdOrThrow
 import com.team8.project2.global.Rq
 import com.team8.project2.global.exception.ServiceException
 import org.springframework.context.ApplicationEventPublisher
@@ -33,8 +32,8 @@ class MemberService(
     private val eventPublisher: ApplicationEventPublisher
 
 ) {
-    fun join(memberId: String?, password: String?, role: RoleEnum?, email: String?, profileImage: String?): Member {
-        return join(memberId, password, role, email, profileImage, null)
+    fun join(loginId: String?, password: String?, role: RoleEnum?, email: String?, profileImage: String?): Member {
+        return join(loginId, password, role, email, profileImage, null)
     }
 
     fun count(): Long {
@@ -43,7 +42,7 @@ class MemberService(
 
     @Transactional
     fun join(
-        memberId: String?, password: String?, role: RoleEnum?, email: String?, profileImage: String?,
+        loginId: String?, password: String?, role: RoleEnum?, email: String?, profileImage: String?,
         introduce: String?
     ): Member {
         var role = role
@@ -51,7 +50,7 @@ class MemberService(
             role = RoleEnum.MEMBER
         }
         val member = Member(
-            memberId = memberId,
+            loginId = loginId,
             password = password,
             role = RoleEnum.MEMBER,  // 기본값 지정이 사라졌을 수 있으므로 명시
             email = email,
@@ -66,16 +65,17 @@ class MemberService(
         return memberRepository.save(member)
     }
 
-    fun findByMemberId(memberId: String): Member? {
-        return memberRepository.findByMemberId(memberId)
+    fun findByLoginId(loginId: String): Member? {
+        return memberRepository.findByLoginId(loginId)
     }
 
     fun findByUsername(username: String?): Member? {
         return memberRepository.findByUsername(username)
     }
 
-    fun findById(id: Long?): Member {
-        return memberRepository.findByIdOrThrow(id)
+    fun findById(id: Long): Member {
+        return memberRepository.findById(id)
+            .orElseThrow { ServiceException("404-1", "해당 회원을 찾을 수 없습니다.") }
     }
 
     fun getAuthToken(member: Member?): String {
@@ -83,8 +83,8 @@ class MemberService(
     }
 
     @Transactional
-    fun deleteMember(memberId: String?) {
-        val member = memberRepository.findByMemberId(memberId)
+    fun deleteMember(loginId: String?) {
+        val member = memberRepository.findByLoginId(loginId)
             ?: throw ServiceException("404-1", "해당 회원을 찾을 수 없습니다.")
         memberRepository.delete(member)
     }
@@ -97,9 +97,9 @@ class MemberService(
         }
 
         val id = payload["id"] as Long
-        val memberId = payload["memberId"] as String?
+        val loginId = payload["loginId"] as String?
 
-        return Optional.of(Member(id, memberId!!))
+        return Optional.of(Member(id, loginId!!))
     }
 
     fun genAccessToken(member: Member?): String {
@@ -111,7 +111,7 @@ class MemberService(
         val followee = findByUsername(username)
             ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
 
-        if (follower.getMemberId() == followee.getMemberId()) {
+        if (follower.getLoginId() == followee.getLoginId()) {
             throw ServiceException("400-1", "자신을 팔로우할 수 없습니다.")
         }
 
@@ -132,7 +132,7 @@ class MemberService(
 
             ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
 
-        if (follower.getMemberId() == followee.getMemberId()) {
+        if (follower.getLoginId() == followee.getLoginId()) {
             throw ServiceException("400-1", "자신을 팔로우할 수 없습니다.")
         }
 

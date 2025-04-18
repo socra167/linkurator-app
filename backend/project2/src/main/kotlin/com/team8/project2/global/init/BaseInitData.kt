@@ -42,7 +42,7 @@ class BaseInitData(
 
     private fun createMembers(): List<Member> {
         val members = mutableListOf<Member>()
-        members.add(createMember("team8@gmail.com", "team8", "memberId", "username", "password", s3Uploader.baseUrl + "default-profile.svg", "test", RoleEnum.MEMBER))
+        members.add(createMember("team8@gmail.com", "team8", "loginId", "username", "password", s3Uploader.baseUrl + "default-profile.svg", "test", RoleEnum.MEMBER))
         members.add(createMember("team9@gmail.com", "team9", "othermember", "other", "password", s3Uploader.baseUrl + "default-profile.svg", "test2", RoleEnum.MEMBER))
         members.add(createMember("team10@gmail.com", "team10", "othermember2", "other2", "password", s3Uploader.baseUrl + "default-profile.svg", "test3", RoleEnum.MEMBER))
         members.add(createMember("admin@gmail.com", "admin", "admin", "admin", "password", s3Uploader.baseUrl + "default-profile.svg", "admin", RoleEnum.ADMIN))
@@ -62,9 +62,9 @@ class BaseInitData(
         return members
     }
 
-    private fun createMember(email: String, username: String, memberId: String, displayName: String, password: String, profileImage: String, introduce: String, role: RoleEnum): Member {
+    private fun createMember(email: String, username: String, loginId: String, displayName: String, password: String, profileImage: String, introduce: String, role: RoleEnum): Member {
         val member = Member(
-            memberId = memberId,
+            loginId = loginId,
             username = displayName,
             password = password,
             role = role,

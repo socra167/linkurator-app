@@ -34,7 +34,7 @@ class Rq(
         val userDetails: UserDetails =
             SecurityUser(
                 member.id!!,
-                member.getMemberId(),
+                member.getLoginId(),
                 "",
                 member.authorities,
             )
@@ -106,7 +106,7 @@ class Rq(
 
     fun getRealActor(actor: Member): Member =
         memberService
-            .findById(actor.id)
+            .findById(actor.id!!)
 
     fun removeCookie(name: String) {
         val cookie =

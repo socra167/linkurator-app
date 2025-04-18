@@ -123,7 +123,7 @@ class ApiV1CurationControllerTest {
     fun updateCurationByOtherUser_ShouldFail() {
         // 다른 사용자 생성
         val anotherMember = Member(
-            memberId = "otherperson",
+            loginId = "otherperson",
             username = "otherperson",
             password = "otherperson",
             role = RoleEnum.MEMBER,
@@ -399,7 +399,7 @@ class ApiV1CurationControllerTest {
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/v1/curation/like/{id}", savedCuration.id)
                 .header("Authorization", "Bearer $memberAccessKey")
-                .param("memberId", member.getMemberId())
+                .param("loginId", member.getLoginId())
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
             .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-1"))
@@ -428,7 +428,7 @@ class ApiV1CurationControllerTest {
 
     private fun createMember(author: String): Member {
         val member =  Member(
-            memberId = author,
+            loginId = author,
             username = author,
             password = "password",
             role = RoleEnum.MEMBER,
@@ -540,7 +540,7 @@ class ApiV1CurationControllerTest {
         mockMvc.perform(
             MockMvcRequestBuilders.post("/api/v1/curation/like/{id}", curationId)
                 .header("Authorization", "Bearer $memberAccessKey")
-                .param("memberId", member.getMemberId())
+                .param("loginId", member.getLoginId())
         )
             .andExpect(MockMvcResultMatchers.status().isOk())
             .andExpect(MockMvcResultMatchers.jsonPath("$.code").value("200-1"))

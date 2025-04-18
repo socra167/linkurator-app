@@ -10,8 +10,8 @@ import jakarta.validation.constraints.Size
 data class MemberReqDTO(
     @field:NotBlank(message = "회원 ID는 필수 입력값입니다.")
     @field:Size(max = 100, message = "회원 ID는 최대 100자까지 입력 가능합니다.")
-    @JsonProperty("memberId")
-    val memberId: String?,
+    @JsonProperty("loginId")
+    val loginId: String?,
 
     @field:NotBlank(message = "비밀번호는 필수 입력값입니다.")
     @field:Size(min = 6, message = "비밀번호는 최소 6자 이상이어야 합니다.")
@@ -37,7 +37,7 @@ data class MemberReqDTO(
 ){
     fun toEntity(): Member {
         return Member(
-            memberId = this.memberId.toString(),
+            loginId = this.loginId.toString(),
             username = this.username,
             password = this.password.toString(),
             role = this.role,

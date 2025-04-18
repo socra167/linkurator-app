@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor
 data class MemberUpdateReqDTO(
     @field:NotBlank(message = "회원 ID는 필수 입력값입니다.")
     @field:Size(max = 100, message = "회원 ID는 최대 100자까지 입력 가능합니다.")
-    @JsonProperty("memberId")
-    val memberId: String? = null,
+    @JsonProperty("loginId")
+    val loginId: String? = null,
 
     @field:Email(message = "올바른 이메일 형식이 아닙니다.")
     @JsonProperty("email")

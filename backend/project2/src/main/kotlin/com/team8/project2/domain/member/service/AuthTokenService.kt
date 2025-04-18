@@ -28,7 +28,7 @@ class AuthTokenService {
             expireSeconds,
             java.util.Map.of<String, Any>(
                 "id", member.id,
-                "memberId", member.getMemberId()
+                "loginId", member.getLoginId()
             )
         )
         val claimsJws = Jwts.parser()
@@ -48,10 +48,10 @@ class AuthTokenService {
         val payload = Ut.Jwt.getPayload(keyString.toString(), token)
         val idNo = payload["id"] as Number?
         val id = idNo!!.toLong()
-        val memberId = payload["memberId"] as String?
+        val loginId = payload["loginId"] as String?
         return java.util.Map.of<String, Any?>(
             "id", id,
-            "memberId", memberId
+            "loginId", loginId
         )
     }
 

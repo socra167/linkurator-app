@@ -388,10 +388,10 @@ internal class CurationServiceTest {
     @DisplayName("큐레이션 좋아요 기능을 테스트합니다.")
     fun likeCuration() {
         val curationId = 1L
-        val memberId = 1L
+        val loginId = 1L
 
         val redisKey = "curation_like:$curationId"
-        val redisValue = memberId.toString()
+        val redisValue = loginId.toString()
 
         // 실제 큐레이션과 멤버 객체
         val mockCuration = mock<Curation>()
@@ -408,14 +408,14 @@ internal class CurationServiceTest {
 
         // 저장소 모킹
         whenever(curationRepository.findById(curationId)).thenReturn(Optional.of(mockCuration))
-        whenever(memberRepository.findById(memberId)).thenReturn(Optional.of(mockMember))
+        whenever(memberRepository.findById(loginId)).thenReturn(Optional.of(mockMember))
 
         // 실행
-        curationService.likeCuration(curationId, memberId)
+        curationService.likeCuration(curationId, loginId)
 
         // 검증
         verify(curationRepository, times(1)).findById(curationId)
-        verify(memberRepository, times(1)).findById(memberId)
+        verify(memberRepository, times(1)).findById(loginId)
         verify(redisTemplate, times(1)).execute<Any>(
             any(),
             eq(listOf(redisKey)),
@@ -429,9 +429,9 @@ internal class CurationServiceTest {
     fun likeCurationWithCancel() {
         // given
         val curationId = 1L
-        val memberId = 1L
+        val loginId = 1L
         val redisKey = "curation_like:$curationId"
-        val redisValue = memberId.toString()
+        val redisValue = loginId.toString()
 
         // Redis에 이미 좋아요가 있어서, 해당 키/값 제거됨 (0L 반환)
         whenever(
@@ -447,11 +447,11 @@ internal class CurationServiceTest {
 
         whenever(curationRepository.findById(eq(curationId)))
             .thenReturn(Optional.of(mockCuration))
-        whenever(memberRepository.findById(eq(memberId)))
+        whenever(memberRepository.findById(eq(loginId)))
             .thenReturn(Optional.of(mockMember))
 
         // when
-        curationService.likeCuration(curationId, memberId)
+        curationService.likeCuration(curationId, loginId)
 
         // then
         verify(redisTemplate, times(1)).execute<Any>(
@@ -460,7 +460,7 @@ internal class CurationServiceTest {
             eq(redisValue)
         )
         verify(curationRepository, times(1)).findById(eq(curationId))
-        verify(memberRepository, times(1)).findById(eq(memberId))
+        verify(memberRepository, times(1)).findById(eq(loginId))
         verifyNoInteractions(likeRepository)
     }
 
@@ -513,7 +513,7 @@ internal class CurationServiceTest {
     fun testSyncLikesToDatabase() {
         val key = "curation_like:1"
         val keys = Set.of(key)
-        val memberIds = setOf("100", "101")
+        val loginIds = setOf("100", "101")
         val actor = Member()
         val curation = Curation(
             title = "title",
@@ -525,11 +525,11 @@ internal class CurationServiceTest {
 
         whenever(redisTemplate.keys("curation_like:*")).thenReturn(keys)
         whenever(redisTemplate.opsForSet()).thenReturn(setOperations)
-        whenever(setOperations.members(key)).thenReturn(HashSet<Any>(memberIds)) // ✅ 수정된 부분
-        whenever(setOperations.size(key)).thenReturn(memberIds.size.toLong())
+        whenever(setOperations.members(key)).thenReturn(HashSet<Any>(loginIds)) // ✅ 수정된 부분
+        whenever(setOperations.size(key)).thenReturn(loginIds.size.toLong())
 
         whenever(curationRepository.findById(1L)).thenReturn(Optional.of(curation))
-        whenever(memberRepository.findByMemberId(any<String>()))
+        whenever(memberRepository.findByLoginId(any<String>()))
             .thenReturn(Member())
 
         curationService.syncLikesToDatabase()
@@ -544,14 +544,14 @@ internal class CurationServiceTest {
     @DisplayName("큐레이션에 대한 좋아요 여부를 Redis에서 확인합니다.")
     fun testIsLikedByMember_ReturnsTrue() {
         val curationId = 1L
-        val memberId = 100L
+        val loginId = 100L
         val key = "curation_like:$curationId"
 
         val setOperations: SetOperations<String, Any> = mock<SetOperations<String, Any>>()
         whenever(redisTemplate.opsForSet()).thenReturn(setOperations)
-        whenever(redisTemplate.opsForSet().isMember(key, memberId.toString())).thenReturn(true)
+        whenever(redisTemplate.opsForSet().isMember(key, loginId.toString())).thenReturn(true)
 
-        val result = curationService.isLikedByMember(curationId, memberId)
+        val result = curationService.isLikedByMember(curationId, loginId)
 
         Assertions.assertTrue(result)
     }
