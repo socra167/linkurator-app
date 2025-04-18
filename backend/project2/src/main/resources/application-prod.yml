@@ -1,9 +1,15 @@
 spring:
+  data:
+    redis:
+      host: redis_1
+      port: 6379
+      timeout: 6000ms
+      password: ${custom.redis.password}
   datasource:
-    url: jdbc:mysql://localhost:3306/project1
-    username: dbuser
-    password: 1234
+    url: jdbc:mysql://mysql_1:3306/project1
+    username: ${custom.mysql.username}
+    password: ${custom.mysql.password}
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
