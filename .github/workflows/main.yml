@@ -46,74 +46,74 @@ jobs:
           path: backend/project2/build/reports/tests/test/
           if-no-files-found: ignore
 
-  discordNotification:
-    needs: backend-ci
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: ✅ Discord Notification on Success (PR)
-        if: needs.backend-ci.result == 'success' && github.event_name == 'pull_request' && github.event.action == 'opened'
-        uses: discord-actions/message@v2
-        with:
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
-          message: |
-            ✅ **Backend CI Passed!**
-            **Event:** Pull Request
-            **Repo:** ${{ github.repository }}
-            **PR Title:** ${{ github.event.pull_request.title }}
-            **Author:** ${{ github.event.pull_request.user.login }}
-            **PR Link:** ${{ github.event.pull_request.html_url }}
-
-      - name: ❌ Discord Notification on Failure (PR)
-        if: needs.backend-ci.result == 'failure' && github.event_name == 'pull_request' && github.event.action == 'opened'
-        uses: discord-actions/message@v2
-        with:
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
-          message: |
-            ❌ **Backend CI Failed!**
-            **Event:** Pull Request
-            **Repo:** ${{ github.repository }}
-            **PR Title:** ${{ github.event.pull_request.title }}
-            **Author:** ${{ github.event.pull_request.user.login }}
-            **PR Link:** ${{ github.event.pull_request.html_url }}
-            📄 [테스트 리포트 확인하기](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-      - name: ✅ Discord Notification on Success (Push)
-        if: needs.backend-ci.result == 'success' && github.event_name == 'push'
-        uses: discord-actions/message@v2
-        with:
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
-          message: |
-            ✅ **Backend CI Passed!**
-            **Event:** Push
-            **Repo:** ${{ github.repository }}
-            **Branch:** ${{ github.ref }}
-            **Commit:** [${{ github.event.head_commit.message }}](${{ github.event.head_commit.url }})
-            **Pusher:** ${{ github.event.pusher.name }}
-
-      - name: ❌ Discord Notification on Failure (Push)
-        if: needs.backend-ci.result == 'failure' && github.event_name == 'push'
-        uses: discord-actions/message@v2
-        with:
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
-          message: |
-            ❌ **Backend CI Failed!**
-            **Event:** Push
-            **Repo:** ${{ github.repository }}
-            **Branch:** ${{ github.ref }}
-            **Commit:** [${{ github.event.head_commit.message }}](${{ github.event.head_commit.url }})
-            **Pusher:** ${{ github.event.pusher.name }}
-            📄 [테스트 리포트 확인하기](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-      - name: 🎉 Discord Notification on PR Merge
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
-        uses: discord-actions/message@v2
-        with:
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
-          message: |
-            🎉 **Pull Request Merged!**
-            **Repo:** ${{ github.repository }}
-            **PR Title:** ${{ github.event.pull_request.title }}
-            **Merged by:** ${{ github.event.pull_request.merged_by.login }}
-            **PR Link:** ${{ github.event.pull_request.html_url }}
-
+#  discordNotification:
+#    needs: backend-ci
+#    if: always()
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: ✅ Discord Notification on Success (PR)
+#        if: needs.backend-ci.result == 'success' && github.event_name == 'pull_request' && github.event.action == 'opened'
+#        uses: discord-actions/message@v2
+#        with:
+#          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+#          message: |
+#            ✅ **Backend CI Passed!**
+#            **Event:** Pull Request
+#            **Repo:** ${{ github.repository }}
+#            **PR Title:** ${{ github.event.pull_request.title }}
+#            **Author:** ${{ github.event.pull_request.user.login }}
+#            **PR Link:** ${{ github.event.pull_request.html_url }}
+#
+#      - name: ❌ Discord Notification on Failure (PR)
+#        if: needs.backend-ci.result == 'failure' && github.event_name == 'pull_request' && github.event.action == 'opened'
+#        uses: discord-actions/message@v2
+#        with:
+#          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+#          message: |
+#            ❌ **Backend CI Failed!**
+#            **Event:** Pull Request
+#            **Repo:** ${{ github.repository }}
+#            **PR Title:** ${{ github.event.pull_request.title }}
+#            **Author:** ${{ github.event.pull_request.user.login }}
+#            **PR Link:** ${{ github.event.pull_request.html_url }}
+#            📄 [테스트 리포트 확인하기](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+#
+#      - name: ✅ Discord Notification on Success (Push)
+#        if: needs.backend-ci.result == 'success' && github.event_name == 'push'
+#        uses: discord-actions/message@v2
+#        with:
+#          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+#          message: |
+#            ✅ **Backend CI Passed!**
+#            **Event:** Push
+#            **Repo:** ${{ github.repository }}
+#            **Branch:** ${{ github.ref }}
+#            **Commit:** [${{ github.event.head_commit.message }}](${{ github.event.head_commit.url }})
+#            **Pusher:** ${{ github.event.pusher.name }}
+#
+#      - name: ❌ Discord Notification on Failure (Push)
+#        if: needs.backend-ci.result == 'failure' && github.event_name == 'push'
+#        uses: discord-actions/message@v2
+#        with:
+#          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+#          message: |
+#            ❌ **Backend CI Failed!**
+#            **Event:** Push
+#            **Repo:** ${{ github.repository }}
+#            **Branch:** ${{ github.ref }}
+#            **Commit:** [${{ github.event.head_commit.message }}](${{ github.event.head_commit.url }})
+#            **Pusher:** ${{ github.event.pusher.name }}
+#            📄 [테스트 리포트 확인하기](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+#
+#      - name: 🎉 Discord Notification on PR Merge
+#        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+#        uses: discord-actions/message@v2
+#        with:
+#          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+#          message: |
+#            🎉 **Pull Request Merged!**
+#            **Repo:** ${{ github.repository }}
+#            **PR Title:** ${{ github.event.pull_request.title }}
+#            **Merged by:** ${{ github.event.pull_request.merged_by.login }}
+#            **PR Link:** ${{ github.event.pull_request.html_url }}
+#
